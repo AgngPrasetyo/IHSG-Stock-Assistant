@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analisis Saham · SDA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="analysis-page">
+
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Kembali ke beranda">SDA<span>.</span></a>
+    <nav aria-label="Navigasi utama">
+      <a href="/">Tentang sistem</a>
+    </nav>
+  </header>
+
+  <main class="analysis-main">
+
+    <!-- ── STATE 1: Entry / Greeting ─────────────────────────────── -->
+    <section
+      id="analysis-entry"
+      class="chat-first state-panel fade-in"
+      aria-labelledby="chat-title"
+    >
+      <div class="chat-first-card">
+
+        <h1 id="chat-title">Halo, saham apa yang ingin Anda analisis?</h1>
+
+        <form id="analysis-form" novalidate>
+          <label class="sr-only" for="stock-query">Pertanyaan atau kode saham</label>
+
+          <!-- Pill composer bar -->
+          <div class="chat-input-row composer">
+            <input
+              id="stock-query"
+              name="query"
+              type="text"
+              placeholder="Contoh: BBCA atau Analisis saham BBCA"
+              autocomplete="off"
+            >
+            <button
+              id="analyze-button"
+              class="button button-primary composer-send"
+              type="submit"
+              aria-label="Kirim analisis"
+              title="Kirim analisis"
+            >
+              <!-- Arrow-up icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Options row -->
+          <div class="composer-options">
+            <label for="stock-select">Pilih dari daftar</label>
+            <select id="stock-select" name="ticker">
+              <option value="">Pilih saham dari daftar…</option>
+            </select>
+          </div>
+
+        </form>
+
+        <p id="sector-summary" class="sector-summary" aria-live="polite"></p>
+        <p id="form-status"    class="form-status"    aria-live="polite"></p>
+
+      </div>
+    </section>
+
+    {% include "loading.html" %}
+    {% include "result.html" %}
+
+    
+
+    
+  </main>
+
+  <footer>
+    <p>Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+</html>
