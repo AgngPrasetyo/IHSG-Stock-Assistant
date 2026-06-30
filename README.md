@@ -1,61 +1,30 @@
 # Stock Decision Assistant
 
-Aplikasi web untuk demo skripsi:
+Aplikasi web untuk skripsi:
 
 **Rancang Bangun Asisten Pendukung Keputusan untuk Analisis Teknikal Saham Berbasis Large Language Model menggunakan Fixed-Length Rolling Walk-Forward Analysis**
 
-Sistem ini adalah asisten pendukung keputusan untuk analisis teknikal saham. Output BUY, SELL, atau HOLD harus dipahami sebagai sinyal analisis teknikal, bukan rekomendasi investasi final.
+Stock Decision Assistant adalah aplikasi web berbasis Flask yang membantu pengguna memahami hasil analisis teknikal saham secara lebih terstruktur. Sistem menyajikan indikator teknikal terbaik berdasarkan evaluasi sektoral, sinyal analisis BUY/SELL/HOLD, metrik evaluasi, grafik harga penutupan, ringkasan hasil analisis, hint istilah teknikal, dan laporan PDF.
 
-## Status
+Output BUY, SELL, atau HOLD harus dipahami sebagai sinyal analisis teknikal, bukan rekomendasi investasi final.
 
-Tahap 0 selesai: setup project awal, struktur folder, virtual environment, dependency list, konfigurasi contoh, dan halaman Flask kosong.
+## Status Project
 
-## Teknologi
+Versi saat ini sudah mencakup:
 
-- Backend: Python Flask
-- Frontend: HTML, CSS, JavaScript
-- Data saham: Yahoo Finance melalui `yfinance`
-- Analisis data: pandas, numpy
-- Chart: Plotly
-- LLM: OpenAI API
+- Web app Flask dengan landing page dan halaman analisis.
+- Input saham melalui kode, nama emiten, atau alias saham.
+- Mapping saham untuk 40 sampel dari 4 sektor BEI.
+- Analisis teknikal menggunakan MA Crossover, MACD, dan RSI.
+- Evaluasi indikator menggunakan Fixed-Length Rolling Walk-Forward Analysis.
+- Pemilihan indikator terbaik berdasarkan evaluasi sektoral.
+- Dashboard hasil analisis.
+- Ringkasan hasil berbasis LLM atau fallback deterministik.
+- Hint istilah teknikal dan metrik evaluasi.
+- Unduh laporan hasil analisis dalam format PDF.
+- Test otomatis dengan pytest.
 
-## Cara Menjalankan
-
-Masuk ke folder project:
-
-```bash
-cd stock_decision_assistant
-```
-
-Aktifkan virtual environment di Windows PowerShell:
-
-```bash
-.\.venv\Scripts\Activate.ps1
-```
-
-Install dependency:
-
-```bash
-pip install -r requirements.txt
-```
-
-Jalankan Flask:
-
-```bash
-python app.py
-```
-
-Buka browser ke:
+Validasi terakhir:
 
 ```text
-http://127.0.0.1:5000
-```
-
-## Catatan Batasan
-
-- Sistem tidak melakukan prediksi harga saham.
-- Sistem tidak melakukan trading otomatis.
-- Sistem tidak melakukan eksekusi order.
-- Sistem tidak memberi rekomendasi investasi final.
-- Perhitungan indikator teknikal akan dilakukan deterministik oleh kode Python, bukan oleh LLM.
-- API key tidak boleh di-hardcode. Gunakan file `.env`.
+173 passed
