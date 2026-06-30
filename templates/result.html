@@ -1,0 +1,43 @@
+﻿<!-- ── STATE 3: Result ────────────────────────────────────────── -->
+<section
+  id="result-state"
+  class="result-state state-panel"
+  hidden
+  aria-live="polite"
+>
+  <div id="result-dashboard" class="result-dashboard">
+    <div id="result-numerical" class="result-numerical"></div>
+
+    <aside class="assistant-panel">
+      <div id="assistant-explanation"></div>
+
+      <form id="followup-form" class="followup-form">
+        <label for="followup-query">Analisis saham lain</label>
+        <div class="chat-input-row composer composer-compact">
+          <input
+            id="followup-query"
+            type="text"
+            placeholder="Contoh: BBRI atau Analisis saham GOTO"
+          >
+          <button class="button button-secondary" type="submit">Kirim</button>
+        </div>
+      </form>
+    </aside>
+
+    <aside class="utility-panel" aria-label="Bantuan istilah dan laporan">
+      <div id="technical-hint" class="technical-hint"></div>
+
+      <section class="report-card" aria-labelledby="report-title">
+        <p class="eyebrow">Laporan Offline</p>
+        <h3 id="report-title">Simpan hasil analisis</h3>
+        <p>
+          Unduh laporan hasil analisis ini dalam format PDF agar dapat dibaca kembali secara offline.
+        </p>
+        <button id="download-report-button" class="button button-secondary" type="button">
+          Download laporan PDF
+        </button>
+        <p id="report-status" class="form-status" role="status" aria-live="polite"></p>
+      </section>
+    </aside>
+  </div>
+</section>

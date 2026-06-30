@@ -1,0 +1,121 @@
+sektor;ticker;ticker_yfinance;indicator;signal_column;windows_count;total_active_signals;correct_signals;directional_accuracy;hit_rate
+Energi;ADMR;ADMR.JK;MA Crossover;MA_Crossover_Signal;4;6;4;6.666.666.666.666.660;7.777.777.777.777.770
+Energi;ADMR;ADMR.JK;MACD;MACD_Trade_Signal;4;6;2;3.333.333.333.333.330;27.777.777.777.777.700
+Energi;ADMR;ADMR.JK;RSI;RSI_Signal;4;5;2;40.0;50.0
+Energi;ADRO;ADRO.JK;MA Crossover;MA_Crossover_Signal;4;7;4;5.714.285.714.285.710;5.555.555.555.555.550
+Energi;ADRO;ADRO.JK;MACD;MACD_Trade_Signal;4;9;4;4.444.444.444.444.440;44.444.444.444.444.400
+Energi;ADRO;ADRO.JK;RSI;RSI_Signal;4;4;2;50.0;33.333.333.333.333.300
+Energi;BUMI;BUMI.JK;MA Crossover;MA_Crossover_Signal;4;4;2;50.0;50.0
+Energi;BUMI;BUMI.JK;MACD;MACD_Trade_Signal;4;8;4;50.0;50.0
+Energi;BUMI;BUMI.JK;RSI;RSI_Signal;4;1;1;100.0;100.0
+Energi;BYAN;BYAN.JK;MA Crossover;MA_Crossover_Signal;4;4;1;25.0;25.0
+Energi;BYAN;BYAN.JK;MACD;MACD_Trade_Signal;4;13;4;3.076.923.076.923.070;31.249.999.999.999.900
+Energi;BYAN;BYAN.JK;RSI;RSI_Signal;4;2;1;50.0;50.0
+Energi;CUAN;CUAN.JK;MA Crossover;MA_Crossover_Signal;4;4;3;75.0;8.333.333.333.333.330
+Energi;CUAN;CUAN.JK;MACD;MACD_Trade_Signal;4;5;4;80.0;87.5
+Energi;CUAN;CUAN.JK;RSI;RSI_Signal;4;4;3;75.0;8.333.333.333.333.330
+Energi;DSSA;DSSA.JK;MA Crossover;MA_Crossover_Signal;4;3;1;3.333.333.333.333.330;50.0
+Energi;DSSA;DSSA.JK;MACD;MACD_Trade_Signal;4;10;7;70.0;6.666.666.666.666.660
+Energi;DSSA;DSSA.JK;RSI;RSI_Signal;4;3;2;6.666.666.666.666.660;75.0
+Energi;GEMS;GEMS.JK;MA Crossover;MA_Crossover_Signal;4;7;4;5.714.285.714.285.710;50.0
+Energi;GEMS;GEMS.JK;MACD;MACD_Trade_Signal;4;8;4;50.0;5.333.333.333.333.330
+Energi;GEMS;GEMS.JK;RSI;RSI_Signal;4;1;0;0.0;0.0
+Energi;PGAS;PGAS.JK;MA Crossover;MA_Crossover_Signal;4;6;3;50.0;50.0
+Energi;PGAS;PGAS.JK;MACD;MACD_Trade_Signal;4;9;5;5.555.555.555.555.550;5.833.333.333.333.330
+Energi;PGAS;PGAS.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Energi;PTRO;PTRO.JK;MA Crossover;MA_Crossover_Signal;4;3;1;3.333.333.333.333.330;50.0
+Energi;PTRO;PTRO.JK;MACD;MACD_Trade_Signal;4;6;5;8.333.333.333.333.330;8.333.333.333.333.330
+Energi;PTRO;PTRO.JK;RSI;RSI_Signal;4;3;3;100.0;100.0
+Energi;TCPI;TCPI.JK;MA Crossover;MA_Crossover_Signal;4;5;1;20.0;16.666.666.666.666.600
+Energi;TCPI;TCPI.JK;MACD;MACD_Trade_Signal;4;6;4;6.666.666.666.666.660;62.5
+Energi;TCPI;TCPI.JK;RSI;RSI_Signal;4;4;1;25.0;33.333.333.333.333.300
+Finansial;BBCA;BBCA.JK;MA Crossover;MA_Crossover_Signal;4;4;3;75.0;75.0
+Finansial;BBCA;BBCA.JK;MACD;MACD_Trade_Signal;4;10;5;50.0;50.0
+Finansial;BBCA;BBCA.JK;RSI;RSI_Signal;4;1;0;0.0;0.0
+Finansial;BBNI;BBNI.JK;MA Crossover;MA_Crossover_Signal;4;8;6;75.0;75.0
+Finansial;BBNI;BBNI.JK;MACD;MACD_Trade_Signal;4;10;2;20.0;20.833.333.333.333.300
+Finansial;BBNI;BBNI.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Finansial;BBRI;BBRI.JK;MA Crossover;MA_Crossover_Signal;4;8;4;50.0;50.0
+Finansial;BBRI;BBRI.JK;MACD;MACD_Trade_Signal;4;10;7;70.0;6.944.444.444.444.440
+Finansial;BBRI;BBRI.JK;RSI;RSI_Signal;4;1;0;0.0;0.0
+Finansial;BMRI;BMRI.JK;MA Crossover;MA_Crossover_Signal;4;10;7;70.0;7.291.666.666.666.660
+Finansial;BMRI;BMRI.JK;MACD;MACD_Trade_Signal;4;10;2;20.0;10.0
+Finansial;BMRI;BMRI.JK;RSI;RSI_Signal;4;1;0;0.0;0.0
+Finansial;BNLI;BNLI.JK;MA Crossover;MA_Crossover_Signal;4;4;2;50.0;6.666.666.666.666.660
+Finansial;BNLI;BNLI.JK;MACD;MACD_Trade_Signal;4;7;4;5.714.285.714.285.710;5.833.333.333.333.330
+Finansial;BNLI;BNLI.JK;RSI;RSI_Signal;4;2;1;50.0;50.0
+Finansial;BRIS;BRIS.JK;MA Crossover;MA_Crossover_Signal;4;6;1;16.666.666.666.666.600;16.666.666.666.666.600
+Finansial;BRIS;BRIS.JK;MACD;MACD_Trade_Signal;4;8;4;50.0;3.611.111.111.111.110
+Finansial;BRIS;BRIS.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Finansial;CASA;CASA.JK;MA Crossover;MA_Crossover_Signal;4;2;1;50.0;50.0
+Finansial;CASA;CASA.JK;MACD;MACD_Trade_Signal;4;5;2;40.0;50.0
+Finansial;CASA;CASA.JK;RSI;RSI_Signal;4;3;1;3.333.333.333.333.330;25.0
+Finansial;DNET;DNET.JK;MA Crossover;MA_Crossover_Signal;4;5;4;80.0;6.666.666.666.666.660
+Finansial;DNET;DNET.JK;MACD;MACD_Trade_Signal;4;13;6;4.615.384.615.384.610;4.333.333.333.333.330
+Finansial;DNET;DNET.JK;RSI;RSI_Signal;4;3;2;6.666.666.666.666.660;75.0
+Finansial;MEGA;MEGA.JK;MA Crossover;MA_Crossover_Signal;4;9;3;3.333.333.333.333.330;37.5
+Finansial;MEGA;MEGA.JK;MACD;MACD_Trade_Signal;4;19;5;2.631.578.947.368.420;41.666.666.666.666.600
+Finansial;MEGA;MEGA.JK;RSI;RSI_Signal;4;2;0;0.0;0.0
+Finansial;SMMA;SMMA.JK;MA Crossover;MA_Crossover_Signal;4;6;3;50.0;62.5
+Finansial;SMMA;SMMA.JK;MACD;MACD_Trade_Signal;4;12;4;3.333.333.333.333.330;29.166.666.666.666.600
+Finansial;SMMA;SMMA.JK;RSI;RSI_Signal;4;3;1;3.333.333.333.333.330;3.333.333.333.333.330
+Industri;ARNA;ARNA.JK;MA Crossover;MA_Crossover_Signal;4;5;1;20.0;16.666.666.666.666.600
+Industri;ARNA;ARNA.JK;MACD;MACD_Trade_Signal;4;12;4;3.333.333.333.333.330;37.5
+Industri;ARNA;ARNA.JK;RSI;RSI_Signal;4;3;1;3.333.333.333.333.330;33.333.333.333.333.300
+Industri;ASII;ASII.JK;MA Crossover;MA_Crossover_Signal;4;3;3;100.0;100.0
+Industri;ASII;ASII.JK;MACD;MACD_Trade_Signal;4;14;4;2.857.142.857.142.850;29.166.666.666.666.600
+Industri;ASII;ASII.JK;RSI;RSI_Signal;4;1;0;0.0;0.0
+Industri;BNBR;BNBR.JK;MA Crossover;MA_Crossover_Signal;4;7;4;5.714.285.714.285.710;62.5
+Industri;BNBR;BNBR.JK;MACD;MACD_Trade_Signal;4;6;3;50.0;50.0
+Industri;BNBR;BNBR.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Industri;HEXA;HEXA.JK;MA Crossover;MA_Crossover_Signal;4;4;3;75.0;8.333.333.333.333.330
+Industri;HEXA;HEXA.JK;MACD;MACD_Trade_Signal;4;10;5;50.0;7.083.333.333.333.330
+Industri;HEXA;HEXA.JK;RSI;RSI_Signal;4;5;1;20.0;16.666.666.666.666.600
+Industri;IMPC;IMPC.JK;MA Crossover;MA_Crossover_Signal;4;4;2;50.0;50.0
+Industri;IMPC;IMPC.JK;MACD;MACD_Trade_Signal;4;5;1;20.0;25.0
+Industri;IMPC;IMPC.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Industri;JTPE;JTPE.JK;MA Crossover;MA_Crossover_Signal;4;2;1;50.0;50.0
+Industri;JTPE;JTPE.JK;MACD;MACD_Trade_Signal;4;6;4;6.666.666.666.666.660;75.0
+Industri;JTPE;JTPE.JK;RSI;RSI_Signal;4;1;1;100.0;100.0
+Industri;MARK;MARK.JK;MA Crossover;MA_Crossover_Signal;4;2;1;50.0;50.0
+Industri;MARK;MARK.JK;MACD;MACD_Trade_Signal;4;8;5;62.5;7.083.333.333.333.330
+Industri;MARK;MARK.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Industri;SUNI;SUNI.JK;MA Crossover;MA_Crossover_Signal;4;5;2;40.0;33.333.333.333.333.300
+Industri;SUNI;SUNI.JK;MACD;MACD_Trade_Signal;4;6;1;16.666.666.666.666.600;8.333.333.333.333.330
+Industri;SUNI;SUNI.JK;RSI;RSI_Signal;4;3;2;6.666.666.666.666.660;6.666.666.666.666.660
+Industri;UNTR;UNTR.JK;MA Crossover;MA_Crossover_Signal;4;3;2;6.666.666.666.666.660;75.0
+Industri;UNTR;UNTR.JK;MACD;MACD_Trade_Signal;4;15;6;40.0;3.708.333.333.333.330
+Industri;UNTR;UNTR.JK;RSI;RSI_Signal;4;2;1;50.0;50.0
+Industri;VISI;VISI.JK;MA Crossover;MA_Crossover_Signal;4;4;3;75.0;75.0
+Industri;VISI;VISI.JK;MACD;MACD_Trade_Signal;4;9;5;5.555.555.555.555.550;50.0
+Industri;VISI;VISI.JK;RSI;RSI_Signal;4;3;1;3.333.333.333.333.330;25.0
+Teknologi;BELI;BELI.JK;MA Crossover;MA_Crossover_Signal;4;2;2;100.0;100.0
+Teknologi;BELI;BELI.JK;MACD;MACD_Trade_Signal;4;6;1;16.666.666.666.666.600;12.5
+Teknologi;BELI;BELI.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Teknologi;BUKA;BUKA.JK;MA Crossover;MA_Crossover_Signal;4;6;2;3.333.333.333.333.330;22.222.222.222.222.200
+Teknologi;BUKA;BUKA.JK;MACD;MACD_Trade_Signal;4;14;6;42.857.142.857.142.800;52.5
+Teknologi;BUKA;BUKA.JK;RSI;RSI_Signal;4;3;2;6.666.666.666.666.660;6.666.666.666.666.660
+Teknologi;CYBR;CYBR.JK;MA Crossover;MA_Crossover_Signal;4;3;2;6.666.666.666.666.660;6.666.666.666.666.660
+Teknologi;CYBR;CYBR.JK;MACD;MACD_Trade_Signal;4;11;2;18.181.818.181.818.100;16.666.666.666.666.600
+Teknologi;CYBR;CYBR.JK;RSI;RSI_Signal;4;1;1;100.0;100.0
+Teknologi;DCII;DCII.JK;MA Crossover;MA_Crossover_Signal;4;2;1;50.0;50.0
+Teknologi;DCII;DCII.JK;MACD;MACD_Trade_Signal;4;10;2;20.0;15.0
+Teknologi;DCII;DCII.JK;RSI;RSI_Signal;4;4;3;75.0;6.666.666.666.666.660
+Teknologi;EMTK;EMTK.JK;MA Crossover;MA_Crossover_Signal;4;6;4;6.666.666.666.666.660;7.222.222.222.222.220
+Teknologi;EMTK;EMTK.JK;MACD;MACD_Trade_Signal;4;6;3;50.0;37.5
+Teknologi;EMTK;EMTK.JK;RSI;RSI_Signal;4;1;1;100.0;100.0
+Teknologi;GOTO;GOTO.JK;MA Crossover;MA_Crossover_Signal;4;6;3;50.0;62.5
+Teknologi;GOTO;GOTO.JK;MACD;MACD_Trade_Signal;4;9;2;2.222.222.222.222.220;37.5
+Teknologi;GOTO;GOTO.JK;RSI;RSI_Signal;4;0;0;0.0;0.0
+Teknologi;MLPT;MLPT.JK;MA Crossover;MA_Crossover_Signal;4;3;2;6.666.666.666.666.660;75.0
+Teknologi;MLPT;MLPT.JK;MACD;MACD_Trade_Signal;4;7;6;8.571.428.571.428.570;6.666.666.666.666.660
+Teknologi;MLPT;MLPT.JK;RSI;RSI_Signal;4;1;0;0.0;0.0
+Teknologi;MSTI;MSTI.JK;MA Crossover;MA_Crossover_Signal;4;7;4;5.714.285.714.285.710;50.0
+Teknologi;MSTI;MSTI.JK;MACD;MACD_Trade_Signal;4;9;3;3.333.333.333.333.330;24.999.999.999.999.900
+Teknologi;MSTI;MSTI.JK;RSI;RSI_Signal;4;1;1;100.0;100.0
+Teknologi;MTDL;MTDL.JK;MA Crossover;MA_Crossover_Signal;4;5;4;80.0;75.0
+Teknologi;MTDL;MTDL.JK;MACD;MACD_Trade_Signal;4;14;3;21.428.571.428.571.400;45.370.370.370.370.300
+Teknologi;MTDL;MTDL.JK;RSI;RSI_Signal;4;3;1;3.333.333.333.333.330;50.0
+Teknologi;WIFI;WIFI.JK;MA Crossover;MA_Crossover_Signal;4;4;4;100.0;100.0
+Teknologi;WIFI;WIFI.JK;MACD;MACD_Trade_Signal;4;12;7;58.333.333.333.333.300;68.75
+Teknologi;WIFI;WIFI.JK;RSI;RSI_Signal;4;3;1;3.333.333.333.333.330;33.333.333.333.333.300
