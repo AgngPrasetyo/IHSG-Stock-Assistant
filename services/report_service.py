@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from datetime import date
 from io import BytesIO
+import math
 from typing import Any
 from xml.sax.saxutils import escape
 
@@ -31,6 +33,19 @@ HEADER_BG = colors.HexColor("#F2E6D6")
 LABEL_BG = colors.HexColor("#FBFAF7")
 DISCLAIMER_BG = colors.HexColor("#FFF7ED")
 TEAL = colors.HexColor("#0D8A83")
+POST_SIGNAL_STATUS_LABELS = {
+    "MATCH": "Sesuai arah",
+    "NOT_MATCH": "Tidak sesuai arah",
+    "NOT_MATCH_FLAT": "Harga tidak berubah",
+    "NOT_EVALUATED_HOLD": "Tidak dievaluasi",
+    "UNAVAILABLE": "Data belum tersedia",
+}
+POST_SIGNAL_VALIDATION_DESCRIPTION = (
+    "Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, "
+    "dan T+5. Validasi ini tidak digunakan untuk mengubah indikator terbaik, "
+    "sinyal utama, atau hasil evaluasi Walk-Forward Analysis."
+)
+INVALID_PDF_TEXT_CHARS = str.maketrans("", "", "■□�")
 
 
 def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
@@ -108,6 +123,10 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
         align_right_cols={1, 2, 3, 4},
     ))
 
+    post_signal_validation = analysis.get("post_signal_validation")
+    if isinstance(post_signal_validation, list) and post_signal_validation:
+        story.append(_post_signal_validation_section(post_signal_validation, styles))
+
     hint = analysis.get("technical_hint") or {}
     hint_rows = [["Istilah", "Penjelasan"]]
     for item in hint.get("items") or []:
@@ -125,7 +144,7 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
         Paragraph(_clean_text(hint.get("title") or "Hint istilah teknikal"), styles["Subtle"]),
         _data_table(hint_rows, styles, col_widths=[4.2 * cm, 11.0 * cm]),
         Spacer(1, 0.12 * cm),
-        Paragraph("Metrik Evaluasi", styles["Subtle"]),
+        Paragraph(_clean_text("Metrik Evaluasi"), styles["Subtle"]),
         _data_table(metric_hint_rows, styles, col_widths=[4.2 * cm, 11.0 * cm]),
     ]))
 
@@ -139,9 +158,9 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
 def _header(styles: dict[str, ParagraphStyle]) -> list[Any]:
     """Build the fixed report heading without reading external state."""
     return [
-        Paragraph("Stock Decision Assistant", styles["TitleSmall"]),
-        Paragraph("Laporan Hasil Analisis Teknikal Saham", styles["Heading1"]),
-        Paragraph(f"Dicetak pada: {date.today().isoformat()}", styles["Subtle"]),
+        Paragraph(_clean_text("Stock Decision Assistant"), styles["TitleSmall"]),
+        Paragraph(_clean_text("Laporan Hasil Analisis Teknikal Saham"), styles["Heading1"]),
+        Paragraph(_clean_text(f"Dicetak pada: {date.today().isoformat()}"), styles["Subtle"]),
         Spacer(1, 0.12 * cm),
         HRFlowable(width="100%", thickness=0.6, color=BORDER, spaceBefore=4, spaceAfter=12),
     ]
@@ -245,13 +264,13 @@ def _styles() -> dict[str, ParagraphStyle]:
 
 def _section_block(styles: dict[str, ParagraphStyle], title: str, flowables: list[Any]) -> KeepTogether:
     """Keep short sections together so they do not split awkwardly across pages."""
-    return KeepTogether([Spacer(1, 0.08 * cm), Paragraph(title, styles["Heading2"]), *flowables])
+    return KeepTogether([Spacer(1, 0.08 * cm), Paragraph(_clean_text(title), styles["Heading2"]), *flowables])
 
 
 def _add_section(story: list[Any], styles: dict[str, ParagraphStyle], title: str) -> None:
     """Append a standalone section heading to the report story."""
     story.append(Spacer(1, 0.12 * cm))
-    story.append(Paragraph(title, styles["Heading2"]))
+    story.append(Paragraph(_clean_text(title), styles["Heading2"]))
 
 
 def _key_value_table(rows: list[tuple[str, Any]], styles: dict[str, ParagraphStyle]) -> Table:
@@ -305,6 +324,63 @@ def _data_table(
     return table
 
 
+def _post_signal_validation_section(
+    validations: list[Any],
+    styles: dict[str, ParagraphStyle],
+) -> KeepTogether:
+    """Render latest-signal validation rows already present in the payload."""
+    rows = [[
+        "Horizon",
+        "Sinyal",
+        "Tanggal Sinyal",
+        "Tanggal Target",
+        "Status",
+        "Return",
+        "Keterangan",
+    ]]
+    for raw_item in validations:
+        item = raw_item if isinstance(raw_item, dict) else {}
+        status = str(item.get("status") or "").strip().upper()
+        is_hold = status == "NOT_EVALUATED_HOLD"
+        rows.append([
+            _format_horizon(item),
+            item.get("signal"),
+            _format_optional_text(item.get("signal_date")),
+            "-" if is_hold else _format_optional_text(item.get("target_date")),
+            POST_SIGNAL_STATUS_LABELS.get(status, _format_optional_text(status)),
+            "-" if is_hold else _format_percent(item.get("return_pct")),
+            item.get("message") or item.get("keterangan"),
+        ])
+
+    return _section_block(styles, "Validasi Lanjutan Sinyal Terbaru", [
+        Paragraph(POST_SIGNAL_VALIDATION_DESCRIPTION, styles["BodyRelaxed"]),
+        _data_table(
+            rows,
+            styles,
+            col_widths=[1.35 * cm, 1.45 * cm, 2.05 * cm, 2.05 * cm, 2.35 * cm, 1.55 * cm, 4.4 * cm],
+            align_right_cols={5},
+        ),
+    ])
+
+
+def _format_horizon(item: dict[str, Any]) -> str:
+    """Format validation horizon without recalculating anything from price data."""
+    label = _format_optional_text(item.get("label"))
+    if label != "-":
+        return label
+    horizon = item.get("horizon")
+    try:
+        return f"T+{int(horizon)}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def _format_optional_text(value: Any) -> str:
+    """Return a clean placeholder for optional payload text fields."""
+    text = sanitize_pdf_text(value)
+    return "-" if text.casefold() in {"none", "null", "undefined", "nan"} else text
+
+
 def _disclaimer_box(text: Any, styles: dict[str, ParagraphStyle]) -> Table:
     """Render the investment-safety disclaimer as a highlighted single-cell box."""
     table = Table([[Paragraph(_clean_text(text), styles["Body"])]], colWidths=[15.2 * cm], hAlign="LEFT")
@@ -326,11 +402,34 @@ def _table_cell(value: Any, style: ParagraphStyle) -> Any:
     return Paragraph(_clean_text(value), style)
 
 
-def _clean_text(value: Any) -> str:
-    """Escape user-facing text for ReportLab Paragraph markup."""
-    text = "-" if value is None or value == "" else str(value)
+def sanitize_pdf_text(value: Any) -> str:
+    """Normalize and remove characters that render as invalid boxes in PDFs."""
+    if isinstance(value, float) and math.isnan(value):
+        value = None
+
+    text = "-" if value is None else str(value)
+    text = unicodedata.normalize("NFKC", text)
+    text = text.translate(INVALID_PDF_TEXT_CHARS)
+    cleaned_chars = []
+    for char in text:
+        category = unicodedata.category(char)
+        if category.startswith("C") and char not in {"\n", "\t"}:
+            continue
+        cleaned_chars.append(char)
+
+    text = "".join(cleaned_chars)
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.splitlines()]
+    text = "\n".join(line for line in lines if line)
     text = re.sub(r"\n{3,}", "\n\n", text.strip())
-    return escape(text).replace("\n", "<br/>")
+    text = text.replace(", menghasilkan", ", indikator tersebut menghasilkan")
+    if text.casefold() in {"", "none", "null", "undefined", "nan"}:
+        return "-"
+    return text
+
+
+def _clean_text(value: Any) -> str:
+    """Escape sanitized user-facing text for ReportLab Paragraph markup."""
+    return escape(sanitize_pdf_text(value)).replace("\n", "<br/>")
 
 
 def _format_number(value: Any, decimals: int = 2) -> str:
@@ -338,6 +437,8 @@ def _format_number(value: Any, decimals: int = 2) -> str:
     try:
         numeric = float(value)
     except (TypeError, ValueError):
+        return "-"
+    if not math.isfinite(numeric):
         return "-"
     return f"{numeric:.{decimals}f}"
 
@@ -371,4 +472,3 @@ def _footer(canvas: Any, doc: SimpleDocTemplate) -> None:
     canvas.drawCentredString(width / 2, y, "Bukan rekomendasi investasi final")
     canvas.drawRightString(width - doc.rightMargin, y, f"Halaman {doc.page}")
     canvas.restoreState()
-

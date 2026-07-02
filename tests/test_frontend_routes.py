@@ -1,4 +1,4 @@
-﻿"""Tests for the public landing and analysis frontend pages."""
+"""Tests for the public landing and analysis frontend pages."""
 
 from app import create_app
 
@@ -32,7 +32,9 @@ def test_analysis_page_has_chat_first_input_and_static_assets():
     assert "sk-proj" not in html
     assert "OPENAI_API_KEY" not in html
     assert client.get("/static/css/style.css").status_code == 200
-    assert client.get("/static/js/main.js").status_code == 200
+    js_response = client.get("/static/js/main.js")
+    assert js_response.status_code == 200
+    assert "Validasi Lanjutan Sinyal Terbaru" in js_response.get_data(as_text=True)
 
 
 

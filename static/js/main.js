@@ -16,6 +16,8 @@
   const downloadReportButton = $('#download-report-button');
   const reportStatus = $('#report-status');
 
+  if (!query || !select || !button) return;
+
   let processTimer = null;
   let activeProcessStep = -1;
   let lastAnalysisPayload = null;
@@ -279,6 +281,101 @@
   }
 
 
+
+  function formatValidationStatus(status) {
+    const labels = {
+      MATCH: 'Sesuai arah',
+      NOT_MATCH: 'Tidak sesuai arah',
+      NOT_MATCH_FLAT: 'Harga tidak berubah',
+      NOT_EVALUATED_HOLD: 'Tidak dievaluasi karena HOLD',
+      UNAVAILABLE: 'Data belum tersedia'
+    };
+    return labels[String(status || '').toUpperCase()] || 'Data belum tersedia';
+  }
+
+  function validationStatusClass(status) {
+    return `validation-${String(status || 'unavailable').toLowerCase()}`;
+  }
+
+  function nullable(value) {
+    if (value === null || value === undefined || value === '') return '-';
+    if (typeof value === 'number' && !Number.isFinite(value)) return '-';
+    if (String(value).toLowerCase() === 'nan') return '-';
+    return escapeHtml(value);
+  }
+
+  function validationMessage(item) {
+    const status = String((item || {}).status || '').toUpperCase();
+    const signal = String((item || {}).signal || '').toUpperCase();
+    const label = text((item || {}).label, 'horizon ini');
+
+    if (status === 'NOT_EVALUATED_HOLD' && signal === 'HOLD') {
+      return 'Sinyal HOLD tidak dievaluasi karena bukan sinyal aktif.';
+    }
+    if (status === 'MATCH' && (signal === 'BUY' || signal === 'SELL')) {
+      return `Arah harga sesuai dengan sinyal ${signal} pada ${label}.`;
+    }
+    if (status === 'UNAVAILABLE') {
+      return 'Data setelah tanggal sinyal belum tersedia.';
+    }
+    return text((item || {}).message, '-');
+  }
+
+  function renderPostSignalValidation(analysis) {
+    const validations = Array.isArray((analysis || {}).post_signal_validation)
+      ? analysis.post_signal_validation
+      : [];
+
+    const items = validations.length ? validations : [1, 3, 5].map((horizon) => ({
+      horizon,
+      label: `T+${horizon}`,
+      status: 'UNAVAILABLE',
+      message: 'Data setelah tanggal sinyal belum tersedia.'
+    }));
+
+    const rows = items.map((item) => {
+      const status = String((item || {}).status || '').toUpperCase();
+      const isHoldValidation = status === 'NOT_EVALUATED_HOLD';
+      const detailRows = [
+        `<div><dt>Sinyal</dt><dd>${nullable(item.signal)}</dd></div>`,
+        `<div><dt>Tanggal sinyal</dt><dd>${nullable(item.signal_date)}</dd></div>`
+      ];
+
+      if (!isHoldValidation) {
+        detailRows.push(
+          `<div><dt>Tanggal target</dt><dd>${nullable(item.target_date)}</dd></div>`,
+          `<div><dt>Close sinyal</dt><dd>${item.close_t === null || item.close_t === undefined ? '-' : money(item.close_t)}</dd></div>`,
+          `<div><dt>Close target</dt><dd>${item.close_future === null || item.close_future === undefined ? '-' : money(item.close_future)}</dd></div>`,
+          `<div><dt>Return</dt><dd>${item.return_pct === null || item.return_pct === undefined ? '-' : percent(item.return_pct)}</dd></div>`
+        );
+      }
+
+      return `
+        <article class="validation-item">
+          <div class="validation-item-head">
+            <strong>${nullable(item.label)}</strong>
+            <span class="validation-status ${validationStatusClass(item.status)}">
+              ${escapeHtml(formatValidationStatus(item.status))}
+            </span>
+          </div>
+          <dl class="validation-details">
+            ${detailRows.join('')}
+          </dl>
+          <p>${escapeHtml(validationMessage(item))}</p>
+        </article>
+      `;
+    }).join('');
+
+    return `
+      <section class="result-card validation-card">
+        <h3 class="metrics-title">Validasi Lanjutan Sinyal Terbaru</h3>
+        <p class="metrics-description">
+          Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, dan T+5. Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
+        </p>
+        <div class="validation-grid">${rows}</div>
+      </section>
+    `;
+  }
   function setReportStatus(message = '', isError = false) {
     if (!reportStatus) return;
     reportStatus.textContent = message;
@@ -457,6 +554,8 @@
           </div>
         </section>
 
+        ${renderPostSignalValidation(analysis)}
+
         <section class="result-card">
           <h3 class="metrics-title">Grafik harga penutupan</h3>
           ${chart(analysis.chart_data)}
@@ -550,7 +649,12 @@
   });
 
   select.addEventListener('change', () => {
-    if (select.value) query.value = '';
+    const value = select.value.trim();
+    if (!value) return;
+    if (button.disabled) return;
+
+    query.value = '';
+    analyze(value);
   });
 
   if (downloadReportButton) {

@@ -1,4 +1,4 @@
-﻿"""Compose deterministic stock-analysis payloads from cached data and WFA outputs."""
+"""Compose deterministic stock-analysis payloads from cached data and WFA outputs."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from services.data_service import (
 )
 from services.indicator_service import calculate_macd, calculate_rsi, calculate_sma
 from services.mapping_service import get_stock_info, normalize_ticker, resolve_ticker
+from services.post_signal_validation_service import build_post_signal_validation
 from services.technical_hint_service import get_indicator_hint
 from services.signal_service import (
     MACD_TRADE_SIGNAL_COLUMN,
@@ -43,6 +44,7 @@ DATA_PERIOD = {
     "end_date": END_DATE,
     "end_date_exclusive": True,
 }
+POST_SIGNAL_VALIDATION_END_DATE = "2026-07-11"
 DISCLAIMER = "Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final."
 
 INDICATOR_SIGNAL_COLUMNS = {
@@ -146,6 +148,24 @@ def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
     analysis_df = generate_macd_signal(analysis_df)
     return generate_rsi_signal(analysis_df)
 
+def prepare_post_signal_validation_dataframe(ticker_yfinance: str) -> pd.DataFrame:
+    """Load extended cached OHLCV data only for validating already-formed signals."""
+    price_df = load_or_fetch_price_data(
+        ticker_yfinance,
+        start_date=START_DATE,
+        end_date=POST_SIGNAL_VALIDATION_END_DATE,
+        use_cache=True,
+    )
+    analysis_df = price_df.dropna(subset=REQUIRED_OHLCV_COLUMNS).copy()
+    if analysis_df.empty:
+        raise ValueError("Data OHLCV lengkap tidak tersedia untuk validasi lanjutan.")
+    analysis_df["SMA20"] = calculate_sma(analysis_df, 20)
+    analysis_df["SMA50"] = calculate_sma(analysis_df, 50)
+    analysis_df = calculate_macd(analysis_df)
+    analysis_df = calculate_rsi(analysis_df, 14)
+    analysis_df = generate_ma_signal(analysis_df)
+    analysis_df = generate_macd_signal(analysis_df)
+    return generate_rsi_signal(analysis_df)
 
 def get_latest_signal_by_indicator(df: pd.DataFrame, indicator_name: str) -> str:
     """Return the latest BUY, SELL, or HOLD value for a final indicator."""
@@ -210,6 +230,27 @@ def build_chart_data(df: pd.DataFrame, limit: int = 120) -> list[dict[str, Any]]
     return result
 
 
+def _build_validation_dataframe(
+    ticker_yfinance: str,
+    analysis_df: pd.DataFrame,
+    signal_column: str,
+    signal_date: Any,
+    latest_signal: str,
+) -> pd.DataFrame:
+    try:
+        validation_df = prepare_post_signal_validation_dataframe(ticker_yfinance)
+        if signal_column not in validation_df.columns or pd.Timestamp(signal_date) not in validation_df.index:
+            return analysis_df
+
+        validation_signal = str(validation_df.loc[pd.Timestamp(signal_date), signal_column]).upper()
+        if validation_signal != latest_signal:
+            validation_df = validation_df.copy()
+            validation_df.loc[pd.Timestamp(signal_date), signal_column] = latest_signal
+        return validation_df
+    except Exception:
+        return analysis_df
+
+
 def analyze_stock(user_input: str | None) -> dict[str, Any]:
     """Create a route-ready, deterministic analysis response for a stock request."""
     ticker = extract_ticker_from_text(user_input)
@@ -241,6 +282,21 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
 
     latest_row = analysis_df.iloc[-1]
     indicator_name = str(best_indicator["indicator"])
+    signal_column = _get_signal_column(indicator_name)
+    signal_date = analysis_df.index[-1]
+    latest_signal = get_latest_signal_by_indicator(analysis_df, indicator_name)
+    validation_df = _build_validation_dataframe(
+        str(stock_info["ticker_yfinance"]),
+        analysis_df,
+        signal_column,
+        signal_date,
+        latest_signal,
+    )
+    post_signal_validation = build_post_signal_validation(
+        validation_df,
+        signal_column,
+        signal_date=signal_date,
+    )
     return {
         "success": True,
         "message": "Analisis berhasil.",
@@ -249,7 +305,7 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
         "stock_name": _stock_name(stock_info),
         "sector": stock_info["sektor"],
         "best_indicator": indicator_name,
-        "latest_signal": get_latest_signal_by_indicator(analysis_df, indicator_name),
+        "latest_signal": latest_signal,
         "latest_condition": build_latest_condition(analysis_df, indicator_name),
         "latest_date": pd.Timestamp(analysis_df.index[-1]).strftime("%Y-%m-%d"),
         "latest_close": _json_value(latest_row.get("Close")),
@@ -262,6 +318,7 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
         "indicator_comparison": comparison,
         "technical_hint": get_indicator_hint(indicator_name),
         "chart_data": build_chart_data(analysis_df),
+        "post_signal_validation": post_signal_validation,
         "wfa_config": WFA_CONFIG.copy(),
         "data_period": DATA_PERIOD.copy(),
         "disclaimer": DISCLAIMER,
@@ -368,9 +425,3 @@ def _json_value(value: Any) -> Any:
 
 def _failure(message: str) -> dict[str, Any]:
     return {"success": False, "message": message}
-
-
-
-
-
-
