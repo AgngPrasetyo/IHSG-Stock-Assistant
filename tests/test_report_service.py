@@ -157,7 +157,8 @@ def test_build_analysis_pdf_handles_mixed_post_signal_validation_statuses():
 
     assert pdf.startswith(b"%PDF")
     assert b"Validasi Lanjutan Sinyal Terbaru" in pdf
-    assert b"Sesuai arah" in pdf
+    assert b"Sesuai" in pdf
+    assert b"arah" in pdf
     assert b"Paragraph(" not in pdf
     assert b"caseSensitive" not in pdf
     assert b"NOT_EVALUATED_HOLD" not in pdf

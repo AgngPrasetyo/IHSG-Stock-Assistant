@@ -332,8 +332,8 @@ def _post_signal_validation_section(
     rows = [[
         "Horizon",
         "Sinyal",
-        "Tanggal Sinyal",
-        "Tanggal Target",
+        "Tgl. Sinyal",
+        "Tgl. Target",
         "Status",
         "Return",
         "Keterangan",
@@ -355,12 +355,20 @@ def _post_signal_validation_section(
     return _section_block(styles, "Validasi Lanjutan Sinyal Terbaru", [
         Paragraph(POST_SIGNAL_VALIDATION_DESCRIPTION, styles["BodyRelaxed"]),
         _data_table(
-            rows,
-            styles,
-            col_widths=[1.35 * cm, 1.45 * cm, 2.05 * cm, 2.05 * cm, 2.35 * cm, 1.55 * cm, 4.4 * cm],
-            align_right_cols={5},
-        ),
-    ])
+    rows,
+    styles,
+        col_widths=[
+        1.60 * cm,  # Horizon
+        1.45 * cm,  # Sinyal
+        2.25 * cm,  # Tgl. Sinyal
+        2.25 * cm,  # Tgl. Target
+        2.10 * cm,  # Status
+        1.55 * cm,  # Return
+        4.00 * cm,  # Keterangan
+    ],
+    align_right_cols={5},
+    ),
+])
 
 
 def _format_horizon(item: dict[str, Any]) -> str:
