@@ -1,4 +1,4 @@
-/* ---------------------------------------------------------------
+﻿/* ---------------------------------------------------------------
    SDA � style.css
    Frontend Flask: landing page + analysis workspace
    Theme: Editorial Finance Light (Final Optimized)
@@ -902,16 +902,39 @@ h2 {
   margin-bottom: 1rem;
   color: var(--text);
 }
-
 .explanation {
-  white-space: pre-wrap;
-  line-height: 1.9;
-  font-size: .96rem;
+  line-height: 1.85;
+  font-size: .95rem;
   color: #3F4B5B;
 }
 
 .explanation p {
-  margin: 0 0 1.1rem;
+  margin: 0;
+}
+
+.explanation-structured {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.explanation-block {
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(20, 24, 39, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.explanation-block h3 {
+  margin: 0 0 0.35rem;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+}
+
+.explanation-block p {
+  margin: 0;
+  color: #3F4B5B;
 }
 
 /* Signal Markers */
@@ -972,6 +995,36 @@ h2 {
   display: block;
   margin-top: .2rem;
   color: var(--text);
+}
+
+.summary-item-condition {
+  min-height: 0;
+}
+
+.condition-lines {
+  display: grid;
+  gap: 0.28rem;
+  line-height: 1.45;
+}
+
+.condition-lines span {
+  display: block;
+}
+
+.condition-compact {
+  gap: 0.45rem;
+}
+
+.condition-signal {
+  width: fit-content;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  padding: 0.22rem 0.58rem;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
 }
 
 .metrics-title {
@@ -1080,6 +1133,35 @@ h2 {
   font-size: .82rem;
   line-height: 1.55;
 }
+
+.validation-card-compact {
+  padding: 1.25rem 1.35rem;
+}
+
+.hold-validation-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(100, 116, 139, 0.16);
+  border-radius: 14px;
+  background: rgba(100, 116, 139, 0.07);
+}
+
+.hold-validation-summary strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.hold-validation-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
 /* Financial Comparison Tables */
 .comparison-table {
   width: 100%;
@@ -1100,6 +1182,36 @@ h2 {
 
 .comparison-table td {
   color: #344054;
+}
+
+.comparison-table tr.is-best-indicator {
+  background: rgba(13, 138, 131, 0.07);
+}
+
+.comparison-table tr.is-best-indicator td:first-child {
+  border-left: 4px solid var(--teal);
+}
+
+.indicator-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.best-indicator-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  padding: 0.18rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 850;
+  line-height: 1.2;
+  color: #0A6F69;
+  background: rgba(13, 138, 131, 0.13);
+  border: 1px solid rgba(13, 138, 131, 0.25);
+  letter-spacing: 0.02em;
 }
 
 .analysis-page .disclaimer-box {
@@ -1563,6 +1675,12 @@ h2 {
     width: 100%;
     min-height: 44px;
   }
+
+  @media (max-width: 640px) {
+  .hold-validation-summary {
+    flex-direction: column;
+  }
+}
 }
 
 /* -- 4. Accessibility Reduced-motion overrides ---------------- */

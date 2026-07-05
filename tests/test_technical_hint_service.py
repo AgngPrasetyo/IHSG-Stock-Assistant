@@ -24,8 +24,8 @@ def test_rsi_hint_contains_rsi_terms_without_other_indicator_terms():
     assert {"RSI", "Overbought", "Oversold"}.issubset(terms)
     assert "MACD" not in text
     assert "SMA20" not in text
-    assert "SMA50" in text
-
+    assert "SMA50" not in text
+    assert "aturan sistem" in text
 
 def test_macd_hint_contains_macd_terms_without_other_indicator_terms():
     terms, text = _terms_and_text("MACD")
@@ -33,8 +33,8 @@ def test_macd_hint_contains_macd_terms_without_other_indicator_terms():
     assert {"MACD Line", "Signal Line"}.issubset(terms)
     assert "RSI" not in text
     assert "SMA20" not in text
-    assert "SMA50" in text
-
+    assert "SMA50" not in text
+    assert "aturan sistem" in text
 
 
 

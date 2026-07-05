@@ -57,65 +57,65 @@ _HINTS: dict[str, dict[str, Any]] = {
         ],
     },
     "rsi": {
-        "title": "Hint istilah RSI",
-        "indicator": "RSI",
-        "items": [
-            {
-                "term": "RSI",
-                "description": "Indikator momentum yang membaca kekuatan pergerakan harga pada skala 0 sampai 100.",
-            },
-            {
-                "term": "Overbought",
-                "description": "Kondisi ketika RSI berada di atas 70.",
-            },
-            {
-                "term": "Oversold",
-                "description": "Kondisi ketika RSI berada di bawah 30.",
-            },
-            {
-                "term": "BUY",
-                "description": "Muncul saat RSI keluar dari area oversold dan filter tren SMA50 terpenuhi. RSI yang masih oversold belum otomatis BUY.",
-            },
-            {
-                "term": "SELL",
-                "description": "Muncul saat RSI keluar dari area overbought dan filter tren SMA50 terpenuhi. RSI yang masih overbought belum otomatis SELL.",
-            },
-            {
-                "term": "HOLD",
-                "description": "Muncul saat syarat BUY atau SELL belum lengkap, termasuk ketika RSI masih berada di area ekstrem tetapi belum keluar sesuai aturan sistem.",
-            },
-        ],
-    },
+    "title": "Hint istilah RSI",
+    "indicator": "RSI",
+    "items": [
+        {
+            "term": "RSI",
+            "description": "Indikator momentum yang membaca kekuatan pergerakan harga pada skala 0 sampai 100.",
+        },
+        {
+            "term": "Overbought",
+            "description": "Kondisi ketika RSI berada pada area tinggi dan harga berpotensi mengalami pelemahan momentum.",
+        },
+        {
+            "term": "Oversold",
+            "description": "Kondisi ketika RSI berada pada area rendah dan harga berpotensi mengalami penguatan momentum.",
+        },
+        {
+            "term": "BUY",
+            "description": "Muncul saat RSI keluar dari area oversold sesuai aturan sistem.",
+        },
+        {
+            "term": "SELL",
+            "description": "Muncul saat RSI keluar dari area overbought sesuai aturan sistem.",
+        },
+        {
+            "term": "HOLD",
+            "description": "Muncul saat kondisi BUY atau SELL belum terpenuhi pada data terakhir.",
+        },
+    ],
+},
     "macd": {
-        "title": "Hint istilah MACD",
-        "indicator": "MACD",
-        "items": [
-            {
-                "term": "MACD",
-                "description": "Indikator momentum yang membandingkan pergerakan rata-rata harga jangka pendek dan jangka panjang.",
-            },
-            {
-                "term": "MACD Line",
-                "description": "Garis utama MACD yang menunjukkan perubahan momentum harga.",
-            },
-            {
-                "term": "Signal Line",
-                "description": "Garis pembanding untuk membaca perubahan sinyal MACD.",
-            },
-            {
-                "term": "BUY",
-                "description": "Muncul saat MACD Line memotong Signal Line dari bawah ke atas dan filter tren SMA50 terpenuhi.",
-            },
-            {
-                "term": "SELL",
-                "description": "Muncul saat MACD Line memotong Signal Line dari atas ke bawah dan filter tren SMA50 terpenuhi.",
-            },
-            {
-                "term": "HOLD",
-                "description": "Muncul saat tidak ada crossover baru atau filter tren belum terpenuhi.",
-            },
-        ],
-    },
+    "title": "Hint istilah MACD",
+    "indicator": "MACD",
+    "items": [
+        {
+            "term": "MACD",
+            "description": "Indikator momentum yang membaca hubungan antara garis MACD dan garis sinyal.",
+        },
+        {
+            "term": "MACD Line",
+            "description": "Garis utama MACD yang menunjukkan perubahan momentum harga.",
+        },
+        {
+            "term": "Signal Line",
+            "description": "Garis pembanding yang digunakan untuk membaca perubahan sinyal MACD.",
+        },
+        {
+            "term": "BUY",
+            "description": "Muncul saat MACD Line memotong Signal Line dari bawah ke atas sesuai aturan sistem.",
+        },
+        {
+            "term": "SELL",
+            "description": "Muncul saat MACD Line memotong Signal Line dari atas ke bawah sesuai aturan sistem.",
+        },
+        {
+            "term": "HOLD",
+            "description": "Muncul saat tidak ada sinyal BUY atau SELL baru pada data terakhir.",
+        },
+    ],
+},
 }
 
 

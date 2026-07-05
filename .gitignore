@@ -30,3 +30,7 @@ cache/yfinance/*
 !cache/indicators/.gitkeep
 !cache/wfa_results/.gitkeep
 !cache/yfinance/.gitkeep
+
+# Audit outputs
+data/audit_*.csv
+data/audit_*.txt

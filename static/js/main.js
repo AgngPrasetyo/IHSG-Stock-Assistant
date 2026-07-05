@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const $ = (selector) => document.querySelector(selector);
 
   // DOM references
@@ -244,6 +244,50 @@
       .join('');
   }
 
+  function formatStructuredExplanation(value) {
+  const paragraphs = escapeHtml(text(value, 'Penjelasan belum tersedia.'))
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  if (!paragraphs.length) {
+    return `
+      <section class="explanation-block">
+        <h3>Ringkasan</h3>
+        <p>Penjelasan belum tersedia.</p>
+      </section>
+    `;
+  }
+
+  const labels = [
+    'Ringkasan utama',
+    'Alasan sinyal',
+    'Evaluasi indikator terbaik',
+    'Perbandingan indikator',
+    'Catatan risiko'
+  ];
+
+  if (paragraphs.length === 1) {
+    return `
+      <section class="explanation-block">
+        <h3>Ringkasan utama</h3>
+        <p>${paragraphs[0].replace(/\n/g, '<br>')}</p>
+      </section>
+    `;
+  }
+
+  return paragraphs.map((paragraph, index) => {
+    const title = labels[index] || 'Informasi tambahan';
+
+    return `
+      <section class="explanation-block">
+        <h3>${title}</h3>
+        <p>${paragraph.replace(/\n/g, '<br>')}</p>
+      </section>
+    `;
+  }).join('');
+}
+
   function chart(points) {
     const valid = (Array.isArray(points) ? points : [])
       .filter((point) => Number.isFinite(Number(point.close)));
@@ -320,6 +364,45 @@
     }
     return text((item || {}).message, '-');
   }
+  function formatTechnicalCondition(value) {
+    const raw = text(value, '');
+    if (!raw) return '—';
+
+    const normalized = raw
+      .replace(/;\s*/g, '\n')
+      .replace(/\.\s+(?=SMA|Sinyal|Close|RSI|MACD)/g, '.\n');
+
+    return escapeHtml(normalized)
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => `<span>${line}</span>`)
+      .join('');
+  }
+
+  function formatCompactTechnicalCondition(analysis) {
+    const signal = text((analysis || {}).latest_signal, 'HOLD').toUpperCase();
+    const condition = text((analysis || {}).latest_condition, '');
+
+    let detail = 'Kondisi teknikal terbaru mengikuti aturan indikator terbaik.';
+
+    if (/tidak ada crossover baru/i.test(condition)) {
+      detail = 'Belum ada crossover baru pada data terakhir.';
+    } else if (/crossover baru/i.test(condition)) {
+      detail = 'Terdapat crossover baru pada data terakhir.';
+    } else if (/oversold/i.test(condition)) {
+      detail = 'Kondisi berkaitan dengan area oversold RSI.';
+    } else if (/overbought/i.test(condition)) {
+      detail = 'Kondisi berkaitan dengan area overbought RSI.';
+    } else if (/MACD/i.test(condition)) {
+      detail = 'Kondisi mengikuti perubahan garis MACD dan signal line.';
+    }
+
+    return `
+      <span class="condition-signal ${signalClass(signal)}">${escapeHtml(signal)}</span>
+      <span>${escapeHtml(detail)}</span>
+    `;
+  }
 
   function renderPostSignalValidation(analysis) {
     const validations = Array.isArray((analysis || {}).post_signal_validation)
@@ -332,6 +415,30 @@
       status: 'UNAVAILABLE',
       message: 'Data setelah tanggal sinyal belum tersedia.'
     }));
+
+    const latestSignal = String((analysis || {}).latest_signal || '').toUpperCase();
+      const isHoldSignal = latestSignal === 'HOLD';
+      const allHoldNotEvaluated = items.every((item) => (
+        String((item || {}).status || '').toUpperCase() === 'NOT_EVALUATED_HOLD'
+      ));
+
+      if (isHoldSignal && allHoldNotEvaluated) {
+        return `
+          <section class="result-card validation-card validation-card-compact">
+            <h3 class="metrics-title">Validasi Lanjutan Sinyal Terbaru</h3>
+            <div class="hold-validation-summary">
+              <span class="validation-status validation-not_evaluated_hold">Tidak dievaluasi</span>
+              <div>
+                <strong>Sinyal terbaru adalah HOLD.</strong>
+                <p>
+                  Validasi T+1, T+3, dan T+5 tidak dilakukan karena HOLD bukan sinyal aktif BUY atau SELL.
+                  Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
+                </p>
+              </div>
+            </div>
+          </section>
+        `;
+      }    
 
     const rows = items.map((item) => {
       const status = String((item || {}).status || '').toUpperCase();
@@ -487,15 +594,27 @@
     renderTechnicalHint(analysis.technical_hint);
     setReportStatus();
 
-    const rows = comparison.map((item) => `
-      <tr>
-        <td>${escapeHtml(text(item.indicator))}</td>
-        <td>${percent(item.directional_accuracy)}</td>
-        <td>${percent(item.hit_rate)}</td>
-        <td>${number(item.total_active_signals)}</td>
-        <td>${number(item.correct_signals)}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="5">Data perbandingan belum tersedia.</td></tr>';
+    const bestIndicator = String(analysis.best_indicator || '').trim().toLowerCase();
+
+const rows = comparison.map((item) => {
+  const indicatorName = text(item.indicator, '');
+  const isBestIndicator = String(indicatorName).trim().toLowerCase() === bestIndicator;
+
+  return `
+    <tr class="${isBestIndicator ? 'is-best-indicator' : ''}">
+      <td>
+        <div class="indicator-cell">
+          <span>${escapeHtml(indicatorName)}</span>
+          ${isBestIndicator ? '<span class="best-indicator-badge">Terbaik</span>' : ''}
+        </div>
+      </td>
+      <td>${percent(item.directional_accuracy)}</td>
+      <td>${percent(item.hit_rate)}</td>
+      <td>${number(item.total_active_signals)}</td>
+      <td>${number(item.correct_signals)}</td>
+    </tr>
+  `;
+}).join('') || '<tr><td colspan="5">Data perbandingan belum tersedia.</td></tr>';
 
     $('#result-numerical').innerHTML = `
       <div class="result-stack">
@@ -525,10 +644,12 @@
               <span>Indikator terbaik sektor</span>
               <strong>${escapeHtml(text(analysis.best_indicator))}</strong>
             </div>
-            <div class="summary-item">
-              <span>Kondisi teknikal</span>
-              <strong>${escapeHtml(text(analysis.latest_condition))}</strong>
-            </div>
+            <div class="summary-item summary-item-condition">
+            <span>Kondisi teknikal</span>
+            <strong class="condition-lines condition-compact">
+              ${formatCompactTechnicalCondition(analysis)}
+            </strong>
+          </div>
           </div>
         </section>
 
@@ -581,18 +702,19 @@
         </section>
       </div>
     `;
-
-    $('#assistant-explanation').innerHTML = `
-      <p class="eyebrow">Penjelasan Asisten</p>
-      <h2>Memahami hasil analisis</h2>
-      <div class="explanation">${formatExplanation(body.explanation)}</div>
-      <p class="disclaimer-box">
-        ${escapeHtml(text(
-          analysis.disclaimer || (body.llm || {}).disclaimer,
-          'Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final.'
-        ))}
-      </p>
-    `;
+  $('#assistant-explanation').innerHTML = `
+    <p class="eyebrow">Penjelasan Asisten</p>
+    <h2>Memahami hasil analisis</h2>
+    <div class="explanation explanation-structured">
+      ${formatStructuredExplanation(body.explanation)}
+    </div>
+    <p class="disclaimer-box">
+      ${escapeHtml(text(
+        analysis.disclaimer || (body.llm || {}).disclaimer,
+        'Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final.'
+      ))}
+    </p>
+  `;
   }
 
   // Analysis request flow
@@ -635,8 +757,9 @@
         top: 0,
         behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
       });
-    } catch {
-      showError('Koneksi ke server bermasalah. Silakan coba lagi.');
+    } catch (error) {
+      console.error('Analyze/render error:', error);
+      showError('Analisis belum dapat ditampilkan. Silakan cek console browser.');
     } finally {
       setLoading(false);
     }
