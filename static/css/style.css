@@ -1162,6 +1162,42 @@ h2 {
   line-height: 1.6;
 }
 
+.signal-risk-card {
+  border-color: rgba(163, 106, 60, 0.28);
+  background:
+    linear-gradient(135deg, rgba(242, 230, 214, 0.90), rgba(251, 250, 247, 0.96));
+  box-shadow: 0 16px 38px rgba(90, 58, 26, 0.08);
+}
+
+.signal-risk-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
+
+.signal-risk-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #5A3A1A;
+}
+
+.signal-risk-card p {
+  margin: 0;
+  color: #5A3A1A;
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.signal-risk-disclaimer {
+  margin-top: 0.75rem !important;
+  padding: 0.72rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.46);
+  border: 1px solid rgba(163, 106, 60, 0.22);
+  font-weight: 700;
+}
+
 /* Financial Comparison Tables */
 .comparison-table {
   width: 100%;
@@ -1680,6 +1716,11 @@ h2 {
   .hold-validation-summary {
     flex-direction: column;
   }
+
+}
+.signal-risk-head {
+  align-items: flex-start;
+  flex-direction: column;
 }
 }
 

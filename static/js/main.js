@@ -483,6 +483,40 @@
       </section>
     `;
   }
+
+  function renderSignalRiskNote(analysis) {
+  const signal = String((analysis || {}).latest_signal || '').toUpperCase();
+
+  if (signal !== 'BUY' && signal !== 'SELL') {
+    return '';
+  }
+
+  const signalText = signal === 'BUY'
+    ? 'Sinyal BUY menunjukkan kondisi teknikal yang mengarah pada potensi penguatan harga.'
+    : 'Sinyal SELL menunjukkan kondisi teknikal yang mengarah pada potensi pelemahan harga.';
+
+  return `
+    <section class="result-card signal-risk-card">
+      <div class="signal-risk-head">
+        <span class="signal ${signalClass(signal)}">${escapeHtml(signal)}</span>
+        <h3>Catatan Risiko Sinyal</h3>
+      </div>
+
+      <p>
+        ${escapeHtml(signalText)}
+        Hasil ini tidak menjamin arah harga berikutnya dan bukan rekomendasi investasi final.
+        Interpretasi sinyal perlu dibaca bersama metrik evaluasi, jumlah sinyal, kondisi pasar,
+        serta risiko lain seperti volatilitas, likuiditas, berita, biaya transaksi, dan slippage.
+      </p>
+
+      <p class="signal-risk-disclaimer">
+        Disclaimer: Sistem ini hanya berfungsi sebagai alat bantu analisis teknikal.
+        Keputusan investasi sepenuhnya berada pada pengguna.
+      </p>
+    </section>
+  `;
+}
+
   function setReportStatus(message = '', isError = false) {
     if (!reportStatus) return;
     reportStatus.textContent = message;
@@ -676,6 +710,8 @@ const rows = comparison.map((item) => {
         </section>
 
         ${renderPostSignalValidation(analysis)}
+
+        ${renderSignalRiskNote(analysis)}
 
         <section class="result-card">
           <h3 class="metrics-title">Grafik harga penutupan</h3>
