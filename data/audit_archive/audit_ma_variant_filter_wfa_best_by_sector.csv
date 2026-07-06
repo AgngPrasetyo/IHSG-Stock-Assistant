@@ -1,0 +1,5 @@
+sector,variant,ma_pair,fast_window,slow_window,threshold_label,threshold_pct,volume_label,use_volume_filter,volume_window,volume_multiplier,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
+Energi,SMA10/SMA50 | No Threshold | Volume >= VolMA20,SMA10/SMA50,10,50,No Threshold,0.0,Volume >= VolMA20,True,20,1.0,24,17,70.83333333333334,67.5,True
+Finansial,SMA14/SMA21 | Threshold 0.50% | No Volume Filter,SMA14/SMA21,14,21,Threshold 0.50%,0.005,No Volume Filter,False,20,0.0,10,8,80.0,80.0,True
+Industri,SMA20/SMA50 | Threshold 0.10% | Volume >= VolMA20,SMA20/SMA50,20,50,Threshold 0.10%,0.001,Volume >= VolMA20,True,20,1.0,12,8,66.66666666666666,66.66666666666667,True
+Teknologi,SMA20/SMA50 | Threshold 0.50% | No Volume Filter,SMA20/SMA50,20,50,Threshold 0.50%,0.005,No Volume Filter,False,20,0.0,13,10,76.92307692307693,81.81818181818181,True

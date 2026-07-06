@@ -1,0 +1,29 @@
+sector,indicator,variant,volume_label,use_volume_filter,volume_ma_window,volume_multiplier,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA20,Volume >= 1.0 x VolMA20,True,20.0,1.0,MA10_50_VOLMA20_1p0_Signal,24,17,70.83333333333334,67.5,True
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA20,Volume >= 0.8 x VolMA20,True,20.0,0.8,MA10_50_VOLMA20_0p8_Signal,30,21,70.0,63.63636363636363,True
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA20,Volume >= 0.9 x VolMA20,True,20.0,0.9,MA10_50_VOLMA20_0p9_Signal,28,19,67.85714285714286,61.904761904761905,True
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA10,Volume >= 0.9 x VolMA10,True,10.0,0.9,MA10_50_VOLMA10_0p9_Signal,29,18,62.06896551724138,58.69565217391305,True
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA10,Volume >= 0.8 x VolMA10,True,10.0,0.8,MA10_50_VOLMA10_0p8_Signal,30,18,60.0,56.52173913043478,True
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA10,Volume >= 1.0 x VolMA10,True,10.0,1.0,MA10_50_VOLMA10_1p0_Signal,24,14,58.333333333333336,57.5,True
+Energi,MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,52,29,55.769230769230774,53.273809523809526,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA20,Volume >= 0.8 x VolMA20,True,20.0,0.8,MA10_50_VOLMA20_0p8_Signal,47,24,51.06382978723404,56.06060606060606,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA20,Volume >= 0.9 x VolMA20,True,20.0,0.9,MA10_50_VOLMA20_0p9_Signal,47,24,51.06382978723404,56.06060606060606,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA20,Volume >= 1.0 x VolMA20,True,20.0,1.0,MA10_50_VOLMA20_1p0_Signal,35,17,48.57142857142857,56.25,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA10,Volume >= 0.8 x VolMA10,True,10.0,0.8,MA10_50_VOLMA10_0p8_Signal,47,22,46.808510638297875,54.166666666666664,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA10,Volume >= 1.0 x VolMA10,True,10.0,1.0,MA10_50_VOLMA10_1p0_Signal,31,14,45.16129032258064,50.0,True
+Finansial,MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,79,35,44.303797468354425,52.73148148148148,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA10,Volume >= 0.9 x VolMA10,True,10.0,0.9,MA10_50_VOLMA10_0p9_Signal,41,18,43.90243902439025,50.0,True
+Industri,MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,54,28,51.85185185185185,56.60919540229885,True
+Industri,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA10,Volume >= 0.9 x VolMA10,True,10.0,0.9,MA10_50_VOLMA10_0p9_Signal,27,14,51.85185185185185,53.96825396825396,True
+Industri,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA20,Volume >= 1.0 x VolMA20,True,20.0,1.0,MA10_50_VOLMA20_1p0_Signal,26,13,50.0,54.62962962962963,True
+Industri,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA10,Volume >= 0.8 x VolMA10,True,10.0,0.8,MA10_50_VOLMA10_0p8_Signal,33,16,48.484848484848484,51.449275362318836,True
+Industri,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA20,Volume >= 0.8 x VolMA20,True,20.0,0.8,MA10_50_VOLMA20_0p8_Signal,31,15,48.38709677419355,51.51515151515151,True
+Industri,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA20,Volume >= 0.9 x VolMA20,True,20.0,0.9,MA10_50_VOLMA20_0p9_Signal,28,13,46.42857142857143,49.16666666666667,True
+Industri,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA10,Volume >= 1.0 x VolMA10,True,10.0,1.0,MA10_50_VOLMA10_1p0_Signal,22,10,45.45454545454545,47.22222222222222,True
+Teknologi,MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,46,22,47.82608695652174,47.32142857142857,True
+Teknologi,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA20,Volume >= 0.8 x VolMA20,True,20.0,0.8,MA10_50_VOLMA20_0p8_Signal,25,11,44.0,45.614035087719294,True
+Teknologi,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA20,Volume >= 0.9 x VolMA20,True,20.0,0.9,MA10_50_VOLMA20_0p9_Signal,21,9,42.857142857142854,46.875,True
+Teknologi,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA20,Volume >= 1.0 x VolMA20,True,20.0,1.0,MA10_50_VOLMA20_1p0_Signal,18,7,38.88888888888889,42.30769230769231,True
+Teknologi,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA10,Volume >= 0.8 x VolMA10,True,10.0,0.8,MA10_50_VOLMA10_0p8_Signal,26,10,38.46153846153847,42.10526315789474,True
+Teknologi,MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA10,Volume >= 0.9 x VolMA10,True,10.0,0.9,MA10_50_VOLMA10_0p9_Signal,16,6,37.5,41.666666666666664,True
+Teknologi,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA10,Volume >= 1.0 x VolMA10,True,10.0,1.0,MA10_50_VOLMA10_1p0_Signal,14,5,35.714285714285715,40.0,True

@@ -1,0 +1,5 @@
+sector,indicator,variant,volume_label,use_volume_filter,volume_ma_window,volume_multiplier,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
+Energi,MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA20,Volume >= 1.0 x VolMA20,True,20.0,1.0,MA10_50_VOLMA20_1p0_Signal,24,17,70.83333333333334,67.5,True
+Finansial,MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA20,Volume >= 0.8 x VolMA20,True,20.0,0.8,MA10_50_VOLMA20_0p8_Signal,47,24,51.06382978723404,56.06060606060606,True
+Industri,MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,54,28,51.85185185185185,56.60919540229885,True
+Teknologi,MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,46,22,47.82608695652174,47.32142857142857,True

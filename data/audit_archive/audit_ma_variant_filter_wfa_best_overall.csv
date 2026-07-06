@@ -1,0 +1,11 @@
+variant,ma_pair,fast_window,slow_window,threshold_label,threshold_pct,volume_label,use_volume_filter,volume_window,volume_multiplier,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
+SMA20/SMA50 | Threshold 0.10% | Volume >= VolMA20,SMA20/SMA50,20,50,Threshold 0.10%,0.001,Volume >= VolMA20,True,20,1.0,53,34,64.15094339622641,63.541666666666664,True
+SMA20/SMA50 | Threshold 0.50% | No Volume Filter,SMA20/SMA50,20,50,Threshold 0.50%,0.005,No Volume Filter,False,20,0.0,35,21,60.0,60.9375,True
+SMA20/SMA50 | No Threshold | Volume >= VolMA20,SMA20/SMA50,20,50,No Threshold,0.0,Volume >= VolMA20,True,20,1.0,80,46,57.49999999999999,57.0048309178744,True
+SMA20/SMA50 | Threshold 0.10% | No Volume Filter,SMA20/SMA50,20,50,Threshold 0.10%,0.001,No Volume Filter,False,20,0.0,134,76,56.71641791044776,57.21649484536083,True
+SMA20/SMA50 | No Threshold | No Volume Filter,SMA20/SMA50,20,50,No Threshold,0.0,No Volume Filter,False,20,0.0,194,108,55.670103092783506,59.23611111111111,True
+SMA20/SMA50 | Threshold 0.25% | No Volume Filter,SMA20/SMA50,20,50,Threshold 0.25%,0.0025,No Volume Filter,False,20,0.0,74,39,52.702702702702695,55.932203389830505,True
+SMA10/SMA50 | No Threshold | Volume >= VolMA20,SMA10/SMA50,10,50,No Threshold,0.0,Volume >= VolMA20,True,20,1.0,103,54,52.42718446601942,56.44444444444444,True
+SMA10/SMA50 | Threshold 0.50% | No Volume Filter,SMA10/SMA50,10,50,Threshold 0.50%,0.005,No Volume Filter,False,20,0.0,76,39,51.31578947368421,48.56321839080459,True
+SMA14/SMA21 | Threshold 0.25% | No Volume Filter,SMA14/SMA21,14,21,Threshold 0.25%,0.0025,No Volume Filter,False,20,0.0,175,89,50.857142857142854,51.16666666666667,True
+SMA10/SMA50 | No Threshold | No Volume Filter,SMA10/SMA50,10,50,No Threshold,0.0,No Volume Filter,False,20,0.0,231,114,49.35064935064935,52.53443526170799,True
