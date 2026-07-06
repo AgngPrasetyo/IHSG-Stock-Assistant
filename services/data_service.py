@@ -11,8 +11,8 @@ import requests
 import yfinance as yf
 
 
-START_DATE = "2024-10-20"
-END_DATE = "2026-06-23"
+START_DATE = "2024-10-14"
+END_DATE = "2026-06-27"
 REQUIRED_OHLCV_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

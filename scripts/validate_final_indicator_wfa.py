@@ -18,11 +18,11 @@ from services.wfa_service import generate_wfa_windows  # noqa: E402
 
 OUTPUT_DIR = PROJECT_ROOT / "data"
 
-WINDOW_OUTPUT_PATH = OUTPUT_DIR / "audit_final_indicator_wfa_window_results.csv"
-SUMMARY_OUTPUT_PATH = OUTPUT_DIR / "audit_final_indicator_wfa_summary.csv"
-SECTOR_OUTPUT_PATH = OUTPUT_DIR / "audit_final_indicator_wfa_sector_aggregate.csv"
-BEST_BY_SECTOR_OUTPUT_PATH = OUTPUT_DIR / "audit_final_indicator_wfa_best_by_sector.csv"
-ERROR_OUTPUT_PATH = OUTPUT_DIR / "audit_final_indicator_wfa_errors.csv"
+WINDOW_OUTPUT_PATH = OUTPUT_DIR / "validate_final_indicator_wfa_window_results.csv"
+SUMMARY_OUTPUT_PATH = OUTPUT_DIR / "validate_final_indicator_wfa_summary.csv"
+SECTOR_OUTPUT_PATH = OUTPUT_DIR / "validate_final_indicator_wfa_sector_aggregate.csv"
+BEST_BY_SECTOR_OUTPUT_PATH = OUTPUT_DIR / "validate_final_indicator_wfa_best_by_sector.csv"
+ERROR_OUTPUT_PATH = OUTPUT_DIR / "validate_final_indicator_wfa_errors.csv"
 
 BUY = "BUY"
 SELL = "SELL"

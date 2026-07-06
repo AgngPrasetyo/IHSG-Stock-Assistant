@@ -53,10 +53,15 @@ def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
 
 
 def calculate_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Add SMA20/SMA50, MACD 12/26/9, and RSI14 for the final methods."""
+    """Add final technical indicators: SMA10/SMA50, VolMA20, MACD 12/26/9, and RSI14."""
     indicator_df = _prepare_price_dataframe(df)
-    indicator_df["SMA20"] = calculate_sma(indicator_df, 20)
+    indicator_df["SMA10"] = calculate_sma(indicator_df, 10)
     indicator_df["SMA50"] = calculate_sma(indicator_df, 50)
+
+    if "Volume" not in indicator_df.columns:
+        raise ValueError("Kolom Volume tidak ditemukan untuk menghitung Volume_MA20.")
+
+    indicator_df["Volume_MA20"] = indicator_df["Volume"].rolling(window=20).mean()
     indicator_df = calculate_macd(indicator_df)
     return calculate_rsi(indicator_df, 14)
 

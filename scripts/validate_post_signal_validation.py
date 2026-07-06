@@ -12,7 +12,7 @@ from services.analysis_service import analyze_stock
 from services.mapping_service import load_mapping
 
 
-OUTPUT_PATH = PROJECT_ROOT / "data" / "audit_post_signal_validation.csv"
+OUTPUT_PATH = PROJECT_ROOT / "data" / "validate_post_signal_validation.csv"
 CSV_COLUMNS = [
     "ticker",
     "sector",

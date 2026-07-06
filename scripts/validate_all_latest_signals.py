@@ -1,7 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pandas as pd
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from services.analysis_service import (
     get_sector_best_indicator,
     prepare_latest_analysis_dataframe,
@@ -12,12 +19,6 @@ from services.signal_service import (
     MACD_TRADE_SIGNAL_COLUMN,
     RSI_SIGNAL_COLUMN,
 )
-import pandas as pd
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
-
-
-
 
 
 ACTIVE_SIGNALS = {"BUY", "SELL"}
@@ -31,12 +32,25 @@ def validate_ma(df: pd.DataFrame) -> str:
     latest = df.iloc[-1]
     signal = str(latest.get(MA_CROSSOVER_SIGNAL_COLUMN, "HOLD")).upper()
 
-    required = ["SMA20", "SMA50"]
-    if prev[required].isna().any() or latest[required].isna().any():
+    required_current = ["SMA10", "SMA50", "Volume", "Volume_MA20"]
+    required_previous = ["SMA10", "SMA50"]
+
+    if prev[required_previous].isna().any() or latest[required_current].isna().any():
         return "PERLU_CEK_NILAI_MA_NAN"
 
-    buy_valid = prev["SMA20"] <= prev["SMA50"] and latest["SMA20"] > latest["SMA50"]
-    sell_valid = prev["SMA20"] >= prev["SMA50"] and latest["SMA20"] < latest["SMA50"]
+    volume_confirmed = latest["Volume"] >= latest["Volume_MA20"] * 0.8
+
+    buy_valid = (
+        prev["SMA10"] <= prev["SMA50"]
+        and latest["SMA10"] > latest["SMA50"]
+        and volume_confirmed
+    )
+
+    sell_valid = (
+        prev["SMA10"] >= prev["SMA50"]
+        and latest["SMA10"] < latest["SMA50"]
+        and volume_confirmed
+    )
 
     if signal == "BUY" and buy_valid:
         return "VALID_BUY"
@@ -47,7 +61,6 @@ def validate_ma(df: pd.DataFrame) -> str:
 
     return "PERLU_CEK"
 
-
 def validate_macd(df: pd.DataFrame) -> str:
     if len(df) < 2:
         return "PERLU_CEK_DATA_KURANG"
@@ -56,20 +69,33 @@ def validate_macd(df: pd.DataFrame) -> str:
     latest = df.iloc[-1]
     signal = str(latest.get(MACD_TRADE_SIGNAL_COLUMN, "HOLD")).upper()
 
-    required = ["Close", "SMA50", "MACD", "MACD_Signal"]
-    if prev[required].isna().any() or latest[required].isna().any():
+    required_current = ["Close", "SMA50", "MACD", "MACD_Signal", "Volume", "Volume_MA20"]
+    required_previous = ["MACD", "MACD_Signal"]
+
+    if prev[required_previous].isna().any() or latest[required_current].isna().any():
         return "PERLU_CEK_NILAI_MACD_NAN"
+
+    if latest["Close"] == 0:
+        return "PERLU_CEK_CLOSE_NOL"
+
+    bullish_distance = (latest["MACD"] - latest["MACD_Signal"]) / latest["Close"]
+    bearish_distance = (latest["MACD_Signal"] - latest["MACD"]) / latest["Close"]
+    volume_confirmed = latest["Volume"] >= latest["Volume_MA20"]
 
     buy_valid = (
         prev["MACD"] <= prev["MACD_Signal"]
         and latest["MACD"] > latest["MACD_Signal"]
         and latest["Close"] > latest["SMA50"]
+        and bullish_distance >= 0.001
+        and volume_confirmed
     )
 
     sell_valid = (
         prev["MACD"] >= prev["MACD_Signal"]
         and latest["MACD"] < latest["MACD_Signal"]
         and latest["Close"] < latest["SMA50"]
+        and bearish_distance >= 0.001
+        and volume_confirmed
     )
 
     if signal == "BUY" and buy_valid:
@@ -168,7 +194,7 @@ def main() -> None:
                         "best_indicator": None,
                         "latest_date": None,
                         "latest_signal": None,
-                        "audit_status": "ERROR_BEST_INDICATOR_TIDAK_TERSEDIA",
+                        "validation_status": "ERROR_BEST_INDICATOR_TIDAK_TERSEDIA",
                     }
                 )
                 continue
@@ -181,7 +207,7 @@ def main() -> None:
             prev = df.iloc[-2]
 
             latest_signal = str(latest.get(signal_column, "HOLD")).upper()
-            audit_status = validate_by_indicator(df, best_indicator)
+            validation_status = validate_by_indicator(df, best_indicator)
 
             rows.append(
                 {
@@ -200,18 +226,21 @@ def main() -> None:
                     "ma_signal": latest.get(MA_CROSSOVER_SIGNAL_COLUMN),
                     "macd_signal": latest.get(MACD_TRADE_SIGNAL_COLUMN),
                     "rsi_signal": latest.get(RSI_SIGNAL_COLUMN),
-                    "sma20_prev": prev.get("SMA20"),
+                    "sma10_prev": prev.get("SMA10"),
                     "sma50_prev": prev.get("SMA50"),
-                    "sma20_latest": latest.get("SMA20"),
+                    "sma10_latest": latest.get("SMA10"),
                     "sma50_latest": latest.get("SMA50"),
+                    "volume_latest": latest.get("Volume"),
+                    "volume_ma20_latest": latest.get("Volume_MA20"),
                     "macd_prev": prev.get("MACD"),
                     "macd_signal_prev": prev.get("MACD_Signal"),
                     "macd_latest": latest.get("MACD"),
                     "macd_signal_latest": latest.get("MACD_Signal"),
+                    "macd_histogram_latest": latest.get("MACD_Histogram"),
                     "rsi_prev": prev.get("RSI"),
                     "rsi_latest": latest.get("RSI"),
-                    "audit_status": audit_status,
-                }
+                    "validation_status": validation_status,
+                                    }
             )
 
         except Exception as exc:
@@ -223,17 +252,17 @@ def main() -> None:
                     "best_indicator": None,
                     "latest_date": None,
                     "latest_signal": None,
-                    "audit_status": f"ERROR:{type(exc).__name__}:{exc}",
+                    "validation_status": f"ERROR:{type(exc).__name__}:{exc}",
                 }
             )
 
     result = pd.DataFrame(rows)
 
-    output_path = PROJECT_ROOT / "data" / "audit_all_latest_signals.csv"
+    output_path = PROJECT_ROOT / "data" / "validate_all_latest_signals.csv"
     result.to_csv(output_path, index=False)
 
     print("=" * 100)
-    print("AUDIT SEMUA SINYAL TERBARU BERDASARKAN INDIKATOR TERBAIK SEKTOR")
+    print("VALIDASI SEMUA SINYAL TERBARU BERDASARKAN INDIKATOR TERBAIK SEKTOR")
     print("=" * 100)
     print()
 
@@ -243,16 +272,16 @@ def main() -> None:
         "best_indicator",
         "latest_date",
         "latest_signal",
-        "audit_status",
+        "validation_status",
     ]
 
     print(result[display_columns].to_string(index=False))
     print()
 
     print("=" * 100)
-    print("RINGKASAN STATUS AUDIT")
+    print("RINGKASAN STATUS VALIDASI")
     print("=" * 100)
-    print(result["audit_status"].value_counts().to_string())
+    print(result["validation_status"].value_counts().to_string())
     print()
 
     print("=" * 100)
@@ -260,7 +289,7 @@ def main() -> None:
     print("=" * 100)
 
     need_check = result[
-        result["audit_status"].astype(str).str.contains("PERLU_CEK|ERROR", case=False, na=False)
+        result["validation_status"].astype(str).str.contains("PERLU_CEK|ERROR", case=False, na=False)
     ]
 
     if need_check.empty:
@@ -269,7 +298,7 @@ def main() -> None:
         print(need_check[display_columns].to_string(index=False))
 
     print()
-    print(f"File hasil audit disimpan ke: {output_path}")
+    print(f"File hasil validasi disimpan ke: {output_path}")
 
 
 if __name__ == "__main__":

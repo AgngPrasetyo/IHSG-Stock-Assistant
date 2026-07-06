@@ -12,24 +12,60 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.data_service import load_or_fetch_price_data
+from services.data_service import END_DATE, START_DATE, load_or_fetch_price_data
 from services.mapping_service import load_mapping
 from services.wfa_service import generate_wfa_windows, run_wfa_pipeline
 
-START_DATE, END_DATE = "2024-10-20", "2026-06-23"
 IN_SAMPLE_MONTHS, OUT_SAMPLE_MONTHS, SHIFT_MONTHS = 6, 3, 3
 EVALUATION_HORIZON_PERIODS = 3
-DATA_DIR = PROJECT_ROOT / "data"
-STOCK_PATH = DATA_DIR / "wfa_stock_results_2024-10-20_2026-06-23.csv"
-AGGREGATE_PATH = DATA_DIR / "wfa_sector_aggregate_2024-10-20_2026-06-23.csv"
-BEST_PATH = DATA_DIR / "wfa_best_indicator_by_sector_2024-10-20_2026-06-23.csv"
-SUMMARY_PATH = DATA_DIR / "wfa_summary_2024-10-20_2026-06-23.csv"
-WINDOW_PATH = DATA_DIR / "wfa_window_count_2024-10-20_2026-06-23.csv"
-WINDOW_RESULTS_PATH = DATA_DIR / "wfa_window_results_2024-10-20_2026-06-23.csv"
-STOCK_COLUMNS = ["sektor", "ticker", "ticker_yfinance", "indicator", "signal_column", "windows_count", "total_active_signals", "correct_signals", "directional_accuracy", "hit_rate"]
-WINDOW_RESULT_COLUMNS = ["sektor", "ticker", "ticker_yfinance", "indicator", "signal_column", "window_id", "total_active_signals", "correct_signals", "directional_accuracy", "hit_rate"]
-AGGREGATE_COLUMNS = ["sektor", "indicator", "signal_column", "total_stocks", "total_windows", "total_active_signals", "correct_signals", "directional_accuracy", "hit_rate"]
 
+DATA_DIR = PROJECT_ROOT / "data"
+DATE_RANGE_LABEL = f"{START_DATE}_{END_DATE}"
+
+STOCK_PATH = DATA_DIR / f"wfa_stock_results_{DATE_RANGE_LABEL}.csv"
+AGGREGATE_PATH = DATA_DIR / f"wfa_sector_aggregate_{DATE_RANGE_LABEL}.csv"
+BEST_PATH = DATA_DIR / f"wfa_best_indicator_by_sector_{DATE_RANGE_LABEL}.csv"
+SUMMARY_PATH = DATA_DIR / f"wfa_summary_{DATE_RANGE_LABEL}.csv"
+WINDOW_PATH = DATA_DIR / f"wfa_window_count_{DATE_RANGE_LABEL}.csv"
+WINDOW_RESULTS_PATH = DATA_DIR / f"wfa_window_results_{DATE_RANGE_LABEL}.csv"
+
+STOCK_COLUMNS = [
+    "sektor",
+    "ticker",
+    "ticker_yfinance",
+    "indicator",
+    "signal_column",
+    "windows_count",
+    "total_active_signals",
+    "correct_signals",
+    "directional_accuracy",
+    "hit_rate",
+]
+
+WINDOW_RESULT_COLUMNS = [
+    "sektor",
+    "ticker",
+    "ticker_yfinance",
+    "indicator",
+    "signal_column",
+    "window_id",
+    "total_active_signals",
+    "correct_signals",
+    "directional_accuracy",
+    "hit_rate",
+]
+
+AGGREGATE_COLUMNS = [
+    "sektor",
+    "indicator",
+    "signal_column",
+    "total_stocks",
+    "total_windows",
+    "total_active_signals",
+    "correct_signals",
+    "directional_accuracy",
+    "hit_rate",
+]
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the main WFA analysis.")

@@ -1,4 +1,4 @@
 indicator,variant,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate
-MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,133,71,53.383458646616546,54.6875
-MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,123,60,48.78048780487805,48.58156028368795
-RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,78,37,47.43589743589743,46.666666666666664
+MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,132,71,53.78787878787878,54.71380471380472
+MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,124,58,46.774193548387096,45.92198581560284
+RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,85,39,45.88235294117647,45.96774193548387

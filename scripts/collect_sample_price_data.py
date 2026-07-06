@@ -146,10 +146,10 @@ def main() -> None:
     print(f"SUCCESS: {(report_df['status_fetch'] == 'SUCCESS').sum()}")
     print(f"FAILED: {(report_df['status_fetch'] == 'FAILED').sum()}")
     last_dates = set(report_df.loc[report_df["status_fetch"] == "SUCCESS", "tanggal_akhir"])
-    if last_dates == {"2026-06-22"}:
-        print("Validasi tanggal akhir: seluruh saham tersedia sampai 2026-06-22.")
-    elif last_dates == {"2026-06-19"}:
-        print("Data 2026-06-22 kemungkinan belum tersedia di yfinance; jalankan ulang fetch nanti.")
+    if last_dates == {"2026-06-26"}:
+        print("Validasi tanggal akhir: seluruh saham tersedia sampai 2026-06-26.")
+    elif last_dates == {"2026-06-25"}:
+        print("Data 2026-06-26 kemungkinan belum tersedia di yfinance; jalankan ulang fetch nanti.")
     else:
         print(f"Validasi tanggal akhir perlu ditinjau: {sorted(last_dates)}")
 

@@ -1,4 +1,4 @@
-"""Compose deterministic stock-analysis payloads from cached data and WFA outputs."""
+﻿"""Compose deterministic stock-analysis payloads from cached data and WFA outputs."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from services.data_service import (
     START_DATE,
     load_or_fetch_price_data,
 )
-from services.indicator_service import calculate_macd, calculate_rsi, calculate_sma
+from services.indicator_service import calculate_all_indicators
 from services.mapping_service import get_stock_info, normalize_ticker, resolve_ticker
 from services.post_signal_validation_service import build_post_signal_validation
 from services.technical_hint_service import get_indicator_hint
@@ -29,9 +29,11 @@ from services.signal_service import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
-SECTOR_AGGREGATE_PATH = DATA_DIR / "wfa_sector_aggregate_2024-10-20_2026-06-23.csv"
-BEST_INDICATOR_PATH = DATA_DIR / "wfa_best_indicator_by_sector_2024-10-20_2026-06-23.csv"
-SUMMARY_PATH = DATA_DIR / "wfa_summary_2024-10-20_2026-06-23.csv"
+DATE_RANGE_LABEL = f"{START_DATE}_{END_DATE}"
+
+SECTOR_AGGREGATE_PATH = DATA_DIR / f"wfa_sector_aggregate_{DATE_RANGE_LABEL}.csv"
+BEST_INDICATOR_PATH = DATA_DIR / f"wfa_best_indicator_by_sector_{DATE_RANGE_LABEL}.csv"
+SUMMARY_PATH = DATA_DIR / f"wfa_summary_{DATE_RANGE_LABEL}.csv"
 
 WFA_CONFIG = {
     "in_sample_months": 6,
@@ -59,10 +61,12 @@ CHART_COLUMNS = [
     "Low",
     "Close",
     "Volume",
-    "SMA20",
+    "SMA10",
     "SMA50",
+    "Volume_MA20",
     "MACD",
     "MACD_Signal",
+    "MACD_Histogram",
     "RSI",
     MA_CROSSOVER_SIGNAL_COLUMN,
     MACD_TRADE_SIGNAL_COLUMN,
@@ -138,12 +142,11 @@ def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
     """Load cached/latest OHLCV data and add final indicators and signal columns."""
     price_df = load_or_fetch_price_data(ticker_yfinance, use_cache=True)
     analysis_df = price_df.dropna(subset=REQUIRED_OHLCV_COLUMNS).copy()
+
     if analysis_df.empty:
         raise ValueError("Data OHLCV lengkap tidak tersedia untuk analisis.")
-    analysis_df["SMA20"] = calculate_sma(analysis_df, 20)
-    analysis_df["SMA50"] = calculate_sma(analysis_df, 50)
-    analysis_df = calculate_macd(analysis_df)
-    analysis_df = calculate_rsi(analysis_df, 14)
+
+    analysis_df = calculate_all_indicators(analysis_df)
     analysis_df = generate_ma_signal(analysis_df)
     analysis_df = generate_macd_signal(analysis_df)
     return generate_rsi_signal(analysis_df)
@@ -157,12 +160,11 @@ def prepare_post_signal_validation_dataframe(ticker_yfinance: str) -> pd.DataFra
         use_cache=True,
     )
     analysis_df = price_df.dropna(subset=REQUIRED_OHLCV_COLUMNS).copy()
+
     if analysis_df.empty:
         raise ValueError("Data OHLCV lengkap tidak tersedia untuk validasi lanjutan.")
-    analysis_df["SMA20"] = calculate_sma(analysis_df, 20)
-    analysis_df["SMA50"] = calculate_sma(analysis_df, 50)
-    analysis_df = calculate_macd(analysis_df)
-    analysis_df = calculate_rsi(analysis_df, 14)
+
+    analysis_df = calculate_all_indicators(analysis_df)
     analysis_df = generate_ma_signal(analysis_df)
     analysis_df = generate_macd_signal(analysis_df)
     return generate_rsi_signal(analysis_df)
@@ -188,25 +190,50 @@ def build_latest_condition(df: pd.DataFrame, indicator_name: str) -> str:
     sma50 = _format_number(row.get("SMA50"))
 
     if name == "MA Crossover":
-        sma20 = _format_number(row.get("SMA20"))
-        position = _relative_position(row.get("SMA20"), row.get("SMA50"), "SMA20", "SMA50")
+        sma10 = _format_number(row.get("SMA10"))
+        volume = _format_number(row.get("Volume"))
+        volume_ma20 = _format_number(row.get("Volume_MA20"))
+        position = _relative_position(row.get("SMA10"), row.get("SMA50"), "SMA10", "SMA50")
+        volume_position = _relative_position(row.get("Volume"), row.get("Volume_MA20"), "Volume", "VolMA20")
+
         signal_note = (
-            "Sinyal HOLD karena tidak ada crossover baru pada data terakhir."
+            "Sinyal HOLD karena tidak ada crossover baru atau filter volume belum terpenuhi pada data terakhir."
             if signal == "HOLD"
-            else f"Sinyal {signal} muncul karena ada crossover baru pada data terakhir."
+            else f"Sinyal {signal} muncul karena ada crossover SMA10/SMA50 baru yang terkonfirmasi filter volume."
         )
-        return f"Close {close}; SMA20 {sma20}; SMA50 {sma50}. {position}. {signal_note}"
+
+        return (
+            f"Close {close}; SMA10 {sma10}; SMA50 {sma50}; "
+            f"Volume {volume}; VolMA20 {volume_ma20}. "
+            f"{position}; {volume_position}. {signal_note}"
+        )
     if name == "MACD":
         macd = _format_number(row.get("MACD"))
         macd_signal = _format_number(row.get("MACD_Signal"))
-        macd_position = _relative_position(row.get("MACD"), row.get("MACD_Signal"), "MACD Line", "Signal Line")
-        trend = _relative_position(row.get("Close"), row.get("SMA50"), "Harga", "SMA50")
-        signal_note = (
-            "Sinyal HOLD karena tidak ada crossover baru atau filter tren SMA50 belum terpenuhi."
-            if signal == "HOLD"
-            else f"Sinyal {signal} muncul karena crossover MACD baru terkonfirmasi filter tren SMA50."
+        histogram = _format_number(row.get("MACD_Histogram"))
+        volume = _format_number(row.get("Volume"))
+        volume_ma20 = _format_number(row.get("Volume_MA20"))
+
+        macd_position = _relative_position(
+            row.get("MACD"),
+            row.get("MACD_Signal"),
+            "MACD Line",
+            "Signal Line",
         )
-        return f"MACD Line {macd}; Signal Line {macd_signal}; Close {close}; SMA50 {sma50}. {macd_position}; {trend}. {signal_note}"
+        trend = _relative_position(row.get("Close"), row.get("SMA50"), "Harga", "SMA50")
+        volume_position = _relative_position(row.get("Volume"), row.get("Volume_MA20"), "Volume", "VolMA20")
+
+        signal_note = (
+            "Sinyal HOLD karena seluruh syarat pembentukan sinyal MACD belum terpenuhi secara bersamaan, seperti crossover baru, filter tren SMA50, threshold histogram 0,10%, dan filter volume."
+            if signal == "HOLD"
+            else f"Sinyal {signal} muncul karena crossover MACD baru terkonfirmasi tren SMA50, threshold histogram 0,10%, dan filter volume."
+        )
+
+        return (
+            f"MACD Line {macd}; Signal Line {macd_signal}; Histogram {histogram}; "
+            f"Close {close}; SMA50 {sma50}; Volume {volume}; VolMA20 {volume_ma20}. "
+            f"{macd_position}; {trend}; {volume_position}. {signal_note}"
+        )
 
     rsi = _format_number(row.get("RSI"))
     rsi_state = _rsi_state(row.get("RSI"))
