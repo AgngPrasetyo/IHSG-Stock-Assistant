@@ -38,3 +38,5 @@ data/audit_*_errors.csv
 !data/audit_final_indicator_wfa_sector_aggregate.csv
 !data/audit_final_indicator_wfa_best_by_sector.csv
 !data/audit_final_indicator_wfa_window_results.csv
+
+archive/
