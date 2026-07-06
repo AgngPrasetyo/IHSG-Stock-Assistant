@@ -1,0 +1,13 @@
+sector,indicator,variant,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate
+Energi,MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,30,21,70.0,63.63636363636363
+Energi,MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,32,21,65.625,59.72222222222222
+Energi,RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,27,15,55.55555555555556,53.50877192982456
+Finansial,MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,29,15,51.724137931034484,48.07692307692308
+Finansial,MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,47,24,51.06382978723404,56.06060606060606
+Finansial,RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,16,5,31.25,25.757575757575754
+Industri,MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,31,15,48.38709677419355,51.51515151515151
+Industri,RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,18,7,38.88888888888889,40.0
+Industri,MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,31,11,35.483870967741936,40.151515151515156
+Teknologi,RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,17,10,58.82352941176471,60.0
+Teknologi,MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,25,11,44.0,45.614035087719294
+Teknologi,MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,31,13,41.935483870967744,45.45454545454545

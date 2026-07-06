@@ -1,9 +1,0 @@
-sector,indicator,variant,threshold_label,threshold_pct,level_label,lower_level,upper_level,candle_label,use_candle_confirmation,volume_label,use_volume_filter,volume_window,volume_multiplier,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
-Energi,MACD,MACD 12/26/9 + SMA50 | Histogram Threshold 0.10% | Volume >= VolMA20,Histogram Threshold 0.10%,0.001,,,,,False,Volume >= VolMA20,True,20,1.0,32,21,65.625,59.72222222222222,True
-Energi,RSI,RSI14 + SMA50 | RSI 30/70 | No Candle Confirmation | Volume >= VolMA20,,,RSI 30/70,30.0,70.0,No Candle Confirmation,False,Volume >= VolMA20,True,20,1.0,10,7,70.0,66.66666666666667,True
-Finansial,MACD,MACD 12/26/9 + SMA50 | Histogram Threshold 0.10% | Volume >= VolMA20,Histogram Threshold 0.10%,0.001,,,,,False,Volume >= VolMA20,True,20,1.0,29,15,51.724137931034484,48.07692307692308,True
-Finansial,RSI,RSI14 + SMA50 | RSI 40/60 | Candle Confirmation | Volume >= VolMA20,,,RSI 40/60,40.0,60.0,Candle Confirmation,True,Volume >= VolMA20,True,20,1.0,30,13,43.333333333333336,40.0,True
-Industri,MACD,MACD 12/26/9 + SMA50 | Histogram Threshold 0.01% | No Volume Filter,Histogram Threshold 0.01%,0.0001,,,,,False,No Volume Filter,False,20,0.0,82,35,42.68292682926829,45.0,True
-Industri,RSI,RSI14 + SMA50 | RSI 40/60 | No Candle Confirmation | Volume >= VolMA20,,,RSI 40/60,40.0,60.0,No Candle Confirmation,False,Volume >= VolMA20,True,20,1.0,30,14,46.666666666666664,53.333333333333336,True
-Teknologi,MACD,MACD 12/26/9 + SMA50 | Histogram Threshold 0.10% | Volume >= VolMA20,Histogram Threshold 0.10%,0.001,,,,,False,Volume >= VolMA20,True,20,1.0,31,13,41.935483870967744,45.45454545454545,True
-Teknologi,RSI,RSI14 + SMA50 | RSI 30/70 | Candle Confirmation | No Volume Filter,,,RSI 30/70,30.0,70.0,Candle Confirmation,True,No Volume Filter,False,20,0.0,15,10,66.66666666666666,69.23076923076923,True

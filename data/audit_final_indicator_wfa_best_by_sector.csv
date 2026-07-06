@@ -1,0 +1,5 @@
+sector,indicator,variant,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate
+Energi,MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,30,21,70.0,63.63636363636363
+Finansial,MACD,MACD 12/26/9 + SMA50 + Histogram Threshold 0.10% + Volume >= VolMA20,MACD_Final_Signal,29,15,51.724137931034484,48.07692307692308
+Industri,MA Crossover,SMA10/SMA50 + Volume >= 0.8 x VolMA20,MA_Final_Signal,31,15,48.38709677419355,51.51515151515151
+Teknologi,RSI,RSI14 30/70 + SMA50,RSI_Final_Signal,17,10,58.82352941176471,60.0

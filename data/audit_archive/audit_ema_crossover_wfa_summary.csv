@@ -1,6 +1,0 @@
-variant,ma_type,fast_window,slow_window,threshold_pct,use_volume_filter,volume_window,volume_multiplier,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
-SMA20/SMA50 + Threshold 0.10% + Volume >= VolMA20,SMA,20,50,0.001,True,20,1.0,SMA_20_50_TH_0p001_VOL_Signal,53,34,64.15094339622641,63.541666666666664,True
-EMA14/EMA21 | Threshold 0.10% | Volume >= VolMA20,EMA,14,21,0.001,True,20,1.0,EMA_14_21_TH_0p001_VOL_Signal,61,31,50.81967213114754,51.307189542483655,True
-EMA14/EMA21 | No Threshold | No Volume Filter,EMA,14,21,0.0,False,20,0.0,EMA_14_21_TH_0p0_NOVOL_Signal,302,148,49.00662251655629,55.91208791208791,True
-EMA10/EMA50 | No Threshold | No Volume Filter,EMA,10,50,0.0,False,20,0.0,EMA_10_50_TH_0p0_NOVOL_Signal,246,109,44.3089430894309,48.37837837837838,True
-EMA10/EMA50 | Threshold 0.10% | Volume >= VolMA20,EMA,10,50,0.001,True,20,1.0,EMA_10_50_TH_0p001_VOL_Signal,96,38,39.58333333333333,40.714285714285715,True

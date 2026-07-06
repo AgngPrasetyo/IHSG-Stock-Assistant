@@ -1,8 +1,0 @@
-indicator,variant,volume_label,use_volume_filter,volume_ma_window,volume_multiplier,signal_column,total_active_signals,correct_signals,directional_accuracy,hit_rate,meets_min_active_signals
-MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA20,Volume >= 0.8 x VolMA20,True,20.0,0.8,MA10_50_VOLMA20_0p8_Signal,133,71,53.383458646616546,54.6875,True
-MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA20,Volume >= 1.0 x VolMA20,True,20.0,1.0,MA10_50_VOLMA20_1p0_Signal,103,54,52.42718446601942,56.44444444444444,True
-MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA20,Volume >= 0.9 x VolMA20,True,20.0,0.9,MA10_50_VOLMA20_0p9_Signal,124,65,52.41935483870967,54.25925925925925,True
-MA Crossover,SMA10/SMA50 | Volume >= 0.9 x VolMA10,Volume >= 0.9 x VolMA10,True,10.0,0.9,MA10_50_VOLMA10_0p9_Signal,113,56,49.557522123893804,52.13178294573643,True
-MA Crossover,SMA10/SMA50 | No Volume Filter,No Volume Filter,False,,,MA10_50_NOVOL_Signal,231,114,49.35064935064935,52.53443526170799,True
-MA Crossover,SMA10/SMA50 | Volume >= 0.8 x VolMA10,Volume >= 0.8 x VolMA10,True,10.0,0.8,MA10_50_VOLMA10_0p8_Signal,136,66,48.529411764705884,51.718213058419245,True
-MA Crossover,SMA10/SMA50 | Volume >= 1.0 x VolMA10,Volume >= 1.0 x VolMA10,True,10.0,1.0,MA10_50_VOLMA10_1p0_Signal,91,43,47.25274725274725,50.0,True
