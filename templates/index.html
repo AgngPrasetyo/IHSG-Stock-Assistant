@@ -12,145 +12,200 @@
     <a class="brand" href="/" aria-label="Kembali ke beranda">SDA<span>.</span></a>
     <nav aria-label="Navigasi utama">
       <a href="#cara-kerja">Cara kerja</a>
-      <a href="#transparansi">Prinsip Sistem</a>
+      <a href="#tentang-sistem">Tentang sistem</a>
     </nav>
   </header>
 
   <main id="beranda">
 
-    <!-- ── Hero ──────────────────────────────────────────────── -->
-    <section class="hero section fade-in">
+  <!-- ── Hero ──────────────────────────────────────────────── -->
+  <section class="hero section fade-in">
 
-      <div class="hero-copy">
-        <p class="eyebrow">Stock Decision Assistant</p>
-        <h1>Asisten Pendukung Keputusan Saham</h1>
-        <p class="hero-lead">
-          Analisis teknikal berbasis indikator, evaluasi WFA,
-          dan penjelasan bahasa alami.
-        </p>
-        <p>
-          Analisis saham yang lebih terstruktur, transparan, dan mudah dipahami.
-        </p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="/analysis">
-            Mulai Analisis
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="2.5"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-              <polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </a>
+    <div class="hero-copy">
+      <p class="eyebrow">Stock Decision Assistant</p>
+      <h1>Analisis teknikal saham yang lebih mudah dipahami.</h1>
+      <p class="hero-lead">
+        Sistem membantu membaca sinyal teknikal saham melalui indikator,
+        evaluasi historis, dan penjelasan bahasa alami.
+      </p>
+      <p>
+        Lihat indikator terbaik, sinyal terbaru, metrik evaluasi, dan ringkasan
+        hasil analisis dalam satu tampilan yang terstruktur.
+      </p>
+
+      <div class="hero-actions">
+        <a class="button button-primary" href="/analysis">
+          Mulai Analisis
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+        <a class="button button-secondary" href="#cara-kerja">Lihat cara kerja</a>
+      </div>
+    </div>
+
+    <aside class="hero-preview" aria-label="Preview hasil analisis sistem">
+      <div class="preview-head">
+        <span class="preview-dot"></span>
+        <span>Preview hasil analisis</span>
+      </div>
+
+      <div class="preview-stock">
+        <div>
+          <strong>BBRI</strong>
+          <p>Bank Rakyat Indonesia · Finansial</p>
+        </div>
+        <span class="signal signal-hold">HOLD</span>
+      </div>
+
+      <div class="preview-grid">
+        <div>
+          <span>Indikator terbaik</span>
+          <strong>MACD</strong>
+        </div>
+        <div>
+          <span>Directional Accuracy</span>
+          <strong>50.65%</strong>
+        </div>
+        <div>
+          <span>Evaluasi</span>
+          <strong>T+1 · T+3 · T+5 · T+10</strong>
         </div>
       </div>
 
-      <aside class="hero-card" aria-label="Ringkasan alur sistem">
-        <p class="eyebrow">Alur analisis</p>
-        <ol>
-          <li>Data historis OHLCV</li>
-          <li>Indikator teknikal</li>
-          <li>Evaluasi WFA</li>
-          <li>Sinyal dan penjelasan</li>
-        </ol>
-      </aside>
-
-    </section>
-
-    <!-- ── Tentang sistem ─────────────────────────────────────── -->
-    <section class="section intro fade-in" aria-labelledby="tentang">
-
-      <div class="intro-heading">
-        <p class="eyebrow">Untuk pengguna awam</p>
-        <h2 id="tentang">Memahami sinyal saham, dengan konteks yang jelas.</h2>
-        <p>
-          Sistem menyusun hasil analisis teknikal menjadi informasi yang lebih
-          mudah dibaca — tanpa menyembunyikan cara kerjanya.
-        </p>
-      </div>
-
-      <div class="intro-cards">
-        <article>
-          <span class="intro-icon" aria-hidden="true">01</span>
-          <h3>Tujuan sistem</h3>
-          <p>Membantu Anda membaca sinyal teknikal berdasarkan data historis dan evaluasi indikator.</p>
-        </article>
-        <article>
-          <span class="intro-icon" aria-hidden="true">02</span>
-          <h3>Peran asisten</h3>
-          <p>LLM menjelaskan hasil sistem dengan bahasa natural, bukan menghitung ulang analisis.</p>
-        </article>
-        <article>
-          <span class="intro-icon" aria-hidden="true">03</span>
-          <h3>Batasan yang jelas</h3>
-          <p>Hasil ini adalah bantuan analisis teknikal, bukan rekomendasi investasi final.</p>
-        </article>
-      </div>
-
-    </section>
-
-    <!-- ── Cara kerja ─────────────────────────────────────────── -->
-    <section id="cara-kerja" class="section fade-in" aria-labelledby="cara-title">
-      <p class="eyebrow">Metode kerja</p>
-      <h2 id="cara-title">Cara Sistem Membaca Saham</h2>
-      <div class="steps">
-        <article>
-          <b>01</b>
-          <h3>Pilih saham</h3>
-          <p>Pengguna memilih atau mengetik kode saham BEI.</p>
-        </article>
-        <article>
-          <b>02</b>
-          <h3>Baca OHLCV</h3>
-          <p>Sistem membaca data historis harga dan volume.</p>
-        </article>
-        <article>
-          <b>03</b>
-          <h3>Hitung indikator</h3>
-          <p>MA Crossover, MACD, dan RSI dihitung secara deterministik.</p>
-        </article>
-        <article>
-          <b>04</b>
-          <h3>Evaluasi WFA</h3>
-          <p>Indikator dievaluasi dengan Fixed-Length Rolling Walk-Forward Analysis.</p>
-        </article>
-        <article>
-          <b>05</b>
-          <h3>Jelaskan hasil</h3>
-          <p>Sinyal dan penjelasan bahasa alami ditampilkan bersama.</p>
-        </article>
-      </div>
-    </section>
-
-    <!-- ── Transparansi ───────────────────────────────────────── -->
-    <section id="transparansi" class="section transparency fade-in" aria-labelledby="trans-title">
-      <div>
-        <p class="eyebrow">Prinsip sistem</p>
-        <h2 id="trans-title">Kenapa hasilnya transparan?</h2>
-      </div>
-      <div class="transparency-list">
-        <p>
-          <strong>Perhitungan deterministik.</strong>
-          Sinyal dan metrik dihitung oleh sistem, bukan oleh LLM.
-        </p>
-        <p>
-          <strong>LLM sebagai lapisan penjelasan.</strong>
-          Penjelasan tidak mengubah indikator, sinyal, atau metrik.
-        </p>
-        <p>
-          <strong>Metrik terlihat jelas.</strong>
-          Directional Accuracy, Hit Rate, Total Active Signals, dan Correct Signals
-          dicantumkan. HOLD tidak dihitung sebagai active signal.
-        </p>
-      </div>
-    </section>
-
-    <!-- ── Disclaimer ─────────────────────────────────────────── -->
-    <section class="section landing-disclaimer">
-      <p class="disclaimer-box">
-        Hasil sistem adalah sinyal analisis teknikal berbasis data historis,
-        bukan rekomendasi investasi final.
+      <p class="preview-note">
+        Asisten menjelaskan hasil sistem, bukan menghitung ulang indikator atau metrik.
       </p>
-    </section>
+    </aside>
+
+  </section>
+
+  <!-- ── Fitur utama ───────────────────────────────────────── -->
+  <section class="section value-section feature-showcase fade-in" aria-labelledby="value-title">
+  <div class="feature-shell">
+    <div class="section-heading">
+      <p class="eyebrow">Fitur utama</p>
+      <h2 id="value-title">Informasi penting untuk membaca sinyal saham.</h2>
+      <p>
+        SDA menyusun hasil analisis teknikal menjadi informasi yang ringkas,
+        mudah dibaca, dan tetap dapat ditelusuri.
+      </p>
+    </div>
+
+    <div class="value-cards value-cards-premium">
+      <article>
+        <span class="intro-icon feature-number" aria-hidden="true">01</span>
+        <span class="feature-glyph" aria-hidden="true">▧</span>
+        <h3>Indikator terbaik</h3>
+        <p>MA Crossover, MACD, dan RSI dibandingkan berdasarkan hasil evaluasi historis.</p>
+      </article>
+
+      <article>
+        <span class="intro-icon feature-number" aria-hidden="true">02</span>
+        <span class="feature-glyph" aria-hidden="true">↕</span>
+        <h3>Sinyal teknikal</h3>
+        <p>Sistem menampilkan kondisi BUY, SELL, atau HOLD berdasarkan aturan indikator.</p>
+      </article>
+
+      <article>
+        <span class="intro-icon feature-number" aria-hidden="true">03</span>
+        <span class="feature-glyph" aria-hidden="true">✦</span>
+        <h3>Penjelasan asisten</h3>
+        <p>Hasil analisis dijelaskan dalam bahasa alami agar lebih mudah dipahami pengguna.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+  <!-- ── Cara kerja ─────────────────────────────────────────── -->
+  <section id="cara-kerja" class="section process-section fade-in" aria-labelledby="cara-title">
+  <div class="section-heading process-heading">
+    <p class="eyebrow">Cara kerja</p>
+    <h2 id="cara-title">Dari kode saham menjadi hasil analisis.</h2>
+    <p>
+      Sistem menghitung indikator secara deterministik, mengevaluasi hasilnya,
+      lalu menampilkan ringkasan yang dapat dibaca pengguna.
+    </p>
+  </div>
+
+  <div class="steps steps-four process-flow">
+    <article>
+      <b>01</b>
+      <h3>Pilih saham</h3>
+      <p>Pengguna mengetik kode saham BEI yang ingin dianalisis.</p>
+    </article>
+
+    <article>
+      <b>02</b>
+      <h3>Hitung indikator</h3>
+      <p>Sistem membaca data OHLCV dan menghitung MA Crossover, MACD, serta RSI.</p>
+    </article>
+
+    <article>
+      <b>03</b>
+      <h3>Evaluasi WFA</h3>
+      <p>Indikator dievaluasi menggunakan Rolling Walk-Forward Analysis.</p>
+    </article>
+
+    <article>
+      <b>04</b>
+      <h3>Tampilkan hasil</h3>
+      <p>Sinyal, metrik, perbandingan indikator, dan penjelasan asisten ditampilkan bersama.</p>
+    </article>
+  </div>
+</section>
+
+  <!-- ── Tentang sistem ─────────────────────────────────────── -->
+  <section id="tentang-sistem" class="section platform-section system-showcase fade-in" aria-labelledby="platform-title">
+  <div class="platform-copy">
+    <p class="eyebrow">Tentang sistem</p>
+    <h2 id="platform-title">Analisis teknikal yang disusun agar mudah dibaca.</h2>
+    <p>
+      SDA membantu menyajikan hasil analisis teknikal saham secara terstruktur,
+      mulai dari indikator terbaik, sinyal teknikal, metrik evaluasi, hingga
+      penjelasan bahasa alami.
+    </p>
+  </div>
+
+  <div class="system-glass">
+    <span class="system-orb system-orb-a" aria-hidden="true"></span>
+    <span class="system-orb system-orb-b" aria-hidden="true"></span>
+
+    <div class="platform-list system-list">
+      <article>
+        <span class="system-chip">Data</span>
+        <h3>Berbasis data historis</h3>
+        <p>Sistem membaca data harga dan volume saham sebagai dasar perhitungan indikator teknikal.</p>
+      </article>
+
+      <article>
+        <span class="system-chip">Evaluasi</span>
+        <h3>Evaluasi indikator</h3>
+        <p>MA Crossover, MACD, dan RSI dibandingkan menggunakan evaluasi historis untuk menentukan indikator terbaik.</p>
+      </article>
+
+      <article>
+        <span class="system-chip">Asisten</span>
+        <h3>Asisten sebagai penjelas</h3>
+        <p>LLM membantu menjelaskan hasil analisis tanpa mengubah sinyal, indikator, atau metrik sistem.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+  <!-- ── Disclaimer ─────────────────────────────────────────── -->
+  <section class="section landing-disclaimer">
+    <p class="disclaimer-box">
+      Hasil sistem adalah bantuan analisis teknikal berbasis data historis,
+      bukan rekomendasi investasi final.
+    </p>
+  </section>
+
+</main>
 
   </main>
 

@@ -1,8 +1,10 @@
-﻿import pandas as pd
+import pandas as pd
 import pytest
 
 from services import data_service
 from services.data_service import (
+    END_DATE,
+    START_DATE,
     fetch_price_data,
     get_cache_path,
     load_cached_price_data,
@@ -36,12 +38,12 @@ def test_validate_ohlcv_fails_when_close_missing():
         validate_ohlcv(df)
 
 
-def test_get_cache_path_uses_prices_folder():
+def test_get_cache_path_uses_current_prices_folder_and_date_range():
     cache_path = get_cache_path("BBCA.JK")
 
     assert cache_path.parent.name == "prices"
     assert cache_path.parent.parent.name == "cache"
-    assert cache_path.name == "BBCA_JK_2024-10-20_2026-06-23.csv"
+    assert cache_path.name == f"BBCA_JK_{START_DATE}_{END_DATE}.csv"
 
 
 def test_save_and_load_cached_price_data(monkeypatch, tmp_path):
@@ -140,4 +142,3 @@ def test_fetch_price_data_uses_yahoo_chart_fallback(monkeypatch, tmp_path):
     assert validate_ohlcv(result) is True
     assert result.index.is_monotonic_increasing
     assert list(result["Close"]) == [102.0, 101.0]
-

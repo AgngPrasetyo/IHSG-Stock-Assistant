@@ -1,4 +1,4 @@
-﻿from services.mapping_service import (
+from services.mapping_service import (
     get_stock_info,
     is_stock_available,
     load_mapping,

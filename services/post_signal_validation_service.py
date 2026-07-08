@@ -7,8 +7,8 @@ from typing import Any
 import pandas as pd
 
 
-DEFAULT_HORIZONS = [1, 3, 5]
-UNAVAILABLE_MESSAGE = "Data setelah tanggal sinyal belum tersedia untuk horizon ini."
+DEFAULT_HORIZONS = [1, 3, 5, 10]
+UNAVAILABLE_MESSAGE = "Data setelah tanggal sinyal belum tersedia untuk periode evaluasi ini."
 
 
 def build_post_signal_validation(

@@ -3,13 +3,18 @@
 from app import create_app
 
 
-def test_landing_page_has_explanation_and_no_dashboard_form():
+def test_landing_page_has_final_explanation_and_no_dashboard_form():
     client = create_app({"TESTING": True}).test_client()
     response = client.get("/")
     html = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    for phrase in ("Asisten Pendukung Keputusan Saham", "Memahami sinyal saham, dengan konteks yang jelas.", "Cara Sistem Membaca Saham", "Transparansi"):
+    for phrase in (
+        "Analisis teknikal saham yang lebih mudah dipahami.",
+        "Fitur utama",
+        "Dari kode saham menjadi hasil analisis.",
+        "Tentang sistem",
+    ):
         assert phrase in html
     assert 'href="/analysis"' in html
     assert 'id="analysis-form"' not in html
@@ -28,6 +33,7 @@ def test_analysis_page_has_chat_first_input_and_static_assets():
     assert 'id="stock-query"' in html
     assert 'id="stock-select"' in html
     assert 'aria-label="Kirim analisis"' in html
+    assert 'href="/#tentang-sistem"' in html
     assert 'workspace-mark' not in html
     assert "sk-proj" not in html
     assert "OPENAI_API_KEY" not in html
@@ -35,6 +41,4 @@ def test_analysis_page_has_chat_first_input_and_static_assets():
     js_response = client.get("/static/js/main.js")
     assert js_response.status_code == 200
     assert "Validasi Lanjutan Sinyal Terbaru" in js_response.get_data(as_text=True)
-
-
-
+    assert "T+1, T+3, T+5, dan T+10" in js_response.get_data(as_text=True)

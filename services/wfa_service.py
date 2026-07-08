@@ -5,12 +5,16 @@ from __future__ import annotations
 import pandas as pd
 
 from services.indicator_service import calculate_all_indicators
-from services.metric_service import evaluate_signal_performance
+from services.metric_service import (
+    DEFAULT_FORWARD_HORIZONS,
+    evaluate_signal_performance_average_forward,
+)
 from services.signal_service import generate_all_signals
 
 DEFAULT_IN_SAMPLE_MONTHS = 6
 DEFAULT_OUT_SAMPLE_MONTHS = 3
 DEFAULT_SHIFT_MONTHS = 3
+DEFAULT_EVALUATION_HORIZONS = DEFAULT_FORWARD_HORIZONS
 
 INDICATOR_SIGNAL_MAP = {
     "MA Crossover": "MA_Crossover_Signal",
@@ -113,7 +117,7 @@ def generate_wfa_windows(
 
 def run_wfa_for_window(
     window: dict[str, object],
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
 ) -> list[dict[str, object]]:
     """Evaluate every final indicator inside one fixed-length WFA window."""
     combined = window.get("combined_df")
@@ -131,10 +135,10 @@ def run_wfa_for_window(
     results = []
 
     for indicator, column in INDICATOR_SIGNAL_MAP.items():
-        metric = evaluate_signal_performance(
+        metric = evaluate_signal_performance_average_forward(
             evaluation,
             column,
-            forward_periods=evaluation_horizon_periods,
+            forward_horizons=evaluation_horizons,
         )
         results.append(
             {
@@ -157,7 +161,7 @@ def run_wfa_for_window(
 
 def run_wfa_all_indicators(
     df: pd.DataFrame,
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -166,7 +170,7 @@ def run_wfa_all_indicators(
     windows = generate_wfa_windows(df, in_sample_months, out_sample_months, shift_months)
     results = []
     for window in windows:
-        results.extend(run_wfa_for_window(window, evaluation_horizon_periods))
+        results.extend(run_wfa_for_window(window, evaluation_horizons))
 
     if not results:
         return pd.DataFrame(columns=WFA_RESULT_COLUMNS)
@@ -216,23 +220,19 @@ def select_best_indicator(aggregate_df: pd.DataFrame) -> dict[str, object] | Non
     }
 
 
+
 def run_wfa_pipeline(
     df: pd.DataFrame,
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
 ) -> dict[str, object]:
-    """Run the complete fixed-length rolling WFA workflow for one stock.
-
-    The pipeline only composes existing steps: generate rolling windows, evaluate
-    all indicators per window, aggregate count-based metrics, and select the best
-    indicator with the existing tie-break order.
-    """
+    """Run the complete fixed-length rolling WFA workflow for one stock."""
     windows = generate_wfa_windows(df, in_sample_months, out_sample_months, shift_months)
     results = run_wfa_all_indicators(
         df,
-        evaluation_horizon_periods,
+        evaluation_horizons,
         in_sample_months,
         out_sample_months,
         shift_months,

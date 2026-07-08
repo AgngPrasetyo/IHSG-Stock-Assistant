@@ -14,6 +14,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.graphics.shapes import Drawing, Line, PolyLine, String
 from reportlab.platypus import (
     HRFlowable,
     KeepTogether,
@@ -42,11 +43,26 @@ POST_SIGNAL_STATUS_LABELS = {
 }
 POST_SIGNAL_VALIDATION_DESCRIPTION = (
     "Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, "
-    "dan T+5. Validasi ini tidak digunakan untuk mengubah indikator terbaik, "
-    "sinyal utama, atau hasil evaluasi Walk-Forward Analysis."
+    "T+5, dan T+10 hari perdagangan bursa saham. Validasi ini tidak digunakan "
+    "untuk mengubah indikator terbaik, sinyal utama, atau hasil evaluasi "
+    "Walk-Forward Analysis."
 )
 INVALID_PDF_TEXT_CHARS = str.maketrans("", "", "■□�")
 
+def _format_user_friendly_condition(analysis: dict[str, Any]) -> str:
+    signal = str(analysis.get("latest_signal") or "HOLD").upper()
+    indicator = analysis.get("best_indicator") or "indikator terbaik"
+    latest_date = analysis.get("latest_date") or "tanggal terakhir"
+
+    if signal == "HOLD":
+        return (
+            f"Sinyal saat ini adalah HOLD pada {latest_date}. "
+            f"Belum ada sinyal BUY atau SELL baru berdasarkan {indicator} pada data terakhir."
+        )
+
+    return (
+        f"Sinyal saat ini adalah {signal} pada {latest_date} berdasarkan {indicator}."
+    )
 
 def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     """Build a PDF report from an already available frontend analysis payload."""
@@ -82,29 +98,51 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     ]))
 
     story.append(_section_block(styles, "Ringkasan Hasil", [
-        _key_value_table([
-            ("Sinyal Teknis Saat Ini", analysis.get("latest_signal")),
-            ("Indikator Terbaik", analysis.get("best_indicator")),
-            ("Harga Penutupan Terakhir", _format_rupiah(analysis.get("latest_close"))),
-            ("Kondisi Teknikal", analysis.get("latest_condition")),
-        ], styles),
-    ]))
+    _key_value_table([
+        ("Sinyal Teknis Saat Ini", analysis.get("latest_signal")),
+        ("Sinyal Aktif Terakhir", _format_last_active_signal(analysis.get("last_active_signal"))),
+        ("Indikator Terbaik", analysis.get("best_indicator")),
+        ("Harga Penutupan Terakhir", _format_rupiah(analysis.get("latest_close"))),
+        ("Kondisi Teknikal", _format_user_friendly_condition(analysis)),
+    ], styles),
+]))
 
     metrics = analysis.get("metrics") or {}
     story.append(_section_block(styles, "Metrik Evaluasi", [
-        _data_table([
-            ["Metrik", "Nilai"],
-            ["Directional Accuracy", _format_percent(metrics.get("directional_accuracy"))],
-            ["Hit Rate", _format_percent(metrics.get("hit_rate"))],
-            ["Total Active Signals", _format_number(metrics.get("total_active_signals"), 0)],
-            ["Correct Signals", _format_number(metrics.get("correct_signals"), 0)],
-        ], styles, col_widths=[10.2 * cm, 5.0 * cm], align_right_cols={1}),
-    ]))
+    Paragraph(
+        "Directional Accuracy digunakan sebagai dasar pemilihan indikator terbaik dan "
+        "dihitung berdasarkan kecocokan arah sinyal BUY/SELL terhadap Average Forward "
+        "Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. "
+        "Hit Rate, Total Active Signals, dan Correct Signals digunakan sebagai metrik "
+        "pendukung untuk membaca rata-rata keberhasilan dan jumlah sinyal.",
+        styles["BodyRelaxed"],
+    ),
+    _data_table([
+        ["Metrik", "Nilai"],
+        ["Directional Accuracy", _format_percent(metrics.get("directional_accuracy"))],
+        ["Hit Rate", _format_percent(metrics.get("hit_rate"))],
+        ["Total Active Signals", _format_number(metrics.get("total_active_signals"), 0)],
+        ["Correct Signals", _format_number(metrics.get("correct_signals"), 0)],
+    ], styles, col_widths=[10.2 * cm, 5.0 * cm], align_right_cols={1}),
+]))
+
 
     _add_section(story, styles, "Penjelasan Asisten")
     story.append(Paragraph(_clean_text(payload.get("explanation") or "Penjelasan belum tersedia."), styles["BodyRelaxed"]))
 
+    
+    chart_section = _price_chart_section(analysis.get("chart_data"), styles)
+    if chart_section is not None:
+        story.append(chart_section)
+
     _add_section(story, styles, "Perbandingan Indikator")
+    story.append(Paragraph(
+    "Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi. "
+    "Hit Rate, Active, dan Correct digunakan sebagai metrik pendukung untuk membaca "
+    "rata-rata keberhasilan dan jumlah sinyal.",
+    styles["BodyRelaxed"],
+))
+
     comparison_rows = [["Indikator", "Directional Accuracy", "Hit Rate", "Active", "Correct"]]
     for item in analysis.get("indicator_comparison") or []:
         comparison_rows.append([
@@ -323,6 +361,97 @@ def _data_table(
     ]))
     return table
 
+def _price_chart_section(chart_data: Any, styles: dict[str, ParagraphStyle]) -> KeepTogether | None:
+    """Render a simple closing-price chart from frontend chart_data."""
+    if not isinstance(chart_data, list):
+        return None
+
+    points = []
+    for item in chart_data[-120:]:
+        if not isinstance(item, dict):
+            continue
+
+        date_value = item.get("date")
+        close_value = item.get("close")
+
+        try:
+            close = float(close_value)
+        except (TypeError, ValueError):
+            continue
+
+        if not math.isfinite(close):
+            continue
+
+        points.append(
+            {
+                "date": str(date_value or ""),
+                "close": close,
+            }
+        )
+
+    if len(points) < 2:
+        return None
+
+    drawing = _build_price_chart_drawing(points)
+
+    return _section_block(styles, "Grafik Harga Penutupan", [
+        Paragraph(
+            "Grafik ini menampilkan pergerakan harga penutupan terbaru berdasarkan data historis yang digunakan pada dashboard.",
+            styles["BodyRelaxed"],
+        ),
+        drawing,
+    ])
+
+def _build_price_chart_drawing(points: list[dict[str, Any]]) -> Drawing:
+    """Build a compact line chart drawing for closing prices."""
+    width = 15.2 * cm
+    height = 5.2 * cm
+    left_pad = 1.05 * cm
+    right_pad = 0.45 * cm
+    top_pad = 0.35 * cm
+    bottom_pad = 0.75 * cm
+
+    chart_width = width - left_pad - right_pad
+    chart_height = height - top_pad - bottom_pad
+
+    closes = [float(point["close"]) for point in points]
+    min_close = min(closes)
+    max_close = max(closes)
+    value_range = max_close - min_close or 1.0
+
+    drawing = Drawing(width, height)
+
+    axis_color = colors.HexColor("#E2E8F0")
+    text_color = colors.HexColor("#728196")
+    line_color = colors.HexColor("#2F5BEA")
+
+    x0 = left_pad
+    y0 = bottom_pad
+    x1 = left_pad + chart_width
+    y1 = bottom_pad + chart_height
+
+    drawing.add(Line(x0, y0, x1, y0, strokeColor=axis_color, strokeWidth=0.8))
+    drawing.add(Line(x0, y0, x0, y1, strokeColor=axis_color, strokeWidth=0.8))
+
+    coordinates: list[float] = []
+    denominator = max(len(points) - 1, 1)
+
+    for index, point in enumerate(points):
+        x = left_pad + (index / denominator) * chart_width
+        y = bottom_pad + ((float(point["close"]) - min_close) / value_range) * chart_height
+        coordinates.extend([x, y])
+
+    drawing.add(PolyLine(coordinates, strokeColor=line_color, strokeWidth=1.6))
+
+    first_date = points[0].get("date") or "-"
+    last_date = points[-1].get("date") or "-"
+
+    drawing.add(String(x0, y1 + 3, _format_number(max_close, 0), fontSize=7.5, fillColor=text_color))
+    drawing.add(String(x0, y0 - 12, _format_number(min_close, 0), fontSize=7.5, fillColor=text_color))
+    drawing.add(String(x0, y0 - 25, first_date, fontSize=7.2, fillColor=text_color))
+    drawing.add(String(x1 - 52, y0 - 25, last_date, fontSize=7.2, fillColor=text_color))
+
+    return drawing
 
 def _post_signal_validation_section(
     validations: list[Any],
@@ -370,6 +499,18 @@ def _post_signal_validation_section(
     ),
 ])
 
+def _format_last_active_signal(value: Any) -> str:
+    """Format the latest historical BUY/SELL signal for the PDF report."""
+    if not isinstance(value, dict):
+        return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
+
+    signal = str(value.get("signal") or "").strip().upper()
+    signal_date = value.get("date")
+
+    if signal not in {"BUY", "SELL"} or not signal_date:
+        return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
+
+    return f"{signal} pada {signal_date}"
 
 def _format_horizon(item: dict[str, Any]) -> str:
     """Format validation horizon without recalculating anything from price data."""

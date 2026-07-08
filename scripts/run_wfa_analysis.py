@@ -17,7 +17,7 @@ from services.mapping_service import load_mapping
 from services.wfa_service import generate_wfa_windows, run_wfa_pipeline
 
 IN_SAMPLE_MONTHS, OUT_SAMPLE_MONTHS, SHIFT_MONTHS = 6, 3, 3
-EVALUATION_HORIZON_PERIODS = 3
+EVALUATION_HORIZONS = [1, 3, 5, 10]
 
 DATA_DIR = PROJECT_ROOT / "data"
 DATE_RANGE_LABEL = f"{START_DATE}_{END_DATE}"
@@ -119,7 +119,7 @@ def evaluate_stock(stock: pd.Series, refresh: bool) -> tuple[pd.DataFrame, pd.Da
     windows = generate_wfa_windows(price, IN_SAMPLE_MONTHS, OUT_SAMPLE_MONTHS, SHIFT_MONTHS)
     wfa = run_wfa_pipeline(
         price,
-        EVALUATION_HORIZON_PERIODS,
+        EVALUATION_HORIZONS,
         IN_SAMPLE_MONTHS,
         OUT_SAMPLE_MONTHS,
         SHIFT_MONTHS,
@@ -168,7 +168,7 @@ def main() -> None:
     args = parse_args()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     samples, stock_frames, window_frames, windows = load_samples(), [], [], []
-    print(f"Jumlah saham: {len(samples)}\nJumlah sektor: {samples.sektor.nunique()}\nPeriode data: {START_DATE} s.d. {END_DATE} (exclusive)\nWFA: {IN_SAMPLE_MONTHS},{OUT_SAMPLE_MONTHS},{SHIFT_MONTHS}\nHorizon evaluasi: {EVALUATION_HORIZON_PERIODS}")
+    print(f"Jumlah saham: {len(samples)}\nJumlah sektor: {samples.sektor.nunique()}\nPeriode data: {START_DATE} s.d. {END_DATE} (exclusive)\nWFA: {IN_SAMPLE_MONTHS},{OUT_SAMPLE_MONTHS},{SHIFT_MONTHS}\nHorizon evaluasi: {EVALUATION_HORIZONS}")
     for position, (_, stock) in enumerate(samples.iterrows(), 1):
         print(f"[{position}/40] {stock.sektor} - {stock.ticker}")
         stock_result, window_result, count = evaluate_stock(stock, args.refresh)
@@ -189,6 +189,13 @@ def main() -> None:
     summary = pd.DataFrame([{"sectors_count": best.sektor.nunique(), "sectors_above_50": int((best.directional_accuracy > 50).sum()), "average_best_accuracy": best.directional_accuracy.mean(), "weighted_best_accuracy": 0.0 if active == 0 else correct / active * 100, "total_active_signals": active, "correct_signals": correct, "min_sector_accuracy": best.directional_accuracy.min(), "max_sector_accuracy": best.directional_accuracy.max(), "best_indicators_by_sector": "; ".join(f"{x.sektor}: {x.indicator}" for x in best.itertuples())}])
     window_counts = pd.DataFrame(windows)
     stock_results.to_csv(STOCK_PATH, index=False); window_results.to_csv(WINDOW_RESULTS_PATH, index=False); aggregate.to_csv(AGGREGATE_PATH, index=False); best.to_csv(BEST_PATH, index=False); summary.to_csv(SUMMARY_PATH, index=False); window_counts.to_csv(WINDOW_PATH, index=False)
+    print(
+        f"Jumlah saham: {len(samples)}\n"
+        f"Jumlah sektor: {samples.sektor.nunique()}\n"
+        f"Periode data: {START_DATE} s.d. {END_DATE} (exclusive)\n"
+        f"WFA: {IN_SAMPLE_MONTHS},{OUT_SAMPLE_MONTHS},{SHIFT_MONTHS}\n"
+        f"Evaluasi: Average Forward Return T+1, T+3, T+5, T+10"
+    )
     print("\nJumlah window per saham:"); print(window_counts.to_string(index=False))
     print("\nBest indicator per sector:"); print(best[["sektor", "indicator", "directional_accuracy", "hit_rate", "total_active_signals"]].to_string(index=False))
     print("\nRingkasan WFA:"); print(summary.to_string(index=False))

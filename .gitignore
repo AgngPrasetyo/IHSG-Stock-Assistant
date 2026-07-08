@@ -40,3 +40,20 @@ data/audit_*_errors.csv
 !data/audit_final_indicator_wfa_window_results.csv
 
 archive/
+
+# WFA experiment outputs
+data/*avg_forward_t1_t3_t5_t10*.csv
+data/*pure_signal*.csv
+data/*simple_filter*.csv
+
+# Python/test cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local env/cache
+.env
+.venv/
+cache/
+.vscode/
+*.log

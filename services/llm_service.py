@@ -1,10 +1,16 @@
 ﻿"""Safe natural-language explanations for deterministic stock analysis results."""
 
 from __future__ import annotations
-
+import re
 import json
 import os
+from pathlib import Path
 from typing import Any
+
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env")
 
 from services.analysis_service import analyze_stock
 
@@ -46,6 +52,7 @@ INTERNAL_FIELD_TERMS = (
     "wfa_config",
     "data_period",
     "chart_data",
+    "volume_ma20",
 )
 CONTEXT_FIELDS = (
     "ticker",
@@ -64,6 +71,21 @@ CONTEXT_FIELDS = (
     "disclaimer",
 )
 
+def _contains_disallowed_script(text: str) -> bool:
+    """Detect unexpected non-Indonesian scripts in the explanation output."""
+    return re.search(r"[\u0600-\u06FF]", str(text)) is not None
+
+def _format_last_active_signal_for_prompt(value: Any) -> str:
+    if not isinstance(value, dict):
+        return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
+
+    signal = str(value.get("signal") or "").strip().upper()
+    signal_date = value.get("date")
+
+    if signal not in {"BUY", "SELL"} or not signal_date:
+        return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
+
+    return f"{signal} pada {signal_date}"
 
 def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Return compact, natural-language context without chart data or raw objects."""
@@ -79,7 +101,6 @@ def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
     context = {
         "success": True,
         "ticker": analysis_result.get("ticker"),
-        "ticker_yfinance": analysis_result.get("ticker_yfinance"),
         "sektor": analysis_result.get("sector"),
         "periode_data": _format_data_period_for_prompt(analysis_result),
         "konfigurasi_evaluasi": _format_wfa_config_for_prompt(
@@ -87,12 +108,15 @@ def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
         ),
         "indikator_terbaik": analysis_result.get("best_indicator"),
         "sinyal_teknikal_saat_ini": analysis_result.get("latest_signal"),
-        "kondisi_teknikal_terbaru": analysis_result.get("latest_condition"),
+        "konteks_sinyal": _format_signal_context_for_prompt(analysis_result),
         "tanggal_terbaru": analysis_result.get("latest_date"),
         "harga_penutupan_terakhir": analysis_result.get("latest_close"),
         "metrik_evaluasi": _format_metrics_for_prompt(analysis_result.get("metrics") or {}),
         "perbandingan_indikator": _format_comparison_for_prompt(
             analysis_result.get("indicator_comparison") or []
+        ),
+        "sinyal_aktif_terakhir": _format_last_active_signal_for_prompt(
+            analysis_result.get("last_active_signal")
         ),
         "disclaimer": analysis_result.get("disclaimer", FALLBACK_DISCLAIMER),
     }
@@ -100,39 +124,74 @@ def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
         context["nama_saham"] = analysis_result["stock_name"]
     return _json_safe({key: value for key, value in context.items() if value is not None})
 
+def _format_signal_context_for_prompt(analysis_result: dict[str, Any]) -> str:
+    indicator = str(analysis_result.get("best_indicator") or "indikator terbaik")
+    signal = str(analysis_result.get("latest_signal") or "HOLD").upper()
+    last_active = _format_last_active_signal_for_prompt(
+        analysis_result.get("last_active_signal")
+    )
+
+    if signal == "HOLD":
+        return (
+            f"Sinyal teknikal saat ini adalah HOLD. "
+            f"Belum ada sinyal BUY atau SELL aktif pada tanggal terakhir berdasarkan {indicator}. "
+            f"Sinyal aktif terakhir adalah {last_active}."
+        )
+
+    return (
+        f"Sinyal teknikal saat ini adalah {signal} berdasarkan {indicator}. "
+        f"Sinyal ini berasal dari aturan indikator terbaik sektor."
+    )
 
 def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     """Build a strict Indonesian prompt that explains, never alters, results."""
     payload = json.dumps(analysis_context, ensure_ascii=False, indent=2)
     return f"""Anda adalah asisten penjelas hasil analisis teknikal. Anda hanya menjelaskan output sistem deterministik.
 
-Aturan wajib:
-- Jangan mengubah sinyal, indikator terbaik, atau metrik apa pun.
-- Jangan menghitung ulang indikator atau hasil WFA.
-- Jangan memberi rekomendasi investasi final, jangan memprediksi harga, dan jangan menyebut kepastian naik atau turun.
-- Jangan mengubah angka, sinyal, atau indikator. Gunakan metrik evaluasi yang diberikan agar persentase maksimal dua desimal.
-- Jangan pernah menyebut nama field internal: formatted_metrics, latest_condition, analysis_result, indicator_comparison, latest_signal, best_indicator, wfa_config, data_period, atau chart_data.
-- Gunakan bahasa natural: metrik evaluasi, kondisi teknikal terbaru, perbandingan indikator, sinyal teknikal saat ini, indikator terbaik, periode data, dan konfigurasi evaluasi.
-- Sertakan penegasan bahwa hasil adalah bantuan analisis teknikal, bukan rekomendasi investasi final.
-- Gunakan teks biasa tanpa markdown bold. Buat jawaban ringkas dalam 3 sampai 5 paragraf, sekitar 250 sampai 450 kata. Tampilkan persentase maksimal dua desimal, lalu gunakan urutan:
-  1. Ringkasan saham
-  2. Sinyal teknikal saat ini
-  3. Alasan teknikal
-  4. Evaluasi indikator terbaik
-  5. Perbandingan indikator lain
-  6. Catatan risiko
-- Directional Accuracy adalah akurasi gabungan seluruh sinyal aktif BUY/SELL terhadap arah harga setelah horizon evaluasi 3 trading days.
-- Hit Rate adalah rata-rata keberhasilan sinyal aktif per window evaluasi, bukan selalu sama dengan Directional Accuracy.
-- Jika sinyal teknikal saat ini adalah HOLD, jelaskan bahwa belum ada sinyal BUY atau SELL aktif pada tanggal terakhir berdasarkan indikator terbaik.
-- Jangan menyimpulkan HOLD hanya dari posisi harga terhadap SMA.
-- Untuk MA Crossover, BUY atau SELL hanya muncul saat terjadi crossover SMA20 dan SMA50 pada data terbaru; posisi SMA20 di atas/bawah SMA50 saja bukan sinyal baru.
-- Untuk MACD, BUY atau SELL hanya muncul saat crossover MACD Line dan Signal Line terkonfirmasi filter tren SMA50; posisi garis saja bukan sinyal baru.
-- Untuk RSI, oversold tidak otomatis BUY dan overbought tidak otomatis SELL; sistem menunggu RSI keluar dari area ekstrem dan filter tren SMA50 terpenuhi.
-- Gunakan istilah “horizon evaluasi 3 trading days”, bukan “evaluation horizon 3 periods”.
-
+    Aturan wajib:
+    - Jangan mengubah sinyal, indikator terbaik, atau metrik apa pun.
+    - Jangan menghitung ulang indikator atau hasil WFA.
+    - Jangan memberi rekomendasi investasi final, jangan memprediksi harga, dan jangan menyebut kepastian naik atau turun.
+    - Jangan mengubah angka, sinyal, atau indikator. Gunakan metrik evaluasi yang diberikan agar persentase maksimal dua desimal.
+    - Jangan pernah menyebut nama field internal: formatted_metrics, latest_condition, analysis_result, indicator_comparison, latest_signal, best_indicator, wfa_config, data_period, atau chart_data.
+    - Gunakan bahasa natural: metrik evaluasi, kondisi teknikal terbaru, perbandingan indikator, sinyal teknikal saat ini, indikator terbaik, periode data, dan konfigurasi evaluasi.
+    - Sertakan penegasan bahwa hasil adalah bantuan analisis teknikal, bukan rekomendasi investasi final.
+    - Gunakan teks biasa tanpa markdown bold. Buat jawaban ringkas dalam 3 sampai 5 paragraf, sekitar 250 sampai 450 kata. Tampilkan persentase maksimal dua desimal, lalu gunakan urutan:
+    1. Ringkasan saham
+    2. Sinyal teknikal saat ini
+    3. Alasan teknikal
+    4. Evaluasi indikator terbaik
+    5. Perbandingan indikator lain
+    6. Catatan risiko
+    - Directional Accuracy adalah persentase kecocokan seluruh sinyal aktif BUY/SELL terhadap arah harga berdasarkan Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham.
+    - Average Forward Return adalah rata-rata return harga setelah sinyal pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham.
+    - Correct Signals adalah jumlah sinyal BUY/SELL yang sesuai berdasarkan Average Forward Return tersebut.
+    - Hit Rate adalah rata-rata keberhasilan sinyal aktif per window evaluasi, bukan selalu sama dengan Directional Accuracy.
+    - Jika sinyal teknikal saat ini adalah HOLD, jelaskan bahwa belum ada sinyal BUY atau SELL aktif pada tanggal terakhir berdasarkan indikator terbaik.
+    - Jangan menyimpulkan HOLD hanya dari posisi harga terhadap SMA.
+    - Untuk MA Crossover, BUY atau SELL hanya muncul saat terjadi crossover SMA10 dan SMA50 pada data terbaru; posisi SMA10 di atas/bawah SMA50 saja bukan sinyal baru.
+    - Untuk MACD, BUY atau SELL hanya muncul saat terjadi crossover baru antara MACD Line dan Signal Line; posisi garis saja bukan sinyal baru.
+    - Untuk RSI, oversold tidak otomatis BUY dan overbought tidak otomatis SELL; sistem menunggu RSI keluar dari area oversold atau overbought.
+    - Gunakan istilah “evaluasi Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham”.
+    - Jika tersedia sinyal aktif terakhir, jelaskan secara singkat setelah sinyal teknikal saat ini. Contoh: “Sinyal aktif terakhir adalah BUY pada 2026-06-18.”
+    - Untuk penjelasan utama kepada pengguna, jelaskan aturan dasar indikator: crossover SMA10/SMA50, crossover MACD Line dan Signal Line, atau RSI keluar dari area oversold/overbought.
+    - Jangan menyebut VolMA20, Volume_MA20, threshold histogram, filter volume, filter tren, atau detail filter teknis internal karena metode final tidak menggunakan filter tambahan.
+    - Tuliskan “MA Crossover” dengan spasi. Jangan menulis “MACrossover”.
+    - Pastikan selalu ada spasi setelah tanda baca seperti titik, koma, dan persen.
+    - Gunakan bahasa Indonesia sepenuhnya. Jangan menyisipkan bahasa asing atau karakter non-Latin di luar istilah teknikal umum seperti BUY, SELL, HOLD, MACD, RSI, SMA, dan WFA.
+    - Gunakan konteks_sinyal sebagai sumber utama untuk menjelaskan sinyal saat ini dan sinyal aktif terakhir.
+    - Jangan menyalin angka Volume, VolMA20, atau nilai filter teknis internal ke dalam penjelasan utama.
+    - Jangan menambahkan spasi di dalam angka desimal. Tulis 48.15%, bukan 48. 15%.
+    - Pastikan ada spasi setelah koma dan sebelum kata berikutnya.
+    - Gunakan ticker utama tanpa suffix bursa, misalnya MARK, BBCA, atau ADRO. Jangan menulis MARK.JK atau MARK. JK pada penjelasan utama.
+    - Gunakan istilah “terbaik berdasarkan metrik evaluasi”, bukan “paling kuat”, agar tidak terkesan sebagai rekomendasi investasi.
+    - Gunakan istilah “indikator terbaik berdasarkan metrik evaluasi”, bukan “unggul”, “paling kuat”, atau “lebih baik” agar penjelasan tetap netral.
+    - Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi, bukan berdasarkan Hit Rate atau Correct Signals.
+    - Jika Hit Rate atau Correct Signals indikator lain lebih tinggi, jelaskan bahwa keduanya adalah metrik pendukung, sedangkan pemilihan indikator terbaik tetap mengikuti Directional Accuracy.
+    - Gunakan istilah “indikator terbaik berdasarkan Directional Accuracy”, bukan “indikator paling kuat”, “unggul”, atau “lebih baik”.
+    - Saat membandingkan indikator, gunakan frasa “mencatat Directional Accuracy tertinggi dibanding indikator lain dalam data ini”, bukan “menunjukkan kecocokan sinyal aktif yang lebih tinggi”, “lebih unggul”, atau “lebih kuat”.
 Data sistem deterministik:
 {payload}"""
-
 
 def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
     """Generate the offline explanation path without any API call."""
@@ -143,31 +202,49 @@ def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
     ticker = analysis_result.get("ticker", "Saham")
     sector = analysis_result.get("sector", "tidak tersedia")
     indicator = analysis_result.get("best_indicator", "tidak tersedia")
-    signal = analysis_result.get("latest_signal", "HOLD")
+    signal = str(analysis_result.get("latest_signal", "HOLD")).upper()
+
     metrics = analysis_result.get("metrics") or {}
     accuracy = _format_percent(metrics.get("directional_accuracy"))
     hit_rate = _format_percent(metrics.get("hit_rate"))
     active = _safe_float_format(metrics.get("total_active_signals"), 0)
     correct = _safe_float_format(metrics.get("correct_signals"), 0)
-    condition = analysis_result.get("latest_condition", "Kondisi indikator terkini belum tersedia.")
 
-    signal_sentence = (
-        "Sinyal sistem saat ini adalah HOLD. Belum ada sinyal BUY/SELL aktif berdasarkan indikator terbaik."
-        if signal == "HOLD"
-        else f"Sinyal sistem saat ini adalah {signal}."
+    last_active_signal = _format_last_active_signal_for_prompt(
+        analysis_result.get("last_active_signal")
     )
-    comparison = _format_indicator_comparison(analysis_result.get("indicator_comparison") or [])
+
+    if signal == "HOLD":
+        signal_sentence = (
+            "Sinyal sistem saat ini adalah HOLD. "
+            "Belum ada sinyal BUY/SELL aktif pada tanggal terakhir. "
+            f"Sinyal aktif terakhir adalah {last_active_signal}."
+        )
+    else:
+        signal_sentence = f"Sinyal sistem saat ini adalah {signal}."
+
+    comparison = _format_indicator_comparison(
+        analysis_result.get("indicator_comparison") or []
+    )
+
     return (
         f"Ringkasan saham: {ticker} berada pada sektor {sector}. "
         f"Indikator terbaik sektor menurut WFA adalah {indicator}.\n\n"
-        f"Sinyal teknikal saat ini: {signal_sentence} Alasan teknikal: {condition}\n\n"
-        f"Evaluasi indikator terbaik: Directional Accuracy {accuracy} adalah akurasi gabungan seluruh sinyal aktif, "
-        f"Hit Rate {hit_rate} adalah rata-rata keberhasilan per window, "
-        f"Total Active Signals {active}, dan Correct Signals {correct}.\n\n"
+
+        f"Sinyal teknikal saat ini: {signal_sentence} "
+        f"Penjelasan teknikal disusun berdasarkan aturan indikator terbaik sektor, "
+        f"tanpa mengubah hasil perhitungan sistem.\n\n"
+
+       f"Evaluasi indikator terbaik: Directional Accuracy {accuracy} adalah dasar pemilihan indikator terbaik, "
+       f"karena menunjukkan persentase kecocokan seluruh sinyal aktif BUY/SELL terhadap arah harga berdasarkan Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. "
+       f"Hit Rate {hit_rate} digunakan sebagai metrik pendukung untuk melihat rata-rata keberhasilan sinyal aktif per window, "
+       f"Total Active Signals {active}, dan Correct Signals {correct}.\n\n"
+
         f"Perbandingan indikator lain: {comparison}\n\n"
+
         "Catatan risiko: sinyal dan metrik berasal dari evaluasi historis; kondisi pasar dapat berubah. "
         f"{FALLBACK_DISCLAIMER}"
-    )
+)
 
 
 def generate_openai_explanation(analysis_result: dict[str, Any]) -> tuple[str, bool, str | None]:
@@ -194,6 +271,7 @@ def generate_openai_explanation(analysis_result: dict[str, Any]) -> tuple[str, b
             max_output_tokens=max_output_tokens,
         )
         explanation = str(getattr(response, "output_text", "")).strip()
+        explanation = _normalize_explanation_text(explanation)
     except Exception as exc:
         detail = str(exc).strip() or "unknown_error"
         return (
@@ -205,12 +283,18 @@ def generate_openai_explanation(analysis_result: dict[str, Any]) -> tuple[str, b
     # Guardrails are checked after provider output so unsafe or leaky text falls back.
     if _contains_internal_field_terms(explanation):
         return generate_deterministic_explanation(analysis_result), True, "internal_terms_in_output"
+
+    if _contains_disallowed_script(explanation):
+        return generate_deterministic_explanation(analysis_result), True, "unexpected_script_in_output"
+
     if not explanation or _contains_forbidden_recommendation_terms(explanation):
         return generate_deterministic_explanation(analysis_result), True, "unsafe_output"
+
     if "bantuan analisis teknikal" not in explanation.casefold():
         explanation = f"{explanation}\n\n{FALLBACK_DISCLAIMER}"
-    return explanation, False, None
 
+    explanation = _normalize_explanation_text(explanation)
+    return explanation, False, None
 
 def generate_llm_explanation(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Return a provider-labelled explanation while preserving analysis success."""
@@ -233,7 +317,91 @@ def generate_llm_explanation(analysis_result: dict[str, Any]) -> dict[str, Any]:
         "explanation": explanation,
         "disclaimer": (analysis_result or {}).get("disclaimer", FALLBACK_DISCLAIMER),
     }
+def _normalize_explanation_text(text: str) -> str:
+    """Clean small spacing and typography issues in LLM output without breaking decimals or tickers."""
+    normalized = str(text or "").strip()
+    normalized = re.sub(r"\b([A-Z0-9]{2,6})\s*\.\s*JK\b", r"\1", normalized)
+    replacements = {
+        "MACrossover": "MA Crossover",
+        "MA crossover": "MA Crossover",
+        "tanggalterakhir": "tanggal terakhir",
+        "terbarujuga": "terbaru juga",
+        "aturanindikator": "aturan indikator",
+        "DirectionalAccuracy": "Directional Accuracy",
+        "indikatorterbaik": "indikator terbaik",
+        "investasifinal": "investasi final",
+        "metrikevaluasi": "metrik evaluasi",
+        "tanpamengubah": "tanpa mengubah",
+        "merupakanbantuan": "merupakan bantuan",
+        "sertaRSI": "serta RSI",
+        "Hit Rate": "Hit Rate",
+        "MARK. JK": "MARK.JK",
+        "WFA 6, 3, 3": "WFA 6,3,3",
+        "horizon evaluasi 3 trading days": "evaluasi Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham",
+        "3 trading days": "T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham",
+        "setelah 3 hari perdagangan": "berdasarkan Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham",
+        "filter tren SMA50": "aturan indikator",
+        "menunjukkan kecocokan sinyal aktif yang lebih tinggi dibanding indikator lain dalam data ini": "mencatat Directional Accuracy tertinggi dibanding indikator lain dalam data ini",
+    }
 
+    replacements.update({
+        "%,Hit": "%, Hit",
+        "crossoveryang": "crossover yang",
+        "terkonfirmasioleh": "terkonfirmasi oleh",
+        "dengankonfirmasi": "dengan konfirmasi",
+        "hasilsistem": "hasil sistem",
+        "secarakeseluruhan": "secara keseluruhan",
+         "MARK. JK": "MARK.JK",
+        "evaluasi3": "evaluasi 3",
+        "baruyang": "baru yang",
+        "teknikalterbaru": "teknikal terbaru",
+        "sampai 2026-06-26dianalisis": "sampai 2026-06-26 dianalisis",
+        "metrikevaluasi": "metrik evaluasi",
+        "SELLhanya": "SELL hanya",
+        "BUYatau": "BUY atau",
+        "27total": "27 total",
+        "terbaruseperti": "terbaru seperti",
+    })
+    for old, new in replacements.items():
+        normalized = normalized.replace(old, new)
+
+    # Jangan pecah angka desimal seperti 48.15 atau ticker seperti MARK.JK.
+    normalized = re.sub(r"(?<!\d)([.!?])(?=\S)", r"\1 ", normalized)
+
+    # Tambahkan spasi setelah koma hanya jika bukan pola angka/konfigurasi seperti 6,3,3.
+    normalized = re.sub(r"(?<!\d),(?=\S)", ", ", normalized)
+
+    # Tambahkan spasi setelah persen jika langsung diikuti huruf.
+    normalized = re.sub(r"(?<=%)(?=[A-Za-zÀ-ÿ])", " ", normalized)
+
+    # Perbaiki kata yang sering menempel.
+    normalized = re.sub(r"\bHit Rate(?=\d)", "Hit Rate ", normalized)
+    normalized = re.sub(r"\bDirectional Accuracy(?=\d)", "Directional Accuracy ", normalized)
+    normalized = re.sub(r"\bserta(?=RSI\b)", "serta ", normalized)
+
+    # Sederhanakan detail teknis internal untuk tampilan utama.
+    normalized = re.sub(
+        r",?\s*dan Volume [\d.]+ yang berada di bawah VolMA20 [\d.]+",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(r"\bVolMA20\b", "konfirmasi sistem", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bVolume_MA20\b", "konfirmasi sistem", normalized, flags=re.IGNORECASE)
+
+    normalized = re.sub(r"[ \t]{2,}", " ", normalized)
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+    normalized = re.sub(r"(?<=[a-zA-Z])(?=dianalisis\b)", " ", normalized)
+    normalized = re.sub(r"(?<=[a-zA-Z])(?=terkonfirmasi\b)", " ", normalized)
+    normalized = re.sub(r"(?<=[a-zA-Z])(?=yang\b)", " ", normalized)
+    normalized = re.sub(r"\b([A-Z]{4})\. JK\b", r"\1.JK", normalized)
+    normalized = re.sub(r"(?<=evaluasi)(?=\d)", " ", normalized)
+    normalized = re.sub(r"(?<=baru)(?=yang\b)", " ", normalized)
+    normalized = re.sub(r"(?<=teknikal)(?=terbaru\b)", " ", normalized)
+    normalized = re.sub(r"(?<=\d)(?=total\b)", " ", normalized)
+    normalized = re.sub(r"(?<=SELL)(?=hanya\b)", " ", normalized)
+    normalized = re.sub(r"(?<=BUY)(?=atau\b)", " ", normalized)
+    return normalized.strip()
 
 def explain_stock_analysis(user_input: str) -> dict[str, Any]:
     """Run deterministic analysis, then explain it without modifying results."""
@@ -300,10 +468,16 @@ def _format_comparison_for_prompt(comparison: list[dict[str, Any]]) -> list[str]
 
 
 def _format_wfa_config_for_prompt(config: dict[str, Any]) -> str:
+    label = config.get(
+        "evaluation_horizon_label",
+        "T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham",
+    )
+    method = config.get("evaluation_method", "Average Forward Return")
+
     return (
-        f"WFA {config.get('in_sample_months', 6)},{config.get('out_sample_months', 3)},"
-        f"{config.get('shift_months', 3)} dengan horizon evaluasi "
-        f"{config.get('evaluation_horizon_periods', 3)} trading days"
+        f"WFA {config.get('in_sample_months', 6)},"
+        f"{config.get('out_sample_months', 3)},"
+        f"{config.get('shift_months', 3)} dengan evaluasi {method} pada {label}"
     )
 
 

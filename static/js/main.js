@@ -70,6 +70,20 @@
 
   const signalClass = (signal) => `signal-${String(signal || 'HOLD').toLowerCase()}`;
 
+  const toneClass = (signal) => {
+    const normalized = String(signal || 'HOLD').toUpperCase();
+
+    if (normalized === 'BUY') return 'tone-buy';
+    if (normalized === 'SELL') return 'tone-sell';
+    return 'tone-hold';
+  };
+
+  const lastActiveSignalToneClass = (analysis) => {
+    const item = (analysis || {}).last_active_signal;
+    return toneClass(item && item.signal ? item.signal : 'HOLD');
+  };
+
+
   const show = (element, visible) => {
     if (!element) return;
     element.hidden = !visible;
@@ -404,18 +418,71 @@
     `;
   }
 
+  function formatLastActiveSignal(analysis) {
+    const item = (analysis || {}).last_active_signal;
+
+  if (!item || !item.signal || !item.date) {
+    return `
+      <span class="last-signal-empty">
+        Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia.
+      </span>
+    `;
+  }
+
+  const signal = String(item.signal).toUpperCase();
+
+  if (signal !== 'BUY' && signal !== 'SELL') {
+    return `
+      <span class="last-signal-empty">
+        Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia.
+      </span>
+    `;
+  }
+
+  return `
+    <span class="last-signal-wrap">
+      <span class="signal mini-signal ${signalClass(signal)}">${escapeHtml(signal)}</span>
+      <span class="last-signal-date">${escapeHtml(item.date)}</span>
+    </span>
+  `;
+}
+
+  function formatLastActiveSignalNote(analysis) {
+  const item = (analysis || {}).last_active_signal;
+  const indicator = String((analysis || {}).best_indicator || '').trim();
+
+  if (!item || !item.signal || !item.date) {
+    return 'Sistem belum menemukan sinyal aktif BUY atau SELL pada periode data yang tersedia.';
+  }
+
+  const signal = String(item.signal).toUpperCase();
+
+  if (indicator === 'MA Crossover') {
+    return `Sinyal ${signal} terakhir muncul ketika SMA10 memotong SMA50.`;
+  }
+
+  if (indicator === 'MACD') {
+    return `Sinyal ${signal} terakhir muncul ketika MACD Line memotong Signal Line.`;
+  }
+
+  if (indicator === 'RSI') {
+    return `Sinyal ${signal} terakhir muncul ketika RSI keluar dari area ekstrem.`;
+  }
+
+  return `Sinyal ${signal} terakhir muncul berdasarkan aturan indikator terbaik sektor.`;
+}
+
   function renderPostSignalValidation(analysis) {
     const validations = Array.isArray((analysis || {}).post_signal_validation)
       ? analysis.post_signal_validation
       : [];
 
-    const items = validations.length ? validations : [1, 3, 5].map((horizon) => ({
+    const items = validations.length ? validations : [1, 3, 5, 10].map((horizon) => ({
       horizon,
       label: `T+${horizon}`,
       status: 'UNAVAILABLE',
       message: 'Data setelah tanggal sinyal belum tersedia.'
     }));
-
     const latestSignal = String((analysis || {}).latest_signal || '').toUpperCase();
       const isHoldSignal = latestSignal === 'HOLD';
       const allHoldNotEvaluated = items.every((item) => (
@@ -431,7 +498,7 @@
               <div>
                 <strong>Sinyal terbaru adalah HOLD.</strong>
                 <p>
-                  Validasi T+1, T+3, dan T+5 tidak dilakukan karena HOLD bukan sinyal aktif BUY atau SELL.
+                  Validasi lanjutan tidak dilakukan karena HOLD bukan sinyal aktif BUY atau SELL.
                   Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
                 </p>
               </div>
@@ -477,7 +544,7 @@
       <section class="result-card validation-card">
         <h3 class="metrics-title">Validasi Lanjutan Sinyal Terbaru</h3>
         <p class="metrics-description">
-          Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, dan T+5. Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
+          Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
         </p>
         <div class="validation-grid">${rows}</div>
       </section>
@@ -523,18 +590,30 @@
     reportStatus.classList.toggle('error', isError);
   }
 
-  function renderHintList(items) {
-    return `
-      <dl class="hint-list">
-        ${items.map((item) => `
-          <div class="hint-item">
-            <dt class="hint-term">${escapeHtml(text(item.term))}</dt>
-            <dd class="hint-description">${escapeHtml(text(item.description, ''))}</dd>
-          </div>
-        `).join('')}
-      </dl>
-    `;
-  }
+  function hintTermClass(term) {
+  const normalized = String(term || '').trim().toUpperCase();
+
+  if (normalized === 'BUY') return 'hint-buy';
+  if (normalized === 'SELL') return 'hint-sell';
+  if (normalized === 'HOLD') return 'hint-hold';
+  if (normalized === 'DIRECTIONAL ACCURACY') return 'hint-primary';
+  if (normalized === 'AVERAGE FORWARD RETURN') return 'hint-primary';
+
+  return '';
+}
+
+function renderHintList(items) {
+  return `
+    <dl class="hint-list">
+      ${items.map((item) => `
+        <div class="hint-item ${hintTermClass(item.term)}">
+          <dt class="hint-term">${escapeHtml(text(item.term))}</dt>
+          <dd class="hint-description">${escapeHtml(text(item.description, ''))}</dd>
+        </div>
+      `).join('')}
+    </dl>
+  `;
+}
 
   function renderTechnicalHint(hint) {
     const target = $('#technical-hint');
@@ -561,6 +640,8 @@
       ` : ''}
     `;
   }
+
+  
 
   // PDF download
   function reportFilename(analysis) {
@@ -622,9 +703,12 @@
 
     const signal = text(analysis.latest_signal, 'HOLD');
     const analysisSector = text(analysis.sector || analysis.sektor, '').trim();
-    const analysisTicker = text(analysis.ticker, '').trim();
     const comparisonTitle = `Perbandingan indikator sektor${analysisSector ? ` ${analysisSector}` : ''}`;
-    const comparisonDescription = `Indikator terbaik ditentukan dari hasil evaluasi sektor ${analysisSector || 'terkait'}, sehingga hasil ini tidak hanya merepresentasikan performa individual saham ${analysisTicker || 'ini'}.`;
+
+    const comparisonDescription =
+      `Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi pada hasil evaluasi sektor${analysisSector ? ` ${analysisSector}` : ''}. ` +
+      `Hit Rate, Active, dan Correct digunakan sebagai metrik pendukung untuk membaca rata-rata keberhasilan dan jumlah sinyal.`;
+
     renderTechnicalHint(analysis.technical_hint);
     setReportStatus();
 
@@ -670,29 +754,34 @@ const rows = comparison.map((item) => {
           </div>
 
           <div class="summary-grid">
-            <div class="summary-item">
+            <div class="summary-item summary-item-price">
               <span>Harga penutupan terakhir</span>
               <strong>${money(analysis.latest_close)}</strong>
             </div>
-            <div class="summary-item">
+            <div class="summary-item summary-item-best-indicator">
               <span>Indikator terbaik sektor</span>
               <strong>${escapeHtml(text(analysis.best_indicator))}</strong>
             </div>
-            <div class="summary-item summary-item-condition">
-            <span>Kondisi teknikal</span>
-            <strong class="condition-lines condition-compact">
-              ${formatCompactTechnicalCondition(analysis)}
-            </strong>
-          </div>
+            <div class="summary-item summary-item-last-signal ${lastActiveSignalToneClass(analysis)}">
+              <span>Sinyal aktif terakhir</span>
+              <strong>${formatLastActiveSignal(analysis)}</strong>
+            </div>
+            <div class="summary-item summary-item-condition ${toneClass(signal)}">
+              <span>Kondisi teknikal</span>
+              <strong class="condition-lines condition-compact">
+                ${formatCompactTechnicalCondition(analysis)}
+              </strong>
+            </div>
           </div>
         </section>
 
         <section class="result-card">
           <h3 class="metrics-title">Metrik evaluasi indikator terbaik</h3>
           <div class="metric-grid">
-            <div class="metric">
+            <div class="metric metric-primary">
               <span>Directional Accuracy</span>
               <strong>${percent(metrics.directional_accuracy)}</strong>
+              <small>Dasar pemilihan indikator terbaik</small>
             </div>
             <div class="metric">
               <span>Hit Rate</span>

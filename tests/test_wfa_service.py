@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 
 from services.wfa_service import (
     WFA_RESULT_COLUMNS,
@@ -14,10 +14,7 @@ from services.wfa_service import (
 
 def make_dummy_ohlcv(periods: int = 320, start: str = "2024-10-21") -> pd.DataFrame:
     dates = pd.date_range(start, periods=periods, freq="D", name="Date")
-    close_prices = [
-        100.0 + (index * 0.08) + ((index % 31) - 15) * 0.35
-        for index in range(periods)
-    ]
+    close_prices = [100.0 + (index * 0.08) + ((index % 31) - 15) * 0.35 for index in range(periods)]
 
     return pd.DataFrame(
         {
@@ -82,7 +79,6 @@ def test_prepare_wfa_dataframe_does_not_modify_original_dataframe():
 
 def test_generate_wfa_windows_returns_window_when_data_is_sufficient():
     windows = generate_wfa_windows(make_dummy_ohlcv())
-
     assert len(windows) >= 1
 
 
@@ -99,7 +95,6 @@ def test_each_window_has_sample_dataframes_and_combined_dataframe():
 
 def test_out_sample_start_is_after_in_sample_end():
     window = generate_wfa_windows(make_dummy_ohlcv())[0]
-
     assert window["out_sample_start"] > window["in_sample_end"]
 
 
@@ -124,18 +119,14 @@ def test_generate_wfa_windows_skips_incomplete_final_out_sample_window():
 def test_run_wfa_for_window_returns_three_indicator_results():
     window = generate_wfa_windows(make_dummy_ohlcv())[0]
 
-    results = run_wfa_for_window(window)
+    results = run_wfa_for_window(window, evaluation_horizons=[1, 3, 5, 10])
 
     assert len(results) == 3
-    assert {result["indicator"] for result in results} == {
-        "MA Crossover",
-        "MACD",
-        "RSI",
-    }
+    assert {result["indicator"] for result in results} == {"MA Crossover", "MACD", "RSI"}
 
 
 def test_run_wfa_all_indicators_returns_dataframe_with_complete_columns():
-    result = run_wfa_all_indicators(make_dummy_ohlcv())
+    result = run_wfa_all_indicators(make_dummy_ohlcv(), evaluation_horizons=[1, 3, 5, 10])
 
     assert list(result.columns) == WFA_RESULT_COLUMNS
 
@@ -157,8 +148,6 @@ def test_aggregate_wfa_results_uses_sum_counts_and_average_active_window_hit_rat
     assert ma_result["hit_rate"] == 56.25
 
 
-
-
 def test_aggregate_wfa_results_zero_hit_rate_when_no_active_windows():
     result = aggregate_wfa_results(make_aggregate_source())
     rsi_result = result[result["indicator"] == "RSI"].iloc[0]
@@ -166,6 +155,7 @@ def test_aggregate_wfa_results_zero_hit_rate_when_no_active_windows():
     assert rsi_result["total_active_signals"] == 0
     assert rsi_result["directional_accuracy"] == 0.0
     assert rsi_result["hit_rate"] == 0.0
+
 
 def test_select_best_indicator_chooses_highest_directional_accuracy():
     aggregate_df = pd.DataFrame(
@@ -249,24 +239,26 @@ def test_select_best_indicator_uses_total_active_signals_as_second_tiebreaker():
 
 
 def test_run_wfa_pipeline_returns_expected_keys():
-    result = run_wfa_pipeline(make_dummy_ohlcv())
+    result = run_wfa_pipeline(make_dummy_ohlcv(), evaluation_horizons=[1, 3, 5, 10])
 
-    assert set(result.keys()) == {
-        "windows_count",
-        "wfa_results",
-        "aggregate_results",
-        "best_indicator",
-    }
+    assert set(result.keys()) == {"windows_count", "wfa_results", "aggregate_results", "best_indicator"}
 
 
 def test_default_wfa_window_uses_6_3_3():
     window = generate_wfa_windows(make_dummy_ohlcv())[0]
+
     assert window["out_sample_start"] == window["in_sample_start"] + pd.DateOffset(months=6)
     assert window["out_sample_end"] == window["out_sample_start"] + pd.DateOffset(months=3)
 
 
-def test_run_wfa_pipeline_accepts_evaluation_horizon_three():
-    result = run_wfa_pipeline(make_dummy_ohlcv(), evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3)
+def test_run_wfa_pipeline_accepts_final_evaluation_horizons():
+    result = run_wfa_pipeline(
+        make_dummy_ohlcv(),
+        evaluation_horizons=[1, 3, 5, 10],
+        in_sample_months=6,
+        out_sample_months=3,
+        shift_months=3,
+    )
 
     assert result["windows_count"] >= 1
     assert not result["wfa_results"].empty
@@ -280,8 +272,3 @@ def test_short_data_returns_safe_empty_results():
     assert result["wfa_results"].empty
     assert result["aggregate_results"].empty
     assert result["best_indicator"] is None
-
-
-
-
-

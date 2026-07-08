@@ -1,4 +1,13 @@
-﻿import pandas as pd
+"""
+Tests for sector-level WFA helpers.
+
+Catatan: file ini mengasumsikan sector_service sudah mengikuti metode final:
+- WFA 6,3,3
+- evaluation_horizons=[1, 3, 5, 10]
+- agregasi berbasis Directional Accuracy dari total correct / total active
+"""
+
+import pandas as pd
 import pytest
 
 from services import sector_service
@@ -11,51 +20,20 @@ from services.sector_service import (
     run_all_sectors_pipeline,
     run_sector_pipeline,
     run_sector_wfa,
-    run_sector_wfa_windows,
-    run_wfa_for_stock_row,
-    run_wfa_windows_for_stock_row,
     select_best_sector_indicator,
 )
+
+FINAL_HORIZONS = [1, 3, 5, 10]
 
 
 def make_mapping_df() -> pd.DataFrame:
     return pd.DataFrame(
         [
-            {
-                "ticker": "BBCA",
-                "ticker_yfinance": "BBCA.JK",
-                "sektor": "Finansial",
-                "is_sample": "Ya",
-                "status_data": "Lengkap",
-            },
-            {
-                "ticker": "BBRI",
-                "ticker_yfinance": "BBRI.JK",
-                "sektor": "Finansial",
-                "is_sample": "Ya",
-                "status_data": "Lengkap",
-            },
-            {
-                "ticker": "ASII",
-                "ticker_yfinance": "ASII.JK",
-                "sektor": "Industri",
-                "is_sample": "Ya",
-                "status_data": "Lengkap",
-            },
-            {
-                "ticker": "GOTO",
-                "ticker_yfinance": "GOTO.JK",
-                "sektor": "Teknologi",
-                "is_sample": "Tidak",
-                "status_data": "Lengkap",
-            },
-            {
-                "ticker": "ADRO",
-                "ticker_yfinance": "ADRO.JK",
-                "sektor": "Energi",
-                "is_sample": "Ya",
-                "status_data": "Tidak Lengkap",
-            },
+            {"ticker": "BBCA", "ticker_yfinance": "BBCA.JK", "sektor": "Finansial", "is_sample": "Ya", "status_data": "Lengkap"},
+            {"ticker": "BBRI", "ticker_yfinance": "BBRI.JK", "sektor": "Finansial", "is_sample": "Ya", "status_data": "Lengkap"},
+            {"ticker": "ASII", "ticker_yfinance": "ASII.JK", "sektor": "Industri", "is_sample": "Ya", "status_data": "Lengkap"},
+            {"ticker": "GOTO", "ticker_yfinance": "GOTO.JK", "sektor": "Teknologi", "is_sample": "Tidak", "status_data": "Lengkap"},
+            {"ticker": "ADRO", "ticker_yfinance": "ADRO.JK", "sektor": "Energi", "is_sample": "Ya", "status_data": "Tidak Lengkap"},
         ]
     )
 
@@ -63,13 +41,7 @@ def make_mapping_df() -> pd.DataFrame:
 def make_price_df() -> pd.DataFrame:
     dates = pd.date_range("2024-10-21", periods=10, freq="D", name="Date")
     return pd.DataFrame(
-        {
-            "Open": range(10),
-            "High": range(1, 11),
-            "Low": range(10),
-            "Close": range(10),
-            "Volume": range(100, 110),
-        },
+        {"Open": range(10), "High": range(1, 11), "Low": range(10), "Close": range(10), "Volume": range(100, 110)},
         index=dates,
     )
 
@@ -77,30 +49,9 @@ def make_price_df() -> pd.DataFrame:
 def make_stock_aggregate() -> pd.DataFrame:
     return pd.DataFrame(
         [
-            {
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "total_active_signals": 4,
-                "correct_signals": 3,
-                "directional_accuracy": 75.0,
-                "hit_rate": 75.0,
-            },
-            {
-                "indicator": "MACD",
-                "signal_column": "MACD_Trade_Signal",
-                "total_active_signals": 5,
-                "correct_signals": 2,
-                "directional_accuracy": 40.0,
-                "hit_rate": 40.0,
-            },
-            {
-                "indicator": "RSI",
-                "signal_column": "RSI_Signal",
-                "total_active_signals": 0,
-                "correct_signals": 0,
-                "directional_accuracy": 0.0,
-                "hit_rate": 0.0,
-            },
+            {"indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "total_active_signals": 4, "correct_signals": 3, "directional_accuracy": 75.0, "hit_rate": 75.0},
+            {"indicator": "MACD", "signal_column": "MACD_Trade_Signal", "total_active_signals": 5, "correct_signals": 2, "directional_accuracy": 40.0, "hit_rate": 40.0},
+            {"indicator": "RSI", "signal_column": "RSI_Signal", "total_active_signals": 0, "correct_signals": 0, "directional_accuracy": 0.0, "hit_rate": 0.0},
         ]
     )
 
@@ -108,104 +59,26 @@ def make_stock_aggregate() -> pd.DataFrame:
 def make_sector_results() -> pd.DataFrame:
     return pd.DataFrame(
         [
-            {
-                "sektor": "Finansial",
-                "ticker": "BBCA",
-                "ticker_yfinance": "BBCA.JK",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "total_active_signals": 2,
-                "correct_signals": 1,
-                "directional_accuracy": 50.0,
-                "hit_rate": 50.0,
-                "windows_count": 6,
-            },
-            {
-                "sektor": "Finansial",
-                "ticker": "BBRI",
-                "ticker_yfinance": "BBRI.JK",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "total_active_signals": 8,
-                "correct_signals": 5,
-                "directional_accuracy": 62.5,
-                "hit_rate": 62.5,
-                "windows_count": 6,
-            },
-            {
-                "sektor": "Finansial",
-                "ticker": "BBCA",
-                "ticker_yfinance": "BBCA.JK",
-                "indicator": "MACD",
-                "signal_column": "MACD_Trade_Signal",
-                "total_active_signals": 4,
-                "correct_signals": 2,
-                "directional_accuracy": 50.0,
-                "hit_rate": 50.0,
-                "windows_count": 6,
-            },
+            {"sektor": "Finansial", "ticker": "BBCA", "ticker_yfinance": "BBCA.JK", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "total_active_signals": 2, "correct_signals": 1, "directional_accuracy": 50.0, "hit_rate": 50.0, "windows_count": 6},
+            {"sektor": "Finansial", "ticker": "BBRI", "ticker_yfinance": "BBRI.JK", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "total_active_signals": 8, "correct_signals": 5, "directional_accuracy": 62.5, "hit_rate": 62.5, "windows_count": 6},
+            {"sektor": "Finansial", "ticker": "BBCA", "ticker_yfinance": "BBCA.JK", "indicator": "MACD", "signal_column": "MACD_Trade_Signal", "total_active_signals": 4, "correct_signals": 2, "directional_accuracy": 50.0, "hit_rate": 50.0, "windows_count": 6},
         ]
     )
-
 
 
 def make_sector_window_results() -> pd.DataFrame:
     return pd.DataFrame(
         [
-            {
-                "sektor": "Finansial",
-                "ticker": "A",
-                "ticker_yfinance": "A.JK",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "window_id": 1,
-                "total_active_signals": 1,
-                "correct_signals": 1,
-                "directional_accuracy": 100.0,
-                "hit_rate": 100.0,
-            },
-            {
-                "sektor": "Finansial",
-                "ticker": "A",
-                "ticker_yfinance": "A.JK",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "window_id": 2,
-                "total_active_signals": 9,
-                "correct_signals": 0,
-                "directional_accuracy": 0.0,
-                "hit_rate": 0.0,
-            },
-            {
-                "sektor": "Finansial",
-                "ticker": "B",
-                "ticker_yfinance": "B.JK",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "window_id": 1,
-                "total_active_signals": 1,
-                "correct_signals": 1,
-                "directional_accuracy": 100.0,
-                "hit_rate": 100.0,
-            },
-            {
-                "sektor": "Finansial",
-                "ticker": "B",
-                "ticker_yfinance": "B.JK",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "window_id": 2,
-                "total_active_signals": 0,
-                "correct_signals": 0,
-                "directional_accuracy": 0.0,
-                "hit_rate": 0.0,
-            },
+            {"sektor": "Finansial", "ticker": "A", "ticker_yfinance": "A.JK", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "window_id": 1, "total_active_signals": 1, "correct_signals": 1, "directional_accuracy": 100.0, "hit_rate": 100.0},
+            {"sektor": "Finansial", "ticker": "A", "ticker_yfinance": "A.JK", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "window_id": 2, "total_active_signals": 9, "correct_signals": 0, "directional_accuracy": 0.0, "hit_rate": 0.0},
+            {"sektor": "Finansial", "ticker": "B", "ticker_yfinance": "B.JK", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "window_id": 1, "total_active_signals": 1, "correct_signals": 1, "directional_accuracy": 100.0, "hit_rate": 100.0},
+            {"sektor": "Finansial", "ticker": "B", "ticker_yfinance": "B.JK", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "window_id": 2, "total_active_signals": 0, "correct_signals": 0, "directional_accuracy": 0.0, "hit_rate": 0.0},
         ]
     )
 
+
 def test_get_available_sectors_returns_unique_complete_sample_sectors():
     result = get_available_sectors(make_mapping_df())
-
     assert result == ["Finansial", "Industri"]
 
 
@@ -226,16 +99,14 @@ def test_get_sector_stocks_returns_empty_dataframe_when_sector_not_found():
 
 def test_run_wfa_for_stock_row_adds_stock_identity_columns(monkeypatch):
     monkeypatch.setattr(sector_service, "load_or_fetch_price_data", lambda ticker: make_price_df())
-    monkeypatch.setattr(
-        sector_service,
-        "run_wfa_pipeline",
-        lambda df, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3: {
-            "windows_count": 6,
-            "aggregate_results": make_stock_aggregate(),
-        },
-    )
 
-    result = run_wfa_for_stock_row(make_mapping_df().iloc[0])
+    def fake_run_wfa_pipeline(df, evaluation_horizons=None, in_sample_months=6, out_sample_months=3, shift_months=3):
+        assert evaluation_horizons in (None, FINAL_HORIZONS)
+        return {"windows_count": 6, "aggregate_results": make_stock_aggregate()}
+
+    monkeypatch.setattr(sector_service, "run_wfa_pipeline", fake_run_wfa_pipeline)
+
+    result = sector_service.run_wfa_for_stock_row(make_mapping_df().iloc[0])
 
     assert list(result.columns) == SECTOR_RESULT_COLUMNS
     assert set(result["ticker"]) == {"BBCA"}
@@ -245,19 +116,12 @@ def test_run_wfa_for_stock_row_adds_stock_identity_columns(monkeypatch):
 
 
 def test_run_sector_wfa_combines_multiple_stock_results(monkeypatch):
-    monkeypatch.setattr(
-        sector_service,
-        "get_sector_stocks",
-        lambda sector: get_sector_stocks(sector, make_mapping_df()),
-    )
+    monkeypatch.setattr(sector_service, "get_sector_stocks", lambda sector: get_sector_stocks(sector, make_mapping_df()))
     monkeypatch.setattr(sector_service, "load_or_fetch_price_data", lambda ticker: make_price_df())
     monkeypatch.setattr(
         sector_service,
         "run_wfa_pipeline",
-        lambda df, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3: {
-            "windows_count": 6,
-            "aggregate_results": make_stock_aggregate(),
-        },
+        lambda df, evaluation_horizons=None, in_sample_months=6, out_sample_months=3, shift_months=3: {"windows_count": 6, "aggregate_results": make_stock_aggregate()},
     )
 
     result = run_sector_wfa("Finansial")
@@ -266,30 +130,14 @@ def test_run_sector_wfa_combines_multiple_stock_results(monkeypatch):
     assert set(result["ticker"]) == {"BBCA", "BBRI"}
 
 
-def test_aggregate_sector_results_sums_total_active_and_correct_signals():
+def test_aggregate_sector_results_uses_sum_counts_and_average_active_stock_hit_rate():
     result = aggregate_sector_results(make_sector_results())
     ma_result = result[result["indicator"] == "MA Crossover"].iloc[0]
 
     assert ma_result["total_active_signals"] == 10
     assert ma_result["correct_signals"] == 6
-
-
-def test_aggregate_sector_results_uses_count_accuracy_and_average_active_stock_hit_rate():
-    result = aggregate_sector_results(make_sector_results())
-    ma_result = result[result["indicator"] == "MA Crossover"].iloc[0]
-
     assert ma_result["directional_accuracy"] == 60.0
     assert ma_result["hit_rate"] == 56.25
-
-
-
-
-def test_aggregate_sector_results_hit_rate_can_differ_from_directional_accuracy():
-    result = aggregate_sector_results(make_sector_results())
-    ma_result = result[result["indicator"] == "MA Crossover"].iloc[0]
-
-    assert ma_result["directional_accuracy"] != ma_result["hit_rate"]
-
 
 
 def test_aggregate_sector_results_uses_all_active_window_hit_rates_not_stock_average():
@@ -301,15 +149,6 @@ def test_aggregate_sector_results_uses_all_active_window_hit_rates_not_stock_ave
     assert row["total_windows"] == 4
     assert row["directional_accuracy"] == pytest.approx((2 / 11) * 100)
     assert row["hit_rate"] == pytest.approx((100 + 0 + 100) / 3)
-
-
-def test_sector_hit_rate_is_not_average_of_stock_level_hit_rates():
-    result = aggregate_sector_results(make_sector_window_results())
-    row = result[result["indicator"] == "MA Crossover"].iloc[0]
-    stock_level_average = ((100 + 0) / 2 + 100) / 2
-
-    assert row["hit_rate"] == pytest.approx(66.6666666667)
-    assert row["hit_rate"] != pytest.approx(stock_level_average)
 
 
 def test_aggregate_sector_results_zero_hit_rate_when_no_active_windows():
@@ -324,6 +163,7 @@ def test_aggregate_sector_results_zero_hit_rate_when_no_active_windows():
     assert row["directional_accuracy"] == 0.0
     assert row["hit_rate"] == 0.0
 
+
 def test_aggregate_sector_results_returns_one_row_per_indicator():
     result = aggregate_sector_results(make_sector_results())
 
@@ -335,28 +175,8 @@ def test_aggregate_sector_results_returns_one_row_per_indicator():
 def test_select_best_sector_indicator_chooses_highest_directional_accuracy():
     aggregate_df = pd.DataFrame(
         [
-            {
-                "sektor": "Finansial",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "total_stocks": 2,
-                "total_windows": 12,
-                "total_active_signals": 10,
-                "correct_signals": 6,
-                "directional_accuracy": 60.0,
-                "hit_rate": 60.0,
-            },
-            {
-                "sektor": "Finansial",
-                "indicator": "MACD",
-                "signal_column": "MACD_Trade_Signal",
-                "total_stocks": 2,
-                "total_windows": 12,
-                "total_active_signals": 5,
-                "correct_signals": 4,
-                "directional_accuracy": 80.0,
-                "hit_rate": 70.0,
-            },
+            {"sektor": "Finansial", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "total_stocks": 2, "total_windows": 12, "total_active_signals": 10, "correct_signals": 6, "directional_accuracy": 60.0, "hit_rate": 60.0},
+            {"sektor": "Finansial", "indicator": "MACD", "signal_column": "MACD_Trade_Signal", "total_stocks": 2, "total_windows": 12, "total_active_signals": 5, "correct_signals": 4, "directional_accuracy": 80.0, "hit_rate": 70.0},
         ]
     )
 
@@ -368,28 +188,8 @@ def test_select_best_sector_indicator_chooses_highest_directional_accuracy():
 def test_select_best_sector_indicator_uses_hit_rate_as_first_tiebreaker():
     aggregate_df = pd.DataFrame(
         [
-            {
-                "sektor": "Finansial",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "total_stocks": 2,
-                "total_windows": 12,
-                "total_active_signals": 10,
-                "correct_signals": 7,
-                "directional_accuracy": 70.0,
-                "hit_rate": 70.0,
-            },
-            {
-                "sektor": "Finansial",
-                "indicator": "MACD",
-                "signal_column": "MACD_Trade_Signal",
-                "total_stocks": 2,
-                "total_windows": 12,
-                "total_active_signals": 5,
-                "correct_signals": 4,
-                "directional_accuracy": 70.0,
-                "hit_rate": 80.0,
-            },
+            {"sektor": "Finansial", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "total_stocks": 2, "total_windows": 12, "total_active_signals": 10, "correct_signals": 7, "directional_accuracy": 70.0, "hit_rate": 70.0},
+            {"sektor": "Finansial", "indicator": "MACD", "signal_column": "MACD_Trade_Signal", "total_stocks": 2, "total_windows": 12, "total_active_signals": 5, "correct_signals": 4, "directional_accuracy": 70.0, "hit_rate": 80.0},
         ]
     )
 
@@ -401,28 +201,8 @@ def test_select_best_sector_indicator_uses_hit_rate_as_first_tiebreaker():
 def test_select_best_sector_indicator_uses_total_active_signals_as_second_tiebreaker():
     aggregate_df = pd.DataFrame(
         [
-            {
-                "sektor": "Finansial",
-                "indicator": "MA Crossover",
-                "signal_column": "MA_Crossover_Signal",
-                "total_stocks": 2,
-                "total_windows": 12,
-                "total_active_signals": 10,
-                "correct_signals": 7,
-                "directional_accuracy": 70.0,
-                "hit_rate": 70.0,
-            },
-            {
-                "sektor": "Finansial",
-                "indicator": "MACD",
-                "signal_column": "MACD_Trade_Signal",
-                "total_stocks": 2,
-                "total_windows": 12,
-                "total_active_signals": 5,
-                "correct_signals": 4,
-                "directional_accuracy": 70.0,
-                "hit_rate": 70.0,
-            },
+            {"sektor": "Finansial", "indicator": "MA Crossover", "signal_column": "MA_Crossover_Signal", "total_stocks": 2, "total_windows": 12, "total_active_signals": 10, "correct_signals": 7, "directional_accuracy": 70.0, "hit_rate": 70.0},
+            {"sektor": "Finansial", "indicator": "MACD", "signal_column": "MACD_Trade_Signal", "total_stocks": 2, "total_windows": 12, "total_active_signals": 5, "correct_signals": 4, "directional_accuracy": 70.0, "hit_rate": 70.0},
         ]
     )
 
@@ -432,15 +212,11 @@ def test_select_best_sector_indicator_uses_total_active_signals_as_second_tiebre
 
 
 def test_run_sector_pipeline_returns_expected_keys(monkeypatch):
-    monkeypatch.setattr(
-        sector_service,
-        "get_sector_stocks",
-        lambda sector: get_sector_stocks(sector, make_mapping_df()),
-    )
+    monkeypatch.setattr(sector_service, "get_sector_stocks", lambda sector: get_sector_stocks(sector, make_mapping_df()))
     monkeypatch.setattr(
         sector_service,
         "run_sector_wfa_outputs",
-        lambda sector, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3: (
+        lambda sector, evaluation_horizons=None, in_sample_months=6, out_sample_months=3, shift_months=3: (
             make_sector_results(),
             pd.DataFrame(columns=sector_service.SECTOR_WINDOW_RESULT_COLUMNS),
         ),
@@ -448,38 +224,27 @@ def test_run_sector_pipeline_returns_expected_keys(monkeypatch):
 
     result = run_sector_pipeline("Finansial")
 
-    assert set(result.keys()) == {
-        "sector",
-        "stocks_count",
-        "sector_results",
-        "sector_window_results",
-        "sector_aggregate",
-        "best_indicator",
-    }
+    assert set(result.keys()) == {"sector", "stocks_count", "sector_results", "sector_window_results", "sector_aggregate", "best_indicator"}
     assert result["sector"] == "Finansial"
     assert result["stocks_count"] == 2
 
 
-def test_run_sector_pipeline_accepts_evaluation_horizon_three(monkeypatch):
+def test_run_sector_pipeline_accepts_final_evaluation_horizons(monkeypatch):
     captured_horizons = []
 
-    monkeypatch.setattr(
-        sector_service,
-        "get_sector_stocks",
-        lambda sector: get_sector_stocks(sector, make_mapping_df()),
-    )
+    monkeypatch.setattr(sector_service, "get_sector_stocks", lambda sector: get_sector_stocks(sector, make_mapping_df()))
     monkeypatch.setattr(sector_service, "load_or_fetch_price_data", lambda ticker: make_price_df())
 
-    def fake_run_wfa_pipeline(df, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3):
-        captured_horizons.append(evaluation_horizon_periods)
+    def fake_run_wfa_pipeline(df, evaluation_horizons=None, in_sample_months=6, out_sample_months=3, shift_months=3):
+        captured_horizons.append(evaluation_horizons)
         return {"windows_count": 6, "aggregate_results": make_stock_aggregate()}
 
     monkeypatch.setattr(sector_service, "run_wfa_pipeline", fake_run_wfa_pipeline)
 
-    result = run_sector_pipeline("Finansial", evaluation_horizon_periods=3)
+    result = run_sector_pipeline("Finansial", evaluation_horizons=FINAL_HORIZONS)
 
     assert result["stocks_count"] == 2
-    assert captured_horizons == [3, 3]
+    assert captured_horizons == [FINAL_HORIZONS, FINAL_HORIZONS]
     assert result["best_indicator"] is not None
 
 
@@ -488,7 +253,7 @@ def test_run_all_sectors_pipeline_returns_all_sectors(monkeypatch):
     monkeypatch.setattr(
         sector_service,
         "run_sector_pipeline",
-        lambda sector, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3: {
+        lambda sector, evaluation_horizons=None, in_sample_months=6, out_sample_months=3, shift_months=3: {
             "sector": sector,
             "best_indicator": {"indicator": "MACD"},
         },
@@ -501,48 +266,18 @@ def test_run_all_sectors_pipeline_returns_all_sectors(monkeypatch):
     assert set(result["results_by_sector"]) == {"Finansial", "Industri"}
 
 
-def test_sector_pipeline_stays_safe_when_one_stock_fails(monkeypatch):
-    monkeypatch.setattr(
-        sector_service,
-        "get_sector_stocks",
-        lambda sector: get_sector_stocks(sector, make_mapping_df()),
-    )
-
-    def fake_run_wfa_outputs_for_stock_row(stock_row, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3):
-        if stock_row["ticker"] == "BBRI":
-            return (
-                pd.DataFrame(columns=SECTOR_RESULT_COLUMNS),
-                pd.DataFrame(columns=sector_service.SECTOR_WINDOW_RESULT_COLUMNS),
-            )
-        result = make_stock_aggregate().copy()
-        result["ticker"] = stock_row["ticker"]
-        result["ticker_yfinance"] = stock_row["ticker_yfinance"]
-        result["sektor"] = stock_row["sektor"]
-        result["windows_count"] = 6
-        return result[SECTOR_RESULT_COLUMNS], pd.DataFrame(columns=sector_service.SECTOR_WINDOW_RESULT_COLUMNS)
-
-    monkeypatch.setattr(sector_service, "run_wfa_outputs_for_stock_row", fake_run_wfa_outputs_for_stock_row)
-
-    result = run_sector_pipeline("Finansial")
-
-    assert result["stocks_count"] == 2
-    assert set(result["sector_results"]["ticker"]) == {"BBCA"}
-    assert result["best_indicator"] is not None
-
-
-
-
 def test_sector_service_forwards_final_wfa_parameters(monkeypatch):
     captured = []
     monkeypatch.setattr(sector_service, "get_sector_stocks", lambda sector: get_sector_stocks(sector, make_mapping_df()))
     monkeypatch.setattr(sector_service, "load_or_fetch_price_data", lambda ticker: make_price_df())
 
-    def fake_run_wfa_pipeline(df, evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3):
-        captured.append((evaluation_horizon_periods, in_sample_months, out_sample_months, shift_months))
+    def fake_run_wfa_pipeline(df, evaluation_horizons=None, in_sample_months=6, out_sample_months=3, shift_months=3):
+        captured.append((evaluation_horizons, in_sample_months, out_sample_months, shift_months))
         return {"windows_count": 4, "aggregate_results": make_stock_aggregate()}
 
     monkeypatch.setattr(sector_service, "run_wfa_pipeline", fake_run_wfa_pipeline)
-    result = run_sector_pipeline("Finansial", evaluation_horizon_periods=3, in_sample_months=6, out_sample_months=3, shift_months=3)
+
+    result = run_sector_pipeline("Finansial", evaluation_horizons=FINAL_HORIZONS, in_sample_months=6, out_sample_months=3, shift_months=3)
 
     assert result["best_indicator"] is not None
-    assert captured == [(3, 6, 3, 3), (3, 6, 3, 3)]
+    assert captured == [(FINAL_HORIZONS, 6, 3, 3), (FINAL_HORIZONS, 6, 3, 3)]

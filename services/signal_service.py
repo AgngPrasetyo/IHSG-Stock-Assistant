@@ -1,4 +1,4 @@
-﻿"""Technical-analysis signals for the final SMA20/SMA50 WFA methods."""
+﻿"""Technical-analysis signals for final SMA10/SMA50, MACD, and RSI methods."""
 
 from __future__ import annotations
 
@@ -14,16 +14,12 @@ RSI_SIGNAL_COLUMN = "RSI_Signal"
 
 
 def generate_ma_signal(df: pd.DataFrame) -> pd.DataFrame:
-    """Signal MA Crossover SMA10/SMA50 confirmed by moderate volume filter."""
+    """Signal MA Crossover SMA10/SMA50 without additional filters."""
     signal_df = _ensure_sma_columns(_prepare_signal_dataframe(df), 10, 50)
-    signal_df = _ensure_volume_ma_columns(signal_df, 20)
 
     signal_df[MA_CROSSOVER_SIGNAL_COLUMN] = HOLD
 
-    valid = (
-        _has_current_and_previous_values(signal_df, ["SMA10", "SMA50"])
-        & signal_df[["Volume", "Volume_MA20"]].notna().all(axis=1)
-    )
+    valid = _has_current_and_previous_values(signal_df, ["SMA10", "SMA50"])
 
     bullish_cross = (
         valid
@@ -37,68 +33,66 @@ def generate_ma_signal(df: pd.DataFrame) -> pd.DataFrame:
         & (signal_df["SMA10"] < signal_df["SMA50"])
     )
 
-    volume_confirmed = signal_df["Volume"] >= signal_df["Volume_MA20"] * 0.8
-
-    signal_df.loc[bullish_cross & volume_confirmed, MA_CROSSOVER_SIGNAL_COLUMN] = BUY
-    signal_df.loc[bearish_cross & volume_confirmed, MA_CROSSOVER_SIGNAL_COLUMN] = SELL
+    signal_df.loc[bullish_cross, MA_CROSSOVER_SIGNAL_COLUMN] = BUY
+    signal_df.loc[bearish_cross, MA_CROSSOVER_SIGNAL_COLUMN] = SELL
 
     return signal_df
 
 
 def generate_macd_signal(df: pd.DataFrame) -> pd.DataFrame:
-    """Signal MACD crosses confirmed by SMA50 trend, histogram threshold, and volume filter."""
-    signal_df = _ensure_sma_columns(_prepare_signal_dataframe(df), 50)
-    signal_df = _ensure_volume_ma_columns(signal_df, 20)
+    """Signal MACD Line crossover against Signal Line without additional filters."""
+    signal_df = _prepare_signal_dataframe(df)
 
     if not {"MACD", "MACD_Signal"}.issubset(signal_df.columns):
         signal_df = calculate_macd(signal_df)
 
     signal_df[MACD_TRADE_SIGNAL_COLUMN] = HOLD
 
-    valid = (
-        _has_current_and_previous_values(signal_df, ["MACD", "MACD_Signal"])
-        & signal_df[["Close", "SMA50", "Volume", "Volume_MA20"]].notna().all(axis=1)
-        & (signal_df["Close"] != 0)
-    )
+    valid = _has_current_and_previous_values(signal_df, ["MACD", "MACD_Signal"])
 
     bullish_cross = (
         valid
         & (signal_df["MACD"].shift(1) <= signal_df["MACD_Signal"].shift(1))
         & (signal_df["MACD"] > signal_df["MACD_Signal"])
-        & (signal_df["Close"] > signal_df["SMA50"])
     )
 
     bearish_cross = (
         valid
         & (signal_df["MACD"].shift(1) >= signal_df["MACD_Signal"].shift(1))
         & (signal_df["MACD"] < signal_df["MACD_Signal"])
-        & (signal_df["Close"] < signal_df["SMA50"])
     )
 
-    bullish_distance = (signal_df["MACD"] - signal_df["MACD_Signal"]) / signal_df["Close"]
-    bearish_distance = (signal_df["MACD_Signal"] - signal_df["MACD"]) / signal_df["Close"]
-    volume_confirmed = signal_df["Volume"] >= signal_df["Volume_MA20"]
-
-    buy = bullish_cross & (bullish_distance >= 0.001) & volume_confirmed
-    sell = bearish_cross & (bearish_distance >= 0.001) & volume_confirmed
-
-    signal_df.loc[buy, MACD_TRADE_SIGNAL_COLUMN] = BUY
-    signal_df.loc[sell, MACD_TRADE_SIGNAL_COLUMN] = SELL
+    signal_df.loc[bullish_cross, MACD_TRADE_SIGNAL_COLUMN] = BUY
+    signal_df.loc[bearish_cross, MACD_TRADE_SIGNAL_COLUMN] = SELL
 
     return signal_df
 
-
 def generate_rsi_signal(df: pd.DataFrame) -> pd.DataFrame:
-    """Signal RSI exits from extremes confirmed."""
-    signal_df = _ensure_sma_columns(_prepare_signal_dataframe(df), 50)
+    """Signal RSI exits from oversold/overbought areas without additional filters."""
+    signal_df = _prepare_signal_dataframe(df)
+
     if "RSI" not in signal_df.columns:
         signal_df = calculate_rsi(signal_df, 14)
+
     signal_df[RSI_SIGNAL_COLUMN] = HOLD
-    valid = _has_current_and_previous_values(signal_df, ["Close", "SMA50", "RSI"])
-    buy = valid & (signal_df["RSI"].shift(1) < 30) & (signal_df["RSI"] >= 30) & (signal_df["Close"] > signal_df["SMA50"])
-    sell = valid & (signal_df["RSI"].shift(1) > 70) & (signal_df["RSI"] <= 70) & (signal_df["Close"] < signal_df["SMA50"])
+
+    valid = _has_current_and_previous_values(signal_df, ["RSI"])
+
+    buy = (
+        valid
+        & (signal_df["RSI"].shift(1) < 30)
+        & (signal_df["RSI"] >= 30)
+    )
+
+    sell = (
+        valid
+        & (signal_df["RSI"].shift(1) > 70)
+        & (signal_df["RSI"] <= 70)
+    )
+
     signal_df.loc[buy, RSI_SIGNAL_COLUMN] = BUY
     signal_df.loc[sell, RSI_SIGNAL_COLUMN] = SELL
+
     return signal_df
 
 
@@ -190,18 +184,17 @@ def _build_reason(row: pd.Series, indicator_name: str) -> str:
     name = _normalize_indicator_name(indicator_name)
 
     required = {
-        "MA Crossover": ["Close", "SMA10", "SMA50", "Volume", "Volume_MA20"],
-        "MACD": ["Close", "SMA50", "MACD", "MACD_Signal", "Volume", "Volume_MA20"],
-        "RSI": ["Close", "SMA50", "RSI"],
+        "MA Crossover": ["Close", "SMA10", "SMA50"],
+        "MACD": ["Close", "MACD", "MACD_Signal"],
+        "RSI": ["Close", "RSI"],
     }[name]
-
     if any(pd.isna(row.get(column)) for column in required):
-        return f"Nilai {name} atau filter pendukung belum cukup, sehingga sinyal analisis teknikal HOLD."
+        return f"Nilai {name} belum cukup, sehingga sinyal analisis teknikal HOLD."
 
     descriptions = {
-        "MA Crossover": "MA Crossover SMA10/SMA50 dengan filter Volume >= 0.8 x VolMA20",
-        "MACD": "MACD crossover dengan filter tren SMA50, histogram threshold 0.10%, dan Volume >= VolMA20",
-        "RSI": "RSI14 exit dari area ekstrem 30/70 dengan filter tren SMA50",
+        "MA Crossover": "MA Crossover SMA10/SMA50 tanpa filter tambahan",
+        "MACD": "MACD Line crossover terhadap Signal Line tanpa filter tambahan",
+        "RSI": "RSI14 exit dari area ekstrem 30/70 tanpa filter tambahan",
     }
 
     return f"Sinyal {name} menggunakan {descriptions[name]}."

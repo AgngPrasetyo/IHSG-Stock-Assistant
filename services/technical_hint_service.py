@@ -8,11 +8,25 @@ from typing import Any
 METRIC_ITEMS: list[dict[str, str]] = [
     {
         "term": "Directional Accuracy",
-        "description": "Persentase kecocokan seluruh sinyal aktif BUY/SELL terhadap arah harga setelah 3 trading days.",
+        "description": (
+            "Persentase kecocokan seluruh sinyal BUY/SELL terhadap arah harga "
+            "berdasarkan Average Forward Return pada T+1, T+3, T+5, dan T+10 "
+            "hari perdagangan bursa saham. Metrik ini digunakan untuk menentukan indikator terbaik."
+        ),
+    },
+    {
+    "term": "Average Forward Return",
+    "description": (
+        "Rata-rata return harga setelah sinyal pada T+1, T+3, T+5, dan T+10 "
+        "hari perdagangan bursa saham. Nilai ini digunakan untuk menilai apakah "
+        "arah sinyal BUY atau SELL sesuai secara historis."
+    ),
     },
     {
         "term": "Hit Rate",
-        "description": "Rata-rata persentase keberhasilan sinyal aktif pada setiap window evaluasi.",
+        "description": (
+            "Rata-rata keberhasilan sinyal BUY/SELL yang muncul pada setiap window evaluasi."
+        ),
     },
     {
         "term": "Total Active Signals",
@@ -20,42 +34,45 @@ METRIC_ITEMS: list[dict[str, str]] = [
     },
     {
         "term": "Correct Signals",
-        "description": "Jumlah sinyal BUY dan SELL yang sesuai dengan arah harga setelah 3 trading days.",
+        "description": (
+            "Jumlah sinyal BUY dan SELL yang sesuai berdasarkan Average Forward Return "
+            "pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham."
+        ),
     },
 ]
 
 
 _HINTS: dict[str, dict[str, Any]] = {
     "ma crossover": {
-        "title": "Hint istilah MA Crossover",
-        "indicator": "MA Crossover",
-        "items": [
-            {
-                "term": "MA Crossover",
-                "description": "Metode yang membaca perpotongan dua rata-rata harga.",
-            },
-            {
-                "term": "SMA20",
-                "description": "Rata-rata harga penutupan 20 hari perdagangan terakhir.",
-            },
-            {
-                "term": "SMA50",
-                "description": "Rata-rata harga penutupan 50 hari perdagangan terakhir.",
-            },
-            {
-                "term": "BUY",
-                "description": "Muncul saat SMA20 memotong SMA50 dari bawah ke atas.",
-            },
-            {
-                "term": "SELL",
-                "description": "Muncul saat SMA20 memotong SMA50 dari atas ke bawah.",
-            },
-            {
-                "term": "HOLD",
-                "description": "Muncul saat tidak ada crossover baru pada data terakhir.",
-            },
-        ],
-    },
+    "title": "Hint istilah MA Crossover",
+    "indicator": "MA Crossover",
+    "items": [
+        {
+            "term": "MA Crossover",
+            "description": "Metode yang membaca perpotongan dua rata-rata harga.",
+        },
+        {
+            "term": "SMA10",
+            "description": "Rata-rata harga penutupan 10 hari perdagangan terakhir.",
+        },
+        {
+            "term": "SMA50",
+            "description": "Rata-rata harga penutupan 50 hari perdagangan terakhir.",
+        },
+        {
+            "term": "BUY",
+            "description": "Muncul saat SMA10 memotong SMA50 dari bawah ke atas.",
+        },
+        {
+            "term": "SELL",
+            "description": "Muncul saat SMA10 memotong SMA50 dari atas ke bawah.",
+        },
+        {
+            "term": "HOLD",
+            "description": "Muncul saat tidak ada sinyal BUY atau SELL baru pada data terakhir.",
+        },
+    ],
+},
     "rsi": {
     "title": "Hint istilah RSI",
     "indicator": "RSI",
@@ -65,12 +82,12 @@ _HINTS: dict[str, dict[str, Any]] = {
             "description": "Indikator momentum yang membaca kekuatan pergerakan harga pada skala 0 sampai 100.",
         },
         {
-            "term": "Overbought",
-            "description": "Kondisi ketika RSI berada pada area tinggi dan harga berpotensi mengalami pelemahan momentum.",
+        "term": "Overbought",
+        "description": "Kondisi ketika RSI berada di atas level 70 dan sistem menunggu RSI turun keluar dari area tersebut untuk membaca sinyal SELL.",
         },
         {
-            "term": "Oversold",
-            "description": "Kondisi ketika RSI berada pada area rendah dan harga berpotensi mengalami penguatan momentum.",
+        "term": "Oversold",
+        "description": "Kondisi ketika RSI berada di bawah level 30 dan sistem menunggu RSI naik keluar dari area tersebut untuk membaca sinyal BUY.",
         },
         {
             "term": "BUY",
@@ -104,11 +121,11 @@ _HINTS: dict[str, dict[str, Any]] = {
         },
         {
             "term": "BUY",
-            "description": "Muncul saat MACD Line memotong Signal Line dari bawah ke atas sesuai aturan sistem.",
+            "description": "Muncul saat MACD Line memotong Signal Line dari bawah ke atas.",
         },
         {
             "term": "SELL",
-            "description": "Muncul saat MACD Line memotong Signal Line dari atas ke bawah sesuai aturan sistem.",
+            "description": "Muncul saat MACD Line memotong Signal Line dari atas ke bawah.",
         },
         {
             "term": "HOLD",

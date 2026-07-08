@@ -39,7 +39,10 @@ WFA_CONFIG = {
     "in_sample_months": 6,
     "out_sample_months": 3,
     "shift_months": 3,
-    "evaluation_horizon_periods": 3,
+    "evaluation_method": "Average Forward Return",
+    "evaluation_horizons": [1, 3, 5, 10],
+    "evaluation_horizon_label": "T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham",
+    "evaluation_horizon_periods": None,
 }
 DATA_PERIOD = {
     "start_date": START_DATE,
@@ -169,6 +172,26 @@ def prepare_post_signal_validation_dataframe(ticker_yfinance: str) -> pd.DataFra
     analysis_df = generate_macd_signal(analysis_df)
     return generate_rsi_signal(analysis_df)
 
+def get_last_active_signal(df: pd.DataFrame, signal_column: str) -> dict[str, Any] | None:
+    """Return the latest BUY/SELL signal from the final signal column."""
+    if df is None or df.empty or signal_column not in df.columns:
+        return None
+
+    active_df = df[df[signal_column].astype(str).str.upper().isin({"BUY", "SELL"})].copy()
+    if active_df.empty:
+        return None
+
+    last_date = active_df.index[-1]
+    last_row = active_df.iloc[-1]
+    signal = str(last_row.get(signal_column, "")).upper()
+
+    return {
+        "signal": signal,
+        "date": pd.Timestamp(last_date).strftime("%Y-%m-%d"),
+        "close": _json_value(last_row.get("Close")),
+    }
+
+
 def get_latest_signal_by_indicator(df: pd.DataFrame, indicator_name: str) -> str:
     """Return the latest BUY, SELL, or HOLD value for a final indicator."""
     column = _get_signal_column(indicator_name)
@@ -191,28 +214,22 @@ def build_latest_condition(df: pd.DataFrame, indicator_name: str) -> str:
 
     if name == "MA Crossover":
         sma10 = _format_number(row.get("SMA10"))
-        volume = _format_number(row.get("Volume"))
-        volume_ma20 = _format_number(row.get("Volume_MA20"))
         position = _relative_position(row.get("SMA10"), row.get("SMA50"), "SMA10", "SMA50")
-        volume_position = _relative_position(row.get("Volume"), row.get("Volume_MA20"), "Volume", "VolMA20")
 
         signal_note = (
-            "Sinyal HOLD karena tidak ada crossover baru atau filter volume belum terpenuhi pada data terakhir."
+            "Sinyal HOLD karena tidak ada crossover baru antara SMA10 dan SMA50 pada data terakhir."
             if signal == "HOLD"
-            else f"Sinyal {signal} muncul karena ada crossover SMA10/SMA50 baru yang terkonfirmasi filter volume."
+            else f"Sinyal {signal} muncul karena terjadi crossover baru antara SMA10 dan SMA50."
         )
 
         return (
-            f"Close {close}; SMA10 {sma10}; SMA50 {sma50}; "
-            f"Volume {volume}; VolMA20 {volume_ma20}. "
-            f"{position}; {volume_position}. {signal_note}"
+            f"Close {close}; SMA10 {sma10}; SMA50 {sma50}. "
+            f"{position}. {signal_note}"
         )
     if name == "MACD":
         macd = _format_number(row.get("MACD"))
         macd_signal = _format_number(row.get("MACD_Signal"))
         histogram = _format_number(row.get("MACD_Histogram"))
-        volume = _format_number(row.get("Volume"))
-        volume_ma20 = _format_number(row.get("Volume_MA20"))
 
         macd_position = _relative_position(
             row.get("MACD"),
@@ -220,26 +237,22 @@ def build_latest_condition(df: pd.DataFrame, indicator_name: str) -> str:
             "MACD Line",
             "Signal Line",
         )
-        trend = _relative_position(row.get("Close"), row.get("SMA50"), "Harga", "SMA50")
-        volume_position = _relative_position(row.get("Volume"), row.get("Volume_MA20"), "Volume", "VolMA20")
 
         signal_note = (
-            "Sinyal HOLD karena seluruh syarat pembentukan sinyal MACD belum terpenuhi secara bersamaan, seperti crossover baru, filter tren SMA50, threshold histogram 0,10%, dan filter volume."
+            "Sinyal HOLD karena tidak ada crossover baru antara MACD Line dan Signal Line pada data terakhir."
             if signal == "HOLD"
-            else f"Sinyal {signal} muncul karena crossover MACD baru terkonfirmasi tren SMA50, threshold histogram 0,10%, dan filter volume."
+            else f"Sinyal {signal} muncul karena terjadi crossover baru antara MACD Line dan Signal Line."
         )
 
         return (
-            f"MACD Line {macd}; Signal Line {macd_signal}; Histogram {histogram}; "
-            f"Close {close}; SMA50 {sma50}; Volume {volume}; VolMA20 {volume_ma20}. "
-            f"{macd_position}; {trend}; {volume_position}. {signal_note}"
+            f"MACD Line {macd}; Signal Line {macd_signal}; Histogram {histogram}. "
+            f"{macd_position}. {signal_note}"
         )
 
     rsi = _format_number(row.get("RSI"))
     rsi_state = _rsi_state(row.get("RSI"))
-    trend = _relative_position(row.get("Close"), row.get("SMA50"), "Harga", "SMA50")
     signal_note = _rsi_signal_note(signal, rsi_state)
-    return f"RSI {rsi} dengan status {rsi_state}; Close {close}; SMA50 {sma50}. {trend}. {signal_note}"
+    return f"RSI {rsi} dengan status {rsi_state}. {signal_note}"
 
 
 def build_chart_data(df: pd.DataFrame, limit: int = 120) -> list[dict[str, Any]]:
@@ -312,6 +325,7 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
     signal_column = _get_signal_column(indicator_name)
     signal_date = analysis_df.index[-1]
     latest_signal = get_latest_signal_by_indicator(analysis_df, indicator_name)
+    last_active_signal = get_last_active_signal(analysis_df, signal_column)
     validation_df = _build_validation_dataframe(
         str(stock_info["ticker_yfinance"]),
         analysis_df,
@@ -333,6 +347,7 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
         "sector": stock_info["sektor"],
         "best_indicator": indicator_name,
         "latest_signal": latest_signal,
+        "last_active_signal": last_active_signal,
         "latest_condition": build_latest_condition(analysis_df, indicator_name),
         "latest_date": pd.Timestamp(analysis_df.index[-1]).strftime("%Y-%m-%d"),
         "latest_close": _json_value(latest_row.get("Close")),
@@ -423,12 +438,12 @@ def _rsi_state(value: Any) -> str:
 
 def _rsi_signal_note(signal: str, rsi_state: str) -> str:
     if signal != "HOLD":
-        return f"Sinyal {signal} muncul karena RSI keluar dari area ekstrem dan filter tren SMA50 terpenuhi."
+        return f"Sinyal {signal} muncul karena RSI keluar dari area ekstrem 30/70."
     if rsi_state == "oversold":
-        return "Sinyal HOLD; RSI oversold belum otomatis BUY karena sistem menunggu RSI keluar dari area oversold dan filter tren SMA50 terpenuhi."
+        return "Sinyal HOLD; RSI masih berada di area oversold dan sistem menunggu RSI naik keluar dari area tersebut."
     if rsi_state == "overbought":
-        return "Sinyal HOLD; RSI overbought belum otomatis SELL karena sistem menunggu RSI keluar dari area overbought dan filter tren SMA50 terpenuhi."
-    return "Sinyal HOLD karena syarat BUY atau SELL RSI belum lengkap pada data terakhir."
+        return "Sinyal HOLD; RSI masih berada di area overbought dan sistem menunggu RSI turun keluar dari area tersebut."
+    return "Sinyal HOLD karena RSI belum membentuk kondisi keluar dari area oversold atau overbought pada data terakhir."
 
 
 def _format_number(value: Any) -> str:

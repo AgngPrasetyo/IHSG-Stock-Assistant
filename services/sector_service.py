@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from services.metric_service import DEFAULT_FORWARD_HORIZONS
 from services.data_service import load_or_fetch_price_data
 from services.mapping_service import load_mapping
 from services.wfa_service import (
@@ -12,6 +13,8 @@ from services.wfa_service import (
     DEFAULT_SHIFT_MONTHS,
     run_wfa_pipeline,
 )
+
+DEFAULT_EVALUATION_HORIZONS = DEFAULT_FORWARD_HORIZONS
 
 SECTOR_RESULT_COLUMNS = [
     "sektor",
@@ -79,7 +82,7 @@ def get_sector_stocks(sector: str, mapping_df: pd.DataFrame | None = None) -> pd
 
 def run_wfa_for_stock_row(
     stock_row: pd.Series | dict[str, object],
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -88,9 +91,11 @@ def run_wfa_for_stock_row(
     try:
         row = pd.Series(stock_row)
         price_df = load_or_fetch_price_data(str(row["ticker_yfinance"]).strip())
+        selected_horizons = DEFAULT_EVALUATION_HORIZONS if evaluation_horizons is None else list(evaluation_horizons)
+
         wfa = run_wfa_pipeline(
             price_df,
-            evaluation_horizon_periods,
+            selected_horizons,
             in_sample_months,
             out_sample_months,
             shift_months,
@@ -111,7 +116,7 @@ def run_wfa_for_stock_row(
 
 def run_wfa_windows_for_stock_row(
     stock_row: pd.Series | dict[str, object],
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -122,7 +127,7 @@ def run_wfa_windows_for_stock_row(
         price_df = load_or_fetch_price_data(str(row["ticker_yfinance"]).strip())
         wfa = run_wfa_pipeline(
             price_df,
-            evaluation_horizon_periods,
+            evaluation_horizons,
             in_sample_months,
             out_sample_months,
             shift_months,
@@ -142,7 +147,7 @@ def run_wfa_windows_for_stock_row(
 
 def run_wfa_outputs_for_stock_row(
     stock_row: pd.Series | dict[str, object],
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -153,7 +158,7 @@ def run_wfa_outputs_for_stock_row(
         price_df = load_or_fetch_price_data(str(row["ticker_yfinance"]).strip())
         wfa = run_wfa_pipeline(
             price_df,
-            evaluation_horizon_periods,
+            evaluation_horizons,
             in_sample_months,
             out_sample_months,
             shift_months,
@@ -192,7 +197,7 @@ def run_wfa_outputs_for_stock_row(
 
 def run_sector_wfa(
     sector: str,
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -202,7 +207,7 @@ def run_sector_wfa(
     frames = [
         run_wfa_for_stock_row(
             row,
-            evaluation_horizon_periods,
+            evaluation_horizons,
             in_sample_months,
             out_sample_months,
             shift_months,
@@ -218,7 +223,7 @@ def run_sector_wfa(
 
 def run_sector_wfa_windows(
     sector: str,
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -228,7 +233,7 @@ def run_sector_wfa_windows(
     frames = [
         run_wfa_windows_for_stock_row(
             row,
-            evaluation_horizon_periods,
+            evaluation_horizons,
             in_sample_months,
             out_sample_months,
             shift_months,
@@ -244,7 +249,7 @@ def run_sector_wfa_windows(
 
 def run_sector_wfa_outputs(
     sector: str,
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -256,7 +261,7 @@ def run_sector_wfa_outputs(
     for _, row in stocks.iterrows():
         stock_result, window_result = run_wfa_outputs_for_stock_row(
             row,
-            evaluation_horizon_periods,
+            evaluation_horizons,
             in_sample_months,
             out_sample_months,
             shift_months,
@@ -333,7 +338,7 @@ def select_best_sector_indicator(sector_aggregate_df: pd.DataFrame) -> dict[str,
 
 def run_sector_pipeline(
     sector: str,
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -342,7 +347,7 @@ def run_sector_pipeline(
     stocks = get_sector_stocks(sector)
     results, window_results = run_sector_wfa_outputs(
         sector,
-        evaluation_horizon_periods,
+        evaluation_horizons,
         in_sample_months,
         out_sample_months,
         shift_months,
@@ -360,7 +365,7 @@ def run_sector_pipeline(
 
 
 def run_all_sectors_pipeline(
-    evaluation_horizon_periods: int = 3,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
@@ -373,7 +378,7 @@ def run_all_sectors_pipeline(
         "results_by_sector": {
             sector: run_sector_pipeline(
                 sector,
-                evaluation_horizon_periods,
+                evaluation_horizons,
                 in_sample_months,
                 out_sample_months,
                 shift_months,
