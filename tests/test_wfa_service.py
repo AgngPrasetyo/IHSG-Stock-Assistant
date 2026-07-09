@@ -9,6 +9,17 @@ from services.wfa_service import (
     run_wfa_for_window,
     run_wfa_pipeline,
     select_best_indicator,
+    WFA_RESULT_COLUMNS,
+    WFA_SELECTION_COLUMNS,
+    aggregate_wfa_results,
+    generate_wfa_windows,
+    prepare_wfa_dataframe,
+    run_wfa_all_indicators,
+    run_wfa_for_window,
+    run_wfa_pipeline,
+    run_wfa_selection_for_window,
+    run_wfa_selection_pipeline,
+    select_best_indicator,
 )
 
 
@@ -272,3 +283,32 @@ def test_short_data_returns_safe_empty_results():
     assert result["wfa_results"].empty
     assert result["aggregate_results"].empty
     assert result["best_indicator"] is None
+
+def test_run_wfa_selection_for_window_selects_indicator_on_in_sample_then_tests_oos():
+    window = generate_wfa_windows(make_dummy_ohlcv())[0]
+
+    result = run_wfa_selection_for_window(window, evaluation_horizons=[1, 3, 5, 10])
+
+    assert result is not None
+    assert result["selected_indicator"] in {"MA Crossover", "MACD", "RSI"}
+    assert result["selected_signal_column"] in {
+        "MA_Crossover_Signal",
+        "MACD_Trade_Signal",
+        "RSI_Signal",
+    }
+    assert "in_sample_directional_accuracy" in result
+    assert "out_sample_directional_accuracy" in result
+
+
+def test_run_wfa_selection_pipeline_returns_selection_dataframe():
+    result = run_wfa_selection_pipeline(
+        make_dummy_ohlcv(),
+        evaluation_horizons=[1, 3, 5, 10],
+        in_sample_months=6,
+        out_sample_months=3,
+        shift_months=3,
+    )
+
+    assert set(result.keys()) == {"windows_count", "selection_results"}
+    assert result["windows_count"] >= 1
+    assert list(result["selection_results"].columns) == WFA_SELECTION_COLUMNS

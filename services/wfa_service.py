@@ -43,6 +43,24 @@ WFA_AGGREGATE_COLUMNS = [
     "hit_rate",
 ]
 
+WFA_SELECTION_COLUMNS = [
+    "window_id",
+    "selected_indicator",
+    "selected_signal_column",
+    "in_sample_start",
+    "in_sample_end",
+    "out_sample_start",
+    "out_sample_end",
+    "in_sample_total_active_signals",
+    "in_sample_correct_signals",
+    "in_sample_directional_accuracy",
+    "in_sample_hit_rate",
+    "out_sample_total_active_signals",
+    "out_sample_correct_signals",
+    "out_sample_directional_accuracy",
+    "out_sample_hit_rate",
+]
+
 
 def prepare_wfa_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize OHLCV input into a Date-indexed frame for fixed-length rolling WFA."""
@@ -158,6 +176,127 @@ def run_wfa_for_window(
 
     return results
 
+def evaluate_indicators_on_period(
+    signal_df: pd.DataFrame,
+    period_df: pd.DataFrame,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
+) -> pd.DataFrame:
+    """
+    Evaluate all final indicators on a selected period.
+
+    The signal columns are calculated on the full window data, but the metric is
+    measured only on the rows that belong to the requested period. This allows
+    the same prepared indicator data to be evaluated separately on in-sample and
+    out-of-sample periods.
+    """
+    if (
+        not isinstance(signal_df, pd.DataFrame)
+        or signal_df.empty
+        or not isinstance(period_df, pd.DataFrame)
+        or period_df.empty
+    ):
+        return pd.DataFrame(columns=WFA_AGGREGATE_COLUMNS)
+
+    evaluation = signal_df.loc[signal_df.index.isin(period_df.index)].copy()
+    if evaluation.empty:
+        return pd.DataFrame(columns=WFA_AGGREGATE_COLUMNS)
+
+    results = []
+    for indicator, column in INDICATOR_SIGNAL_MAP.items():
+        metric = evaluate_signal_performance_average_forward(
+            evaluation,
+            column,
+            forward_horizons=evaluation_horizons,
+        )
+        results.append(
+            {
+                "indicator": indicator,
+                "signal_column": column,
+                "total_active_signals": int(metric["total_active_signals"]),
+                "correct_signals": int(metric["correct_signals"]),
+                "directional_accuracy": float(metric["directional_accuracy"]),
+                "hit_rate": float(metric["hit_rate"]),
+            }
+        )
+
+    return pd.DataFrame(results, columns=WFA_AGGREGATE_COLUMNS)
+
+
+def run_wfa_selection_for_window(
+    window: dict[str, object],
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
+) -> dict[str, object] | None:
+    """
+    Select the best indicator on in-sample data and validate it on out-sample data.
+
+    This is the stricter WFA workflow:
+    1. All candidate indicators are evaluated on the in-sample period.
+    2. The best in-sample indicator is selected using Directional Accuracy,
+       Hit Rate, and Total Active Signals as tie-breakers.
+    3. Only the selected indicator is evaluated on the out-of-sample period.
+    """
+    combined = window.get("combined_df")
+    in_df = window.get("in_sample_df")
+    out_df = window.get("out_sample_df")
+
+    if (
+        not isinstance(combined, pd.DataFrame)
+        or combined.empty
+        or not isinstance(in_df, pd.DataFrame)
+        or in_df.empty
+        or not isinstance(out_df, pd.DataFrame)
+        or out_df.empty
+    ):
+        return None
+
+    signal_df = generate_all_signals(calculate_all_indicators(combined))
+
+    in_sample_results = evaluate_indicators_on_period(
+        signal_df,
+        in_df,
+        evaluation_horizons=evaluation_horizons,
+    )
+    if in_sample_results.empty:
+        return None
+
+    selected = select_best_indicator(in_sample_results)
+    if not selected:
+        return None
+
+    out_sample_results = evaluate_indicators_on_period(
+        signal_df,
+        out_df,
+        evaluation_horizons=evaluation_horizons,
+    )
+    if out_sample_results.empty:
+        return None
+
+    selected_out = out_sample_results[
+        out_sample_results["indicator"] == selected["indicator"]
+    ]
+    if selected_out.empty:
+        return None
+
+    out_row = selected_out.iloc[0]
+
+    return {
+        "window_id": int(window["window_id"]),
+        "selected_indicator": selected["indicator"],
+        "selected_signal_column": selected["signal_column"],
+        "in_sample_start": _format_date(window["in_sample_start"]),
+        "in_sample_end": _format_date(window["in_sample_end"]),
+        "out_sample_start": _format_date(window["out_sample_start"]),
+        "out_sample_end": _format_date(window["out_sample_end"]),
+        "in_sample_total_active_signals": int(selected["total_active_signals"]),
+        "in_sample_correct_signals": int(selected["correct_signals"]),
+        "in_sample_directional_accuracy": float(selected["directional_accuracy"]),
+        "in_sample_hit_rate": float(selected["hit_rate"]),
+        "out_sample_total_active_signals": int(out_row["total_active_signals"]),
+        "out_sample_correct_signals": int(out_row["correct_signals"]),
+        "out_sample_directional_accuracy": float(out_row["directional_accuracy"]),
+        "out_sample_hit_rate": float(out_row["hit_rate"]),
+    }
+
 
 def run_wfa_all_indicators(
     df: pd.DataFrame,
@@ -219,6 +358,38 @@ def select_best_indicator(aggregate_df: pd.DataFrame) -> dict[str, object] | Non
         "correct_signals": int(row["correct_signals"]),
     }
 
+def run_wfa_selection_pipeline(
+    df: pd.DataFrame,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
+    in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
+    out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
+    shift_months: int = DEFAULT_SHIFT_MONTHS,
+) -> dict[str, object]:
+    """
+    Run WFA selection for one stock.
+
+    This pipeline keeps the old fixed-length 6,3,3 window structure, but changes
+    the logic from evaluating all indicators directly on out-sample data into
+    selecting the best indicator on in-sample data and validating the selected
+    indicator on out-sample data.
+    """
+    windows = generate_wfa_windows(df, in_sample_months, out_sample_months, shift_months)
+
+    records = []
+    for window in windows:
+        result = run_wfa_selection_for_window(window, evaluation_horizons)
+        if result is not None:
+            records.append(result)
+
+    if not records:
+        selection_results = pd.DataFrame(columns=WFA_SELECTION_COLUMNS)
+    else:
+        selection_results = pd.DataFrame(records, columns=WFA_SELECTION_COLUMNS)
+
+    return {
+        "windows_count": len(windows),
+        "selection_results": selection_results,
+    }
 
 
 def run_wfa_pipeline(
