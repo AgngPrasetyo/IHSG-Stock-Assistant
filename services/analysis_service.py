@@ -15,7 +15,12 @@ from services.data_service import (
     load_or_fetch_price_data,
 )
 from services.indicator_service import calculate_all_indicators
-from services.mapping_service import get_stock_info, normalize_ticker, resolve_ticker
+from services.mapping_service import (
+    get_stock_info,
+    normalize_ticker,
+    resolve_ticker,
+    validate_stock_analysis_intent,
+)
 from services.post_signal_validation_service import build_post_signal_validation
 from services.technical_hint_service import get_indicator_hint
 from services.signal_service import (
@@ -296,6 +301,15 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
     ticker = extract_ticker_from_text(user_input)
     if ticker is None:
         return _failure("Kode saham belum dapat dikenali dari input pengguna.")
+
+    intent_result = validate_stock_analysis_intent(user_input, ticker)
+    if not intent_result["success"]:
+        return _failure(intent_result["message"])
+
+    try:
+        stock_info = get_stock_info(ticker)
+    except Exception:
+        return _failure("Mapping saham tidak dapat dibaca saat ini.")
 
     try:
         stock_info = get_stock_info(ticker)
