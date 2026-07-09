@@ -1,0 +1,13 @@
+sektor,indicator,signal_column,total_stocks,total_windows,total_active_signals,correct_signals,directional_accuracy,hit_rate
+Energi,MA Crossover,MA_Crossover_Signal,10,40,48,32,66.66666666666666,70.23809523809524
+Energi,MACD,MACD_Trade_Signal,0,0,0,0,0.0,0.0
+Energi,RSI,RSI_Signal,0,0,0,0,0.0,0.0
+Finansial,MA Crossover,MA_Crossover_Signal,10,30,52,27,51.92307692307693,61.66666666666667
+Finansial,MACD,MACD_Trade_Signal,0,0,0,0,0.0,0.0
+Finansial,RSI,RSI_Signal,10,10,34,13,38.23529411764706,38.666666666666664
+Industri,MA Crossover,MA_Crossover_Signal,10,40,45,27,60.0,66.07142857142857
+Industri,MACD,MACD_Trade_Signal,0,0,0,0,0.0,0.0
+Industri,RSI,RSI_Signal,0,0,0,0,0.0,0.0
+Teknologi,MA Crossover,MA_Crossover_Signal,10,30,24,13,54.166666666666664,59.25925925925927
+Teknologi,MACD,MACD_Trade_Signal,0,0,0,0,0.0,0.0
+Teknologi,RSI,RSI_Signal,10,10,34,16,47.05882352941176,47.5

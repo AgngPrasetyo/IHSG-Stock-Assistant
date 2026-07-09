@@ -13,8 +13,11 @@ import requests
 import yfinance as yf
 
 
-START_DATE = "2024-10-14"
-END_DATE = "2026-06-27"
+WARMUP_START_DATE = "2024-07-01"
+START_DATE = "2024-10-21"
+END_DATE = "2026-06-12"
+LAST_EVALUATION_DATE = "2026-06-11"
+WARMUP_TRADING_DAYS = 50
 REQUIRED_OHLCV_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -46,7 +49,6 @@ def fetch_price_data(ticker_yfinance: str,start_date: str = START_DATE,end_date:
     Jika seluruh sumber gagal atau kosong, fungsi melempar pesan ketersediaan data yang
     aman untuk ditampilkan kepada pengguna.
     """
-
 
     if not ticker_yfinance:
         raise ValueError("ticker_yfinance wajib diisi.")

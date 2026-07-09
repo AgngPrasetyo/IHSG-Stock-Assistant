@@ -312,3 +312,24 @@ def test_run_wfa_selection_pipeline_returns_selection_dataframe():
     assert set(result.keys()) == {"windows_count", "selection_results"}
     assert result["windows_count"] >= 1
     assert list(result["selection_results"].columns) == WFA_SELECTION_COLUMNS
+
+def test_generate_wfa_windows_uses_evaluation_start_date_with_warmup():
+    df = make_dummy_ohlcv(periods=420, start="2024-07-01")
+
+    windows = generate_wfa_windows(
+        df,
+        in_sample_months=6,
+        out_sample_months=3,
+        shift_months=3,
+        evaluation_start_date="2024-10-21",
+        warmup_periods=50,
+    )
+
+    first = windows[0]
+
+    assert first["in_sample_start"] == pd.Timestamp("2024-10-21")
+    assert first["out_sample_start"] == pd.Timestamp("2025-04-21")
+    assert len(first["warmup_df"]) <= 50
+    assert first["warmup_df"].index.max() < first["in_sample_start"]
+    assert first["combined_df"].index.min() < first["in_sample_start"]
+    assert first["in_sample_df"].index.min() >= first["in_sample_start"]

@@ -1,0 +1,61 @@
+sektor,ticker,ticker_yfinance,indicator,signal_column,windows_count,total_active_signals,correct_signals,directional_accuracy,hit_rate
+Energi,ADMR,ADMR.JK,MA Crossover,MA_Crossover_Signal,4,7,6,85.71428571428571,87.5
+Energi,ADRO,ADRO.JK,MA Crossover,MA_Crossover_Signal,4,5,3,60.0,58.33333333333333
+Energi,BUMI,BUMI.JK,MA Crossover,MA_Crossover_Signal,4,4,2,50.0,50.0
+Energi,BYAN,BYAN.JK,MA Crossover,MA_Crossover_Signal,4,2,1,50.0,50.0
+Energi,CUAN,CUAN.JK,MA Crossover,MA_Crossover_Signal,4,4,3,75.0,83.33333333333333
+Energi,DSSA,DSSA.JK,MA Crossover,MA_Crossover_Signal,4,3,2,66.66666666666666,75.0
+Energi,GEMS,GEMS.JK,MA Crossover,MA_Crossover_Signal,4,9,6,66.66666666666666,75.0
+Energi,PGAS,PGAS.JK,MA Crossover,MA_Crossover_Signal,4,5,2,40.0,50.0
+Energi,PTRO,PTRO.JK,MA Crossover,MA_Crossover_Signal,4,5,3,60.0,66.66666666666667
+Energi,TCPI,TCPI.JK,MA Crossover,MA_Crossover_Signal,4,4,4,100.0,100.0
+Finansial,BBCA,BBCA.JK,MA Crossover,MA_Crossover_Signal,3,6,4,66.66666666666666,66.66666666666667
+Finansial,BBCA,BBCA.JK,RSI,RSI_Signal,1,4,2,50.0,50.0
+Finansial,BBNI,BBNI.JK,MA Crossover,MA_Crossover_Signal,3,6,4,66.66666666666666,66.66666666666667
+Finansial,BBNI,BBNI.JK,RSI,RSI_Signal,1,4,0,0.0,0.0
+Finansial,BBRI,BBRI.JK,MA Crossover,MA_Crossover_Signal,3,6,3,50.0,50.0
+Finansial,BBRI,BBRI.JK,RSI,RSI_Signal,1,1,0,0.0,0.0
+Finansial,BMRI,BMRI.JK,MA Crossover,MA_Crossover_Signal,3,5,4,80.0,83.33333333333333
+Finansial,BMRI,BMRI.JK,RSI,RSI_Signal,1,3,2,66.66666666666666,66.66666666666666
+Finansial,BNLI,BNLI.JK,MA Crossover,MA_Crossover_Signal,3,3,2,66.66666666666666,75.0
+Finansial,BNLI,BNLI.JK,RSI,RSI_Signal,1,3,1,33.33333333333333,33.33333333333333
+Finansial,BRIS,BRIS.JK,MA Crossover,MA_Crossover_Signal,3,4,3,75.0,75.0
+Finansial,BRIS,BRIS.JK,RSI,RSI_Signal,1,4,0,0.0,0.0
+Finansial,CASA,CASA.JK,MA Crossover,MA_Crossover_Signal,3,1,1,100.0,100.0
+Finansial,CASA,CASA.JK,RSI,RSI_Signal,1,5,1,20.0,20.0
+Finansial,DNET,DNET.JK,MA Crossover,MA_Crossover_Signal,3,5,2,40.0,62.5
+Finansial,DNET,DNET.JK,RSI,RSI_Signal,1,4,2,50.0,50.0
+Finansial,MEGA,MEGA.JK,MA Crossover,MA_Crossover_Signal,3,9,2,22.22222222222222,27.777777777777775
+Finansial,MEGA,MEGA.JK,RSI,RSI_Signal,1,3,2,66.66666666666666,66.66666666666666
+Finansial,SMMA,SMMA.JK,MA Crossover,MA_Crossover_Signal,3,7,2,28.57142857142857,44.444444444444436
+Finansial,SMMA,SMMA.JK,RSI,RSI_Signal,1,3,3,100.0,100.0
+Industri,ARNA,ARNA.JK,MA Crossover,MA_Crossover_Signal,4,5,2,40.0,33.333333333333336
+Industri,ASII,ASII.JK,MA Crossover,MA_Crossover_Signal,4,4,2,50.0,66.66666666666666
+Industri,BNBR,BNBR.JK,MA Crossover,MA_Crossover_Signal,4,8,5,62.5,70.83333333333333
+Industri,HEXA,HEXA.JK,MA Crossover,MA_Crossover_Signal,4,4,3,75.0,83.33333333333333
+Industri,IMPC,IMPC.JK,MA Crossover,MA_Crossover_Signal,4,4,3,75.0,83.33333333333333
+Industri,JTPE,JTPE.JK,MA Crossover,MA_Crossover_Signal,4,2,2,100.0,100.0
+Industri,MARK,MARK.JK,MA Crossover,MA_Crossover_Signal,4,2,2,100.0,100.0
+Industri,SUNI,SUNI.JK,MA Crossover,MA_Crossover_Signal,4,8,5,62.5,66.66666666666666
+Industri,UNTR,UNTR.JK,MA Crossover,MA_Crossover_Signal,4,2,0,0.0,0.0
+Industri,VISI,VISI.JK,MA Crossover,MA_Crossover_Signal,4,6,3,50.0,41.666666666666664
+Teknologi,BELI,BELI.JK,MA Crossover,MA_Crossover_Signal,3,1,1,100.0,100.0
+Teknologi,BELI,BELI.JK,RSI,RSI_Signal,1,4,0,0.0,0.0
+Teknologi,BUKA,BUKA.JK,MA Crossover,MA_Crossover_Signal,3,1,1,100.0,100.0
+Teknologi,BUKA,BUKA.JK,RSI,RSI_Signal,1,6,4,66.66666666666666,66.66666666666666
+Teknologi,CYBR,CYBR.JK,MA Crossover,MA_Crossover_Signal,3,2,1,50.0,50.0
+Teknologi,CYBR,CYBR.JK,RSI,RSI_Signal,1,2,1,50.0,50.0
+Teknologi,DCII,DCII.JK,MA Crossover,MA_Crossover_Signal,3,1,1,100.0,100.0
+Teknologi,DCII,DCII.JK,RSI,RSI_Signal,1,4,2,50.0,50.0
+Teknologi,EMTK,EMTK.JK,MA Crossover,MA_Crossover_Signal,3,4,2,50.0,66.66666666666666
+Teknologi,EMTK,EMTK.JK,RSI,RSI_Signal,1,3,1,33.33333333333333,33.33333333333333
+Teknologi,GOTO,GOTO.JK,MA Crossover,MA_Crossover_Signal,3,4,2,50.0,50.0
+Teknologi,GOTO,GOTO.JK,RSI,RSI_Signal,1,3,1,33.33333333333333,33.33333333333333
+Teknologi,MLPT,MLPT.JK,MA Crossover,MA_Crossover_Signal,3,1,0,0.0,0.0
+Teknologi,MLPT,MLPT.JK,RSI,RSI_Signal,1,2,1,50.0,50.0
+Teknologi,MSTI,MSTI.JK,MA Crossover,MA_Crossover_Signal,3,5,2,40.0,44.444444444444436
+Teknologi,MSTI,MSTI.JK,RSI,RSI_Signal,1,3,3,100.0,100.0
+Teknologi,MTDL,MTDL.JK,MA Crossover,MA_Crossover_Signal,3,2,2,100.0,100.0
+Teknologi,MTDL,MTDL.JK,RSI,RSI_Signal,1,4,1,25.0,25.0
+Teknologi,WIFI,WIFI.JK,MA Crossover,MA_Crossover_Signal,3,3,1,33.33333333333333,25.0
+Teknologi,WIFI,WIFI.JK,RSI,RSI_Signal,1,3,2,66.66666666666666,66.66666666666666

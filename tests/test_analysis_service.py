@@ -22,7 +22,7 @@ def test_analyze_stock_valid_bbca_success(bbca_result):
     assert bbca_result["success"] is True
     assert bbca_result["ticker"] == "BBCA"
     assert bbca_result["sector"] == "Finansial"
-    assert bbca_result["best_indicator"] == "MACD"
+    assert bbca_result["best_indicator"] == "MA Crossover"
     assert bbca_result["latest_signal"] in {"BUY", "SELL", "HOLD"}
     assert bbca_result["metrics"]
     assert len(bbca_result["indicator_comparison"]) == 3

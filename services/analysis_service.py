@@ -13,6 +13,8 @@ from services.data_service import (
     REQUIRED_OHLCV_COLUMNS,
     START_DATE,
     load_or_fetch_price_data,
+    WARMUP_START_DATE,
+    LAST_EVALUATION_DATE,
 )
 from services.indicator_service import calculate_all_indicators
 from services.mapping_service import (
@@ -34,7 +36,7 @@ from services.signal_service import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
-DATE_RANGE_LABEL = f"{START_DATE}_{END_DATE}"
+DATE_RANGE_LABEL = f"{START_DATE}_{LAST_EVALUATION_DATE}"
 
 SECTOR_AGGREGATE_PATH = DATA_DIR / f"wfa_sector_aggregate_{DATE_RANGE_LABEL}.csv"
 BEST_INDICATOR_PATH = DATA_DIR / f"wfa_best_indicator_by_sector_{DATE_RANGE_LABEL}.csv"

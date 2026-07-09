@@ -15,6 +15,7 @@ DEFAULT_IN_SAMPLE_MONTHS = 6
 DEFAULT_OUT_SAMPLE_MONTHS = 3
 DEFAULT_SHIFT_MONTHS = 3
 DEFAULT_EVALUATION_HORIZONS = DEFAULT_FORWARD_HORIZONS
+DEFAULT_WARMUP_PERIODS = 50
 
 INDICATOR_SIGNAL_MAP = {
     "MA Crossover": "MA_Crossover_Signal",
@@ -87,14 +88,15 @@ def generate_wfa_windows(
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
     out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
     shift_months: int = DEFAULT_SHIFT_MONTHS,
+    evaluation_start_date: str | pd.Timestamp | None = None,
+    warmup_periods: int = 0,
 ) -> list[dict[str, object]]:
-    """Generate fixed-length rolling in-sample/out-sample WFA windows.
+    """
+    Generate fixed-length rolling in-sample/out-sample WFA windows.
 
-    The window moves forward by ``shift_months`` each iteration while preserving
-    the locked in-sample and out-sample month lengths. Date boundaries are kept
-    identical to the original implementation: in-sample is left-closed/right-open,
-    out-sample is left-closed/right-open, and the reported in-sample end is one
-    calendar day before out-sample start.
+    Evaluation windows start from ``evaluation_start_date`` when provided. Rows
+    before that date may be used as warm-up data for indicator calculation, but
+    they are not included in in-sample or out-of-sample evaluation.
     """
     wfa_df = prepare_wfa_dataframe(df)
     if wfa_df.empty:
@@ -102,28 +104,44 @@ def generate_wfa_windows(
 
     windows = []
     window_id = 1
-    start = wfa_df.index.min()
+
+    if evaluation_start_date is None:
+        start = wfa_df.index.min()
+    else:
+        start = pd.Timestamp(evaluation_start_date)
+
     data_end = wfa_df.index.max()
 
     while True:
         out_start = start + pd.DateOffset(months=in_sample_months)
         out_end = out_start + pd.DateOffset(months=out_sample_months)
+
         if data_end < out_end - pd.DateOffset(days=1):
             break
 
         in_df = wfa_df[(wfa_df.index >= start) & (wfa_df.index < out_start)].copy()
         out_df = wfa_df[(wfa_df.index >= out_start) & (wfa_df.index < out_end)].copy()
+
         if not in_df.empty and not out_df.empty:
+            warmup_df = _get_warmup_dataframe(wfa_df, start, warmup_periods)
+            frames = [frame for frame in (warmup_df, in_df, out_df) if not frame.empty]
+            combined_df = pd.concat(frames).sort_index()
+            combined_df = combined_df[~combined_df.index.duplicated(keep="last")]
+            combined_df.index.name = "Date"
+
             windows.append(
                 {
                     "window_id": window_id,
+                    "warmup_start": None if warmup_df.empty else warmup_df.index.min(),
+                    "warmup_end": None if warmup_df.empty else warmup_df.index.max(),
                     "in_sample_start": start,
                     "in_sample_end": out_start - pd.DateOffset(days=1),
                     "out_sample_start": out_start,
                     "out_sample_end": out_end,
+                    "warmup_df": warmup_df,
                     "in_sample_df": in_df,
                     "out_sample_df": out_df,
-                    "combined_df": pd.concat([in_df, out_df]).sort_index(),
+                    "combined_df": combined_df,
                 }
             )
             window_id += 1
@@ -132,6 +150,18 @@ def generate_wfa_windows(
 
     return windows
 
+def _get_warmup_dataframe(
+    df: pd.DataFrame,
+    evaluation_start: pd.Timestamp,
+    warmup_periods: int,
+) -> pd.DataFrame:
+    """Return the latest warm-up rows before the evaluation period starts."""
+    periods = max(0, int(warmup_periods))
+    if periods == 0:
+        return pd.DataFrame(columns=df.columns)
+
+    warmup_df = df[df.index < evaluation_start].tail(periods).copy()
+    return warmup_df
 
 def run_wfa_for_window(
     window: dict[str, object],
@@ -297,6 +327,48 @@ def run_wfa_selection_for_window(
         "out_sample_hit_rate": float(out_row["hit_rate"]),
     }
 
+def run_wfa_selection_pipeline(
+    df: pd.DataFrame,
+    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
+    in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
+    out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
+    shift_months: int = DEFAULT_SHIFT_MONTHS,
+    evaluation_start_date: str | pd.Timestamp | None = None,
+    warmup_periods: int = 0,
+) -> dict[str, object]:
+    """
+    Run WFA with in-sample indicator selection and out-of-sample validation.
+
+    This pipeline keeps the stricter workflow:
+    1. Generate fixed-length WFA windows.
+    2. Select the best indicator from each in-sample window.
+    3. Validate only the selected indicator on the out-sample window.
+    """
+    windows = generate_wfa_windows(
+        df,
+        in_sample_months,
+        out_sample_months,
+        shift_months,
+        evaluation_start_date=evaluation_start_date,
+        warmup_periods=warmup_periods,
+    )
+
+    results = []
+    for window in windows:
+        result = run_wfa_selection_for_window(
+            window,
+            evaluation_horizons=evaluation_horizons,
+        )
+        if result is not None:
+            results.append(result)
+
+    selection_results = pd.DataFrame(results, columns=WFA_SELECTION_COLUMNS)
+
+    return {
+        "windows_count": len(windows),
+        "selection_results": selection_results,
+    }
+
 
 def run_wfa_all_indicators(
     df: pd.DataFrame,
@@ -356,39 +428,6 @@ def select_best_indicator(aggregate_df: pd.DataFrame) -> dict[str, object] | Non
         "hit_rate": float(row["hit_rate"]),
         "total_active_signals": int(row["total_active_signals"]),
         "correct_signals": int(row["correct_signals"]),
-    }
-
-def run_wfa_selection_pipeline(
-    df: pd.DataFrame,
-    evaluation_horizons: list[int] | tuple[int, ...] | None = None,
-    in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
-    out_sample_months: int = DEFAULT_OUT_SAMPLE_MONTHS,
-    shift_months: int = DEFAULT_SHIFT_MONTHS,
-) -> dict[str, object]:
-    """
-    Run WFA selection for one stock.
-
-    This pipeline keeps the old fixed-length 6,3,3 window structure, but changes
-    the logic from evaluating all indicators directly on out-sample data into
-    selecting the best indicator on in-sample data and validating the selected
-    indicator on out-sample data.
-    """
-    windows = generate_wfa_windows(df, in_sample_months, out_sample_months, shift_months)
-
-    records = []
-    for window in windows:
-        result = run_wfa_selection_for_window(window, evaluation_horizons)
-        if result is not None:
-            records.append(result)
-
-    if not records:
-        selection_results = pd.DataFrame(columns=WFA_SELECTION_COLUMNS)
-    else:
-        selection_results = pd.DataFrame(records, columns=WFA_SELECTION_COLUMNS)
-
-    return {
-        "windows_count": len(windows),
-        "selection_results": selection_results,
     }
 
 

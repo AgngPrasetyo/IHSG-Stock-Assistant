@@ -1,0 +1,2 @@
+sectors_count,sectors_above_50,average_best_accuracy,weighted_best_accuracy,total_active_signals,correct_signals,min_sector_accuracy,max_sector_accuracy,best_indicators_by_sector
+4,4,58.18910256410256,58.57988165680473,169,99,51.92307692307693,66.66666666666666,Energi: MA Crossover; Finansial: MA Crossover; Industri: MA Crossover; Teknologi: MA Crossover
