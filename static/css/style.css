@@ -2311,6 +2311,70 @@ h2 {
   }
 }
 
+.metric-quality-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.metric-quality-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #141827;
+  font-size: 0.92rem;
+}
+
+.metric-quality-card p {
+  margin: 0;
+  color: #536171;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.metric-quality-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.metric-note-good {
+  background: rgba(13, 138, 131, 0.08);
+  border-color: rgba(13, 138, 131, 0.22);
+}
+
+.metric-note-good .metric-quality-dot {
+  background: #0d8a83;
+}
+
+.metric-note-caution {
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.metric-note-caution .metric-quality-dot {
+  background: #d97706;
+}
+
+.metric-note-weak {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+.metric-note-weak .metric-quality-dot {
+  background: #dc2626;
+}
+
+.metric-note-neutral .metric-quality-dot {
+  background: #64748b;
+}
+
 /* -- Breakpoint 1: Laptop Standard / Medium (max-width: 1179px) */
 @media (max-width: 1179px) {
   .analysis-page .result-dashboard {

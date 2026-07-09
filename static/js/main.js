@@ -646,6 +646,43 @@ function renderHintList(items) {
   `;
 }
 
+function metricQualityClass(level) {
+  const normalized = String(level || '').toLowerCase();
+
+  if (normalized === 'cukup_kuat') return 'metric-note-good';
+  if (normalized === 'perlu_konfirmasi') return 'metric-note-caution';
+  if (normalized === 'lemah') return 'metric-note-weak';
+
+  return 'metric-note-neutral';
+}
+
+function metricQualityTitle(level) {
+  const normalized = String(level || '').toLowerCase();
+
+  if (normalized === 'cukup_kuat') return 'Catatan kualitas metrik';
+  if (normalized === 'perlu_konfirmasi') return 'Perlu konfirmasi tambahan';
+  if (normalized === 'lemah') return 'Perlu kehati-hatian tinggi';
+
+  return 'Catatan kualitas metrik';
+}
+
+function renderMetricQualityNote(analysis) {
+  const note = (analysis || {}).metric_quality_note || {};
+  const message = text(note.message, '');
+
+  if (!message) return '';
+
+  return `
+    <aside class="metric-quality-card ${metricQualityClass(note.level)}">
+      <div class="metric-quality-dot" aria-hidden="true"></div>
+      <div>
+        <strong>${escapeHtml(metricQualityTitle(note.level))}</strong>
+        <p>${escapeHtml(message)}</p>
+      </div>
+    </aside>
+  `;
+}
+
   function renderTechnicalHint(hint) {
     const target = $('#technical-hint');
     const items = Array.isArray((hint || {}).items) ? hint.items : [];
@@ -811,12 +848,8 @@ const rows = comparison.map((item) => {
 
         <section class="result-card">
           <h3 class="metrics-title">Metrik evaluasi indikator terbaik</h3>
+
           <div class="metric-grid">
-            ${analysis.metric_quality_note && analysis.metric_quality_note.message ? `
-            <p class="metrics-description metric-quality-note">
-              ${escapeHtml(analysis.metric_quality_note.message)}
-            </p>
-          ` : ''}
             <div class="metric metric-primary">
               <span>Directional Accuracy</span>
               <strong>${percent(metrics.directional_accuracy)}</strong>
@@ -835,6 +868,8 @@ const rows = comparison.map((item) => {
               <strong>${number(metrics.correct_signals)}</strong>
             </div>
           </div>
+
+           ${renderMetricQualityNote(analysis)}
         </section>
 
         ${renderPostSignalValidation(analysis)}
@@ -970,13 +1005,22 @@ const rows = comparison.map((item) => {
   loadStocks();
   loadSectors();
 
-const restoredPayload = loadAnalysisSession();
+const shouldStartFresh = sessionStorage.getItem('sda:startFreshAnalysis') === 'true';
 
-if (restoredPayload) {
-  lastAnalysisPayload = restoredPayload;
-  render(restoredPayload);
-  setState('result');
+if (shouldStartFresh) {
+  clearAnalysisSession();
+  sessionStorage.removeItem('sda:startFreshAnalysis');
+  setState('entry');
+} else {
+  const restoredPayload = loadAnalysisSession();
+
+  if (restoredPayload) {
+    lastAnalysisPayload = restoredPayload;
+    render(restoredPayload);
+    setState('result');
+  }
 }
+
 })();
 
 
