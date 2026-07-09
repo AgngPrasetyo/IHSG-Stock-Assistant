@@ -154,7 +154,7 @@ _TOKEN_STOPWORDS = {
     "UNTUK",
     "KODE",
     "EMITEN",
-    "MENGANALISIS"
+    "MENGANALISIS",
     "MENGENAI",
     "APAKAH",
     "ITU",

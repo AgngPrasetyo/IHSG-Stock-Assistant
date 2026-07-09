@@ -15,6 +15,7 @@
   const sectorSummary = $('#sector-summary');
   const downloadReportButton = $('#download-report-button');
   const reportStatus = $('#report-status');
+  const ANALYSIS_SESSION_KEY = 'sda:lastAnalysisPayload';
 
   if (!query || !select || !button) return;
 
@@ -393,6 +394,36 @@
       .map((line) => `<span>${line}</span>`)
       .join('');
   }
+
+  function saveAnalysisSession(payload) {
+  try {
+    sessionStorage.setItem(ANALYSIS_SESSION_KEY, JSON.stringify(payload));
+  } catch {
+    /* Penyimpanan session bukan prasyarat analisis. */
+  }
+}
+
+function loadAnalysisSession() {
+  try {
+    const raw = sessionStorage.getItem(ANALYSIS_SESSION_KEY);
+    if (!raw) return null;
+
+    const payload = JSON.parse(raw);
+    if (!payload || !payload.success || !payload.analysis) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function clearAnalysisSession() {
+  try {
+    sessionStorage.removeItem(ANALYSIS_SESSION_KEY);
+  } catch {
+    /* Abaikan kegagalan pembersihan session. */
+  }
+}
 
   function formatCompactTechnicalCondition(analysis) {
     const signal = text((analysis || {}).latest_signal, 'HOLD').toUpperCase();
@@ -847,6 +878,7 @@ const rows = comparison.map((item) => {
     // Keep /api/analyze contract unchanged: send the user query as JSON.
     clearStatus();
     lastAnalysisPayload = null;
+    clearAnalysisSession();
 
     if (!value) {
       showError('Masukkan kode saham atau pilih saham dari daftar terlebih dahulu.');
@@ -875,6 +907,7 @@ const rows = comparison.map((item) => {
       await new Promise((resolve) => setTimeout(resolve, 220));
 
       lastAnalysisPayload = body;
+      saveAnalysisSession(body);
       render(body);
       setState('result');
 
@@ -928,9 +961,23 @@ const rows = comparison.map((item) => {
   setLoading(false);
   loadStocks();
   loadSectors();
+
+const restoredPayload = loadAnalysisSession();
+
+if (restoredPayload) {
+  lastAnalysisPayload = restoredPayload;
+  render(restoredPayload);
+  setState('result');
+}
 })();
 
+const restoredPayload = loadAnalysisSession();
 
+if (restoredPayload) {
+  lastAnalysisPayload = restoredPayload;
+  render(restoredPayload);
+  setState('result');
+}
 
 
 
