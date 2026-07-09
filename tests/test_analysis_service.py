@@ -189,3 +189,11 @@ def test_analyze_stock_rejects_non_stock_context():
     assert result["success"] is False
     assert "Input belum sesuai" in result["message"]
     assert "konteks analisis teknikal saham" in result["message"]
+
+def test_analysis_response_includes_decision_support_notes(bbca_result):
+    assert bbca_result["best_indicator_basis"]
+    assert "Out-of-Sample" in bbca_result["best_indicator_basis"]
+    assert "In-Sample" in bbca_result["best_indicator_basis"]
+    assert bbca_result["metric_quality_note"]["message"]
+    assert bbca_result["decision_support_note"]
+

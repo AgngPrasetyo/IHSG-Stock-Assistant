@@ -13,7 +13,6 @@ from services.data_service import (
     REQUIRED_OHLCV_COLUMNS,
     START_DATE,
     load_or_fetch_price_data,
-    WARMUP_START_DATE,
     LAST_EVALUATION_DATE,
 )
 from services.indicator_service import calculate_all_indicators
@@ -59,6 +58,11 @@ DATA_PERIOD = {
 POST_SIGNAL_VALIDATION_END_DATE = "2026-07-11"
 DISCLAIMER = "Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final."
 
+BEST_INDICATOR_BASIS = (
+    "Indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample "
+    "pada window WFA ketika indikator tersebut terpilih dari In-Sample."
+)
+
 INDICATOR_SIGNAL_COLUMNS = {
     "MA Crossover": MA_CROSSOVER_SIGNAL_COLUMN,
     "MACD": MACD_TRADE_SIGNAL_COLUMN,
@@ -82,6 +86,7 @@ CHART_COLUMNS = [
     MACD_TRADE_SIGNAL_COLUMN,
     RSI_SIGNAL_COLUMN,
 ]
+
 
 
 def load_wfa_outputs() -> dict[str, pd.DataFrame]:
@@ -140,12 +145,38 @@ def get_sector_indicator_comparison(sector_name: str) -> list[dict[str, Any]]:
 
     rows["_order"] = pd.Categorical(rows["indicator"], INDICATOR_ORDER, ordered=True)
     rows = rows.sort_values("_order")
-    return [
-        _record(row, [
-            "indicator", "directional_accuracy", "hit_rate", "total_active_signals", "correct_signals",
-        ])
-        for _, row in rows.iterrows()
-    ]
+
+    result = []
+    for _, row in rows.iterrows():
+        record = _record(
+            row,
+            [
+                "indicator",
+                "directional_accuracy",
+                "hit_rate",
+                "total_active_signals",
+                "correct_signals",
+            ],
+        )
+        record["evaluation_note"] = _build_comparison_evaluation_note(record)
+        result.append(record)
+
+    return result
+
+
+def _build_comparison_evaluation_note(item: dict[str, Any]) -> str:
+    indicator = item.get("indicator", "Indikator")
+    active = int(_safe_float(item.get("total_active_signals")))
+
+    if active == 0:
+        return (
+            f"{indicator} tidak menjadi indikator terpilih pada window WFA sektor ini, "
+            "sehingga tidak memiliki nilai evaluasi final pada rangkuman perbandingan."
+        )
+
+    return (
+        f"{indicator} memiliki hasil evaluasi final dari window WFA ketika indikator tersebut terpilih."
+    )
 
 
 def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
@@ -381,7 +412,11 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
         "post_signal_validation": post_signal_validation,
         "wfa_config": WFA_CONFIG.copy(),
         "data_period": DATA_PERIOD.copy(),
+        "best_indicator_basis": BEST_INDICATOR_BASIS,
+        "metric_quality_note": build_metric_quality_note(best_indicator),
+        "decision_support_note": build_decision_support_note(best_indicator, comparison, latest_signal),
         "disclaimer": DISCLAIMER,
+        
     }
 
 
@@ -463,6 +498,78 @@ def _rsi_signal_note(signal: str, rsi_state: str) -> str:
         return "Sinyal HOLD; RSI masih berada di area overbought dan sistem menunggu RSI turun keluar dari area tersebut."
     return "Sinyal HOLD karena RSI belum membentuk kondisi keluar dari area oversold atau overbought pada data terakhir."
 
+
+def build_metric_quality_note(best_indicator: dict[str, Any]) -> dict[str, Any]:
+    accuracy = _safe_float(best_indicator.get("directional_accuracy"))
+    active = int(_safe_float(best_indicator.get("total_active_signals")) or 0)
+
+    if accuracy >= 60:
+        level = "cukup_kuat"
+        message = (
+            f"Directional Accuracy {accuracy:.2f}% menunjukkan indikator memiliki "
+            "kinerja historis yang relatif baik pada hasil pengujian sektor ini."
+        )
+    elif accuracy >= 50:
+        level = "perlu_konfirmasi"
+        message = (
+            f"Directional Accuracy {accuracy:.2f}% hanya sedikit di atas ambang 50%, "
+            "sehingga sinyal teknikal perlu dibaca secara hati-hati dan sebaiknya "
+            "dikonfirmasi dengan indikator maupun faktor lain."
+        )
+    else:
+        level = "lemah"
+        message = (
+            f"Directional Accuracy {accuracy:.2f}% berada di bawah 50%, sehingga "
+            "indikator belum menunjukkan kinerja historis yang kuat pada hasil "
+            "pengujian sektor ini."
+        )
+
+    if active < 30:
+        message += (
+            " Jumlah sinyal aktif juga relatif terbatas, sehingga hasil evaluasi "
+            "perlu dibaca dengan konteks tambahan."
+        )
+
+    return {
+        "level": level,
+        "message": message,
+    }
+
+
+def build_decision_support_note(
+    best_indicator: dict[str, Any],
+    comparison: list[dict[str, Any]],
+    latest_signal: str,
+) -> str:
+    indicator = best_indicator.get("indicator", "indikator terbaik")
+    accuracy = _safe_float(best_indicator.get("directional_accuracy"))
+
+    parts = [
+        f"{indicator} dapat digunakan sebagai acuan teknikal utama karena menjadi indikator terbaik berdasarkan Directional Accuracy.",
+    ]
+
+    if accuracy < 60:
+        parts.append(
+            "Namun, performanya belum cukup dominan, sehingga pengguna sebaiknya tetap membandingkan dengan indikator lain."
+        )
+
+    if str(latest_signal).upper() == "HOLD":
+        parts.append(
+            "Karena sinyal saat ini adalah HOLD, sistem tidak membaca kondisi ini sebagai sinyal BUY atau SELL baru."
+        )
+
+    parts.append(
+        "Pertimbangkan juga tren harga terbaru, likuiditas, kondisi sektor, sentimen pasar, dan faktor fundamental emiten sebelum mengambil keputusan."
+    )
+
+    return " ".join(parts)
+
+
+def _safe_float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 def _format_number(value: Any) -> str:
     json_value = _json_value(value)

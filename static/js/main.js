@@ -737,8 +737,11 @@ function renderHintList(items) {
     const comparisonTitle = `Perbandingan indikator sektor${analysisSector ? ` ${analysisSector}` : ''}`;
 
     const comparisonDescription =
-      `Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi pada hasil evaluasi sektor${analysisSector ? ` ${analysisSector}` : ''}. ` +
-      `Hit Rate, Active, dan Correct digunakan sebagai metrik pendukung untuk membaca rata-rata keberhasilan dan jumlah sinyal.`;
+      text(
+        analysis.best_indicator_basis,
+        'Indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample pada window WFA ketika indikator tersebut terpilih dari In-Sample.'
+      ) +
+      ' Hit Rate, Active, dan Correct digunakan sebagai metrik pendukung untuk membaca rata-rata keberhasilan dan jumlah sinyal.';
 
     renderTechnicalHint(analysis.technical_hint);
     setReportStatus();
@@ -809,6 +812,11 @@ const rows = comparison.map((item) => {
         <section class="result-card">
           <h3 class="metrics-title">Metrik evaluasi indikator terbaik</h3>
           <div class="metric-grid">
+            ${analysis.metric_quality_note && analysis.metric_quality_note.message ? `
+            <p class="metrics-description metric-quality-note">
+              ${escapeHtml(analysis.metric_quality_note.message)}
+            </p>
+          ` : ''}
             <div class="metric metric-primary">
               <span>Directional Accuracy</span>
               <strong>${percent(metrics.directional_accuracy)}</strong>
@@ -971,13 +979,6 @@ if (restoredPayload) {
 }
 })();
 
-const restoredPayload = loadAnalysisSession();
-
-if (restoredPayload) {
-  lastAnalysisPayload = restoredPayload;
-  render(restoredPayload);
-  setState('result');
-}
 
 
 

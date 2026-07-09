@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import pandas as pd 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-import pandas as pd
 
-from services.analysis_service import analyze_stock
-from services.mapping_service import load_mapping
+
+from services.analysis_service import analyze_stock # noqa: E402
+from services.mapping_service import load_mapping # noqa: E402
 
 
 OUTPUT_PATH = PROJECT_ROOT / "data" / "validate_post_signal_validation.csv"

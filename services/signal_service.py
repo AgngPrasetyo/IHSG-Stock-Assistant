@@ -145,8 +145,10 @@ def _has_current_and_previous_values(df: pd.DataFrame, columns: list[str]) -> pd
 
 def _ensure_indicator_signal(df: pd.DataFrame, indicator_name: str) -> pd.DataFrame:
     name = _normalize_indicator_name(indicator_name)
-    if name == "MA Crossover": return generate_ma_signal(df)
-    if name == "MACD": return generate_macd_signal(df)
+    if name == "MA Crossover": 
+        return generate_ma_signal(df)
+    if name == "MACD": 
+        return generate_macd_signal(df)
     return generate_rsi_signal(df)
 
 

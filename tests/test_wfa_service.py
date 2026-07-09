@@ -2,14 +2,6 @@ import pandas as pd
 
 from services.wfa_service import (
     WFA_RESULT_COLUMNS,
-    aggregate_wfa_results,
-    generate_wfa_windows,
-    prepare_wfa_dataframe,
-    run_wfa_all_indicators,
-    run_wfa_for_window,
-    run_wfa_pipeline,
-    select_best_indicator,
-    WFA_RESULT_COLUMNS,
     WFA_SELECTION_COLUMNS,
     aggregate_wfa_results,
     generate_wfa_windows,
@@ -284,6 +276,7 @@ def test_short_data_returns_safe_empty_results():
     assert result["aggregate_results"].empty
     assert result["best_indicator"] is None
 
+
 def test_run_wfa_selection_for_window_selects_indicator_on_in_sample_then_tests_oos():
     window = generate_wfa_windows(make_dummy_ohlcv())[0]
 
@@ -312,6 +305,7 @@ def test_run_wfa_selection_pipeline_returns_selection_dataframe():
     assert set(result.keys()) == {"windows_count", "selection_results"}
     assert result["windows_count"] >= 1
     assert list(result["selection_results"].columns) == WFA_SELECTION_COLUMNS
+
 
 def test_generate_wfa_windows_uses_evaluation_start_date_with_warmup():
     df = make_dummy_ohlcv(periods=420, start="2024-07-01")

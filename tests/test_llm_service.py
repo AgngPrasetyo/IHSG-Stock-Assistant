@@ -315,3 +315,16 @@ def test_invalid_analysis_does_not_call_openai(monkeypatch):
     assert result["used_fallback"] is True
     assert result["fallback_reason"] == "analysis_failed"
     assert result["explanation"]
+
+def test_deterministic_explanation_includes_decision_support_note(bbca_analysis):
+    explanation = generate_deterministic_explanation(bbca_analysis)
+
+    assert "hasil gabungan pengujian Out-of-Sample" in explanation
+    assert "faktor fundamental" in explanation
+    assert "likuiditas" in explanation
+
+def test_indicator_zero_note_explained_in_context(bbca_analysis):
+    context = build_llm_context(bbca_analysis)
+    comparison_text = " ".join(context["perbandingan_indikator"])
+
+    assert "tidak menjadi indikator terpilih" in comparison_text or "0" in comparison_text

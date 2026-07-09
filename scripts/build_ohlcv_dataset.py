@@ -9,8 +9,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.data_service import END_DATE, REQUIRED_OHLCV_COLUMNS, START_DATE, load_or_fetch_price_data, validate_ohlcv
-from services.mapping_service import load_mapping
+from services.data_service import END_DATE, REQUIRED_OHLCV_COLUMNS, START_DATE, load_or_fetch_price_data, validate_ohlcv # noqa: E402
+from services.mapping_service import load_mapping # noqa: E402
 
 DATA_DIR = PROJECT_ROOT / "data"
 

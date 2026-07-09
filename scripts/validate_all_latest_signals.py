@@ -9,12 +9,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.analysis_service import (
+from services.analysis_service import ( # noqa: E402
     get_sector_best_indicator,
     prepare_latest_analysis_dataframe,
 )
-from services.mapping_service import load_mapping
-from services.signal_service import (
+from services.mapping_service import load_mapping# noqa: E402
+from services.signal_service import ( # noqa: E402
     MA_CROSSOVER_SIGNAL_COLUMN,
     MACD_TRADE_SIGNAL_COLUMN,
     RSI_SIGNAL_COLUMN,

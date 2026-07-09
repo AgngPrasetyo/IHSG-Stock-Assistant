@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from services.analysis_service import analyze_stock 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env")
 
-from services.analysis_service import analyze_stock
+
 
 try:
     from openai import OpenAI
@@ -115,6 +116,9 @@ def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
         "perbandingan_indikator": _format_comparison_for_prompt(
             analysis_result.get("indicator_comparison") or []
         ),
+        "dasar_pemilihan_indikator": analysis_result.get("best_indicator_basis"),
+        "catatan_kualitas_metrik": (analysis_result.get("metric_quality_note") or {}).get("message"),
+        "catatan_pendukung_keputusan": analysis_result.get("decision_support_note"),
         "sinyal_aktif_terakhir": _format_last_active_signal_for_prompt(
             analysis_result.get("last_active_signal")
         ),
@@ -189,6 +193,10 @@ def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     - Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi, bukan berdasarkan Hit Rate atau Correct Signals.
     - Jika Hit Rate atau Correct Signals indikator lain lebih tinggi, jelaskan bahwa keduanya adalah metrik pendukung, sedangkan pemilihan indikator terbaik tetap mengikuti Directional Accuracy.
     - Gunakan istilah “indikator terbaik berdasarkan Directional Accuracy”, bukan “indikator paling kuat”, “unggul”, atau “lebih baik”.
+    - Jelaskan bahwa indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample pada window WFA ketika indikator tersebut terpilih dari In-Sample.
+    - Jika Directional Accuracy berada di rentang 50% sampai 60%, jelaskan bahwa performa hanya sedikit di atas ambang 50% dan perlu konfirmasi tambahan.
+    - Jika ada indikator pembanding dengan Total Active Signals 0, jelaskan bahwa indikator tersebut tidak memiliki nilai evaluasi final karena tidak menjadi indikator terpilih pada window WFA sektor ini.
+    - Berikan catatan pendukung keputusan yang netral: pertimbangkan indikator pembanding, tren harga, likuiditas, kondisi sektor, sentimen pasar, dan faktor fundamental emiten.
     - Saat membandingkan indikator, gunakan frasa “mencatat Directional Accuracy tertinggi dibanding indikator lain dalam data ini”, bukan “menunjukkan kecocokan sinyal aktif yang lebih tinggi”, “lebih unggul”, atau “lebih kuat”.
 Data sistem deterministik:
 {payload}"""
@@ -227,6 +235,16 @@ def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
         analysis_result.get("indicator_comparison") or []
     )
 
+    metric_quality_note = (
+    analysis_result.get("metric_quality_note") or {}
+    ).get("message", "")
+
+    decision_support_note = analysis_result.get("decision_support_note", "")
+    basis = analysis_result.get(
+        "best_indicator_basis",
+        "Indikator terbaik dipilih berdasarkan hasil evaluasi WFA.",
+    )
+
     return (
         f"Ringkasan saham: {ticker} berada pada sektor {sector}. "
         f"Indikator terbaik sektor menurut WFA adalah {indicator}.\n\n"
@@ -235,14 +253,17 @@ def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
         f"Penjelasan teknikal disusun berdasarkan aturan indikator terbaik sektor, "
         f"tanpa mengubah hasil perhitungan sistem.\n\n"
 
-       f"Evaluasi indikator terbaik: Directional Accuracy {accuracy} adalah dasar pemilihan indikator terbaik, "
-       f"karena menunjukkan persentase kecocokan seluruh sinyal aktif BUY/SELL terhadap arah harga berdasarkan Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. "
-       f"Hit Rate {hit_rate} digunakan sebagai metrik pendukung untuk melihat rata-rata keberhasilan sinyal aktif per window, "
-       f"Total Active Signals {active}, dan Correct Signals {correct}.\n\n"
+        f"Evaluasi indikator terbaik: {basis} "
+        f"Directional Accuracy {accuracy} menjadi dasar pemilihan indikator terbaik "
+        f"karena mengukur kecocokan sinyal BUY/SELL terhadap arah harga berdasarkan "
+        f"Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. "
+        f"{metric_quality_note} "
+        f"Hit Rate {hit_rate}, Total Active Signals {active}, dan Correct Signals {correct} "
+        f"digunakan sebagai metrik pendukung.\n\n"
 
         f"Perbandingan indikator lain: {comparison}\n\n"
 
-        "Catatan risiko: sinyal dan metrik berasal dari evaluasi historis; kondisi pasar dapat berubah. "
+        f"Catatan pendukung keputusan: {decision_support_note} "
         f"{FALLBACK_DISCLAIMER}"
 )
 
@@ -533,3 +554,4 @@ def _contains_forbidden_recommendation_terms(text: str) -> bool:
 def _json_safe(value: Any) -> Any:
     """Round-trip through JSON so prompts never receive pandas/numpy objects."""
     return json.loads(json.dumps(value, default=str, allow_nan=False))
+
