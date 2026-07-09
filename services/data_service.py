@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import re
 import tempfile
 from pathlib import Path
@@ -19,7 +21,19 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CACHE_DIR = PROJECT_ROOT / "cache" / "prices"
 YFINANCE_CACHE_DIR = PROJECT_ROOT / "cache" / "yfinance"
 
+DATA_UNAVAILABLE_MESSAGE = (
+    "Data historis saham belum tersedia secara lengkap pada periode penelitian yang digunakan. "
+    "Silakan periksa kembali kode saham atau pilih saham lain yang tersedia dalam daftar sistem."
+)
 
+def _run_quietly(callback):
+    """Run noisy third-party data calls without printing raw provider logs."""
+    output_buffer = io.StringIO()
+    error_buffer = io.StringIO()
+
+    with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
+        return callback()
+    
 def fetch_price_data(
     ticker_yfinance: str,
     start_date: str = START_DATE,
@@ -32,7 +46,7 @@ def fetch_price_data(
     _configure_yfinance_cache()
 
     try:
-        price_df = yf.download(
+        price_df = _run_quietly(lambda: yf.download(
             ticker_yfinance,
             start=start_date,
             end=end_date,
@@ -40,19 +54,19 @@ def fetch_price_data(
             progress=False,
             auto_adjust=False,
             threads=False,
-        )
+        ))
     except Exception:
         price_df = pd.DataFrame()
 
     price_df = _normalize_price_dataframe(price_df)
     if price_df.empty:
         try:
-            price_df = yf.Ticker(ticker_yfinance).history(
+           price_df = _run_quietly(lambda: yf.Ticker(ticker_yfinance).history(
                 start=start_date,
                 end=end_date,
                 interval="1d",
                 auto_adjust=False,
-            )
+            ))
         except Exception:
             price_df = pd.DataFrame()
 
@@ -63,10 +77,7 @@ def fetch_price_data(
         price_df = _normalize_price_dataframe(price_df)
 
     if price_df.empty:
-        raise ValueError(
-            f"Data OHLCV kosong untuk {ticker_yfinance}. "
-            "Periksa ticker, koneksi internet, atau ketersediaan data Yahoo Finance."
-        )
+        raise ValueError(DATA_UNAVAILABLE_MESSAGE)
 
     validate_ohlcv(price_df)
     return price_df
