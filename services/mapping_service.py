@@ -29,6 +29,77 @@ UNAVAILABLE_MESSAGE = "Kode saham belum tersedia dalam mapping sistem."
 INCOMPLETE_DATA_MESSAGE = "Data saham belum memenuhi kriteria kelengkapan data."
 VALID_MESSAGE = "Kode saham valid dan tersedia dalam mapping sistem."
 
+INVALID_INTENT_MESSAGE = (
+    "Input belum sesuai dengan konteks analisis teknikal saham. "
+    "Silakan masukkan kode saham saja, misalnya BBCA, atau gunakan format seperti analisis saham BBCA."
+)
+
+_STOCK_ANALYSIS_INTENT_KEYWORDS = {
+    "saham",
+    "analisis",
+    "analisa",
+    "teknikal",
+    "sinyal",
+    "indikator",
+    "harga",
+    "tren",
+    "trend",
+    "buy",
+    "sell",
+    "hold",
+    "crossover",
+    "macd",
+    "rsi",
+    "moving average",
+    "ma",
+    "wfa",
+    "evaluasi",
+    "emiten",
+    "bursa",
+    "ihsg",
+    "close",
+    "penutupan",
+    "cek",
+    "check",
+    "lihat",
+    "periksa",
+    "pantau",
+}
+
+_NON_STOCK_INTENT_KEYWORDS = {
+    "kesehatan",
+    "riwayat kesehatan",
+    "penyakit",
+    "medis",
+    "dokter",
+    "rumah sakit",
+    "obat",
+    "diagnosis",
+    "diagnosa",
+    "pasien",
+    "gejala",
+    "sakit",
+    "makan",
+    "makanan",
+    "minum",
+    "rasa",
+    "enak",
+    "lezat",
+    "sedap",
+    "lapar",
+    "haus",
+    "masak",
+    "memasak",
+    "resep",
+    "alamat",
+    "lokasi",
+    "rumah",
+    "biodata",
+    "sejarah",
+    "berdiri",
+    "pendiri",
+}
+
 STOCK_DISPLAY_INFO = {
     "BBCA": {"stock_name": "Bank Central Asia", "aliases": ["bca", "bank bca", "bank central asia"]},
     "BBRI": {"stock_name": "Bank Rakyat Indonesia", "aliases": ["bri", "bank bri", "bank rakyat indonesia"]},
@@ -83,6 +154,10 @@ _TOKEN_STOPWORDS = {
     "UNTUK",
     "KODE",
     "EMITEN",
+    "MENGANALISIS"
+    "MENGENAI",
+    "APAKAH",
+    "ITU",
 }
 
 _PUNCTUATION_TRANSLATION = str.maketrans({char: " " for char in string.punctuation})
@@ -159,6 +234,18 @@ def resolve_ticker(input_text: str | None) -> str | None:
     if normalized_ticker in available_tickers:
         return normalized_ticker
 
+    raw_text = str(input_text or "").upper()
+    token_candidates = re.findall(r"\b[A-Z0-9]{2,6}(?:\.JK)?\b", raw_text)
+
+    valid_token_candidates = [
+        candidate.removesuffix(".JK")
+        for candidate in token_candidates
+        if candidate.removesuffix(".JK") in available_tickers
+    ]
+
+    if valid_token_candidates:
+        return valid_token_candidates[-1]
+
     normalized_input = normalize_search_text(input_text)
     if not normalized_input:
         return None
@@ -186,9 +273,12 @@ def resolve_ticker(input_text: str | None) -> str | None:
 
 
 def get_stock_info(ticker: str) -> dict[str, Any] | None:
-    """Return mapping information for a ticker, or None when it is unavailable."""
-    normalized_ticker = normalize_ticker(ticker)
-    if not normalized_ticker:
+    """Return mapping information for a resolved ticker, or None when it is unavailable."""
+    if ticker is None:
+        return None
+
+    normalized_ticker = str(ticker).strip().upper().removesuffix(".JK")
+    if not normalized_ticker or not re.fullmatch(r"[A-Z0-9]{2,6}", normalized_ticker):
         return None
 
     mapping_df = load_mapping()
@@ -210,9 +300,116 @@ def is_stock_available(ticker: str) -> bool:
 
     return str(stock_info["status_data"]).strip().lower() == "lengkap"
 
+def is_direct_ticker_input(input_text: str | None, ticker: str | None = None) -> bool:
+    """
+    Memeriksa apakah input pengguna hanya berupa kode saham langsung.
+
+    Contoh input valid:
+    - BBCA
+    - bbca
+    - BBCA.JK
+    """
+    if not input_text:
+        return False
+
+    raw = str(input_text).strip().upper()
+    normalized = normalize_ticker(raw)
+    expected = str(ticker or normalized or "").strip().upper()
+
+    if not expected:
+        return False
+
+    return raw in {expected, f"{expected}.JK"}
+
+def is_known_stock_identity_input(input_text: str | None, ticker: str | None = None) -> bool:
+    """
+    Memeriksa apakah input pengguna hanya berupa identitas saham yang dikenal,
+    seperti kode ticker, nama emiten, atau alias resmi dari mapping sistem.
+    """
+    if not input_text or not ticker:
+        return False
+
+    stock_info = get_stock_info(ticker)
+    if not stock_info:
+        return False
+
+    normalized_input = normalize_search_text(input_text)
+
+    identity_terms = [
+        stock_info.get("ticker"),
+        stock_info.get("ticker_yfinance"),
+        stock_info.get("stock_name"),
+        *(stock_info.get("aliases") or []),
+    ]
+
+    normalized_terms = {
+        normalize_search_text(term)
+        for term in identity_terms
+        if term
+    }
+
+    return normalized_input in normalized_terms
+
+def validate_stock_analysis_intent(input_text: str | None, ticker: str | None = None) -> dict[str, Any]:
+    """
+    Memvalidasi apakah input pengguna berada dalam konteks analisis teknikal saham.
+
+    Validasi ini mencegah sistem memproses kalimat di luar domain saham hanya karena
+    terdapat kode ticker yang valid di dalam input.
+    """
+    if not input_text or not str(input_text).strip():
+        return {
+            "success": False,
+            "message": "Input analisis saham belum tersedia.",
+            "intent": "empty",
+        }
+
+    normalized_input = normalize_search_text(input_text)
+
+    has_non_stock_keyword = any(
+        keyword in normalized_input
+        for keyword in _NON_STOCK_INTENT_KEYWORDS
+    )
+    if has_non_stock_keyword:
+        return {
+            "success": False,
+            "message": INVALID_INTENT_MESSAGE,
+            "intent": "non_stock_context",
+        }
+
+    if is_direct_ticker_input(input_text, ticker):
+        return {
+            "success": True,
+            "message": "Input berupa kode saham langsung.",
+            "intent": "direct_ticker",
+        }
+
+    if is_known_stock_identity_input(input_text, ticker):
+        return {
+            "success": True,
+            "message": "Input berupa nama atau alias saham yang dikenal.",
+            "intent": "stock_identity",
+        }
+
+    has_stock_keyword = any(
+        keyword in normalized_input
+        for keyword in _STOCK_ANALYSIS_INTENT_KEYWORDS
+    )
+    if has_stock_keyword:
+        return {
+            "success": True,
+            "message": "Input berada dalam konteks analisis saham.",
+            "intent": "stock_analysis_context",
+        }
+
+    return {
+        "success": False,
+        "message": INVALID_INTENT_MESSAGE,
+        "intent": "unclear_context",
+    }
 
 def validate_stock_request(input_text: str) -> dict[str, Any]:
-    """Validate chatbot stock input against the mapping file."""
+    """Validate chatbot stock input against mapping and stock-analysis intent."""
     ticker = resolve_ticker(input_text) or normalize_ticker(input_text)
     stock_info = get_stock_info(ticker)
 
@@ -224,6 +421,18 @@ def validate_stock_request(input_text: str) -> dict[str, Any]:
             "ticker_yfinance": None,
             "sector": None,
             "stock_info": None,
+        }
+
+    intent_result = validate_stock_analysis_intent(input_text, stock_info["ticker"])
+    if not intent_result["success"]:
+        return {
+            "success": False,
+            "message": intent_result["message"],
+            "ticker": stock_info["ticker"],
+            "ticker_yfinance": stock_info["ticker_yfinance"],
+            "sector": stock_info["sektor"],
+            "stock_info": stock_info,
+            "intent": intent_result["intent"],
         }
 
     if str(stock_info["status_data"]).strip().lower() != "lengkap":

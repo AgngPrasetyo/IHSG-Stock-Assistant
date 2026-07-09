@@ -4,6 +4,10 @@ from services.mapping_service import (
     load_mapping,
     normalize_ticker,
     validate_stock_request,
+    validate_stock_analysis_intent,
+    resolve_ticker,
+    validate_stock_analysis_intent,
+    validate_stock_request,
 )
 
 
@@ -92,3 +96,83 @@ def test_validate_stock_request_unavailable_ticker():
 
     assert result["success"] is False
     assert result["message"] == "Kode saham belum tersedia dalam mapping sistem."
+
+def test_validate_stock_analysis_intent_accepts_direct_ticker():
+    result = validate_stock_analysis_intent("BBCA", "BBCA")
+
+    assert result["success"] is True
+    assert result["intent"] == "direct_ticker"
+
+
+def test_validate_stock_analysis_intent_accepts_stock_context():
+    result = validate_stock_analysis_intent("analisis saham BBCA", "BBCA")
+
+    assert result["success"] is True
+    assert result["intent"] == "stock_analysis_context"
+
+
+def test_validate_stock_analysis_intent_rejects_health_context():
+    result = validate_stock_analysis_intent(
+        "saya ingin bertanya mengenai riwayat kesehatan BBCA",
+        "BBCA",
+    )
+
+    assert result["success"] is False
+    assert result["intent"] == "non_stock_context"
+    assert "Input belum sesuai" in result["message"]
+    assert "konteks analisis teknikal saham" in result["message"]
+
+
+def test_validate_stock_request_rejects_health_context():
+    result = validate_stock_request("saya ingin bertanya mengenai riwayat kesehatan BBCA")
+
+    assert result["success"] is False
+    assert result["ticker"] == "BBCA"
+    assert result["intent"] == "non_stock_context"
+
+def test_validate_stock_analysis_intent_accepts_company_name_identity():
+    result = validate_stock_analysis_intent("Bank Central Asia", "BBCA")
+
+    assert result["success"] is True
+    assert result["intent"] == "stock_identity"
+
+
+def test_validate_stock_analysis_intent_accepts_alias_identity():
+    result = validate_stock_analysis_intent("perusahaan gas negara", "PGAS")
+
+    assert result["success"] is True
+    assert result["intent"] == "stock_identity"
+
+
+def test_validate_stock_analysis_intent_accepts_check_keyword():
+    result = validate_stock_analysis_intent("Tolong cek ADMR", "ADMR")
+
+    assert result["success"] is True
+    assert result["intent"] == "stock_analysis_context"
+
+def test_validate_stock_analysis_intent_rejects_food_context():
+    result = validate_stock_analysis_intent("saya ingin makan BBCA", "BBCA")
+
+    assert result["success"] is False
+    assert result["intent"] == "non_stock_context"
+
+
+def test_validate_stock_analysis_intent_rejects_taste_context():
+    result = validate_stock_analysis_intent("cek rasa BBCA", "BBCA")
+
+    assert result["success"] is False
+    assert result["intent"] == "non_stock_context"
+
+
+def test_resolve_ticker_prefers_known_ticker_inside_sentence():
+    result = resolve_ticker("saya ingin menganalisis saham bbca apakah itu enak")
+
+    assert result == "BBCA"
+
+
+def test_validate_stock_request_rejects_stock_sentence_with_food_context():
+    result = validate_stock_request("saya ingin menganalisis saham bbca apakah itu enak")
+
+    assert result["success"] is False
+    assert result["ticker"] == "BBCA"
+    assert result["intent"] == "non_stock_context"

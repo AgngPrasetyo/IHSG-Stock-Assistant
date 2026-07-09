@@ -182,3 +182,10 @@ def _make_analysis_df(dates, closes, signals):
         },
         index=pd.DatetimeIndex(pd.to_datetime(dates), name="Date"),
     )
+
+def test_analyze_stock_rejects_non_stock_context():
+    result = analyze_stock("saya ingin bertanya mengenai riwayat kesehatan BBCA")
+
+    assert result["success"] is False
+    assert "Input belum sesuai" in result["message"]
+    assert "konteks analisis teknikal saham" in result["message"]
