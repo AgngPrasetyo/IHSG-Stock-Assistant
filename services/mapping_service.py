@@ -226,7 +226,16 @@ def normalize_ticker(input_text: str | None) -> str:
 
 
 def resolve_ticker(input_text: str | None) -> str | None:
-    """Resolve ticker, company name, or curated alias to a known IDX ticker."""
+
+    """
+    Mencari ticker IDX yang tersedia dari input pengguna.
+
+    Fungsi ini mendukung input berupa kode ticker, ticker dengan suffix .JK,
+    nama emiten, atau alias resmi yang ditentukan di STOCK_DISPLAY_INFO.
+    Jika terdapat beberapa token pada kalimat, fungsi memilih token yang
+    benar-benar tersedia di mapping saham.
+    """
+
     mapping_df = load_mapping()
     normalized_ticker = normalize_ticker(input_text)
     available_tickers = set(mapping_df["ticker"].dropna().astype(str))
@@ -409,7 +418,16 @@ def validate_stock_analysis_intent(input_text: str | None, ticker: str | None = 
     }
 
 def validate_stock_request(input_text: str) -> dict[str, Any]:
-    """Validate chatbot stock input against mapping and stock-analysis intent."""
+
+    
+    """
+    Memvalidasi input saham dari pengguna terhadap mapping dan konteks analisis.
+
+    Fungsi ini memastikan ticker tersedia, data saham lengkap, dan kalimat pengguna
+    masih berada dalam konteks analisis teknikal saham sebelum diproses lebih lanjut.
+    """
+
+
     ticker = resolve_ticker(input_text) or normalize_ticker(input_text)
     stock_info = get_stock_info(ticker)
 

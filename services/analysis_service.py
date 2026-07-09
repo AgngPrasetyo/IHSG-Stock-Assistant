@@ -297,7 +297,14 @@ def _build_validation_dataframe(
 
 
 def analyze_stock(user_input: str | None) -> dict[str, Any]:
-    """Create a route-ready, deterministic analysis response for a stock request."""
+    """
+    Menyusun payload analisis saham untuk route API dan dashboard.
+
+    Fungsi ini memvalidasi input pengguna, membaca mapping saham, mengambil hasil WFA sektor,
+    menyiapkan data harga dan indikator teknikal, menentukan sinyal terbaru, membangun data
+    chart, serta menyertakan validasi lanjutan dan hint teknikal. Seluruh hasil yang dikirim
+    bersifat deterministik dan tidak mengubah metrik WFA.
+    """
     ticker = extract_ticker_from_text(user_input)
     if ticker is None:
         return _failure("Kode saham belum dapat dikenali dari input pengguna.")
@@ -305,11 +312,6 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
     intent_result = validate_stock_analysis_intent(user_input, ticker)
     if not intent_result["success"]:
         return _failure(intent_result["message"])
-
-    try:
-        stock_info = get_stock_info(ticker)
-    except Exception:
-        return _failure("Mapping saham tidak dapat dibaca saat ini.")
 
     try:
         stock_info = get_stock_info(ticker)

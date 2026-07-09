@@ -97,9 +97,10 @@ def generate_rsi_signal(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_all_signals(df: pd.DataFrame) -> pd.DataFrame:
-    """Generate final MA Crossover, MACD, and RSI signal columns."""
+    """
+    Generate final MA Crossover, MACD, and RSI signal columns.
+    """
     signal_df = _ensure_sma_columns(_prepare_signal_dataframe(df), 10, 50)
-    signal_df = _ensure_volume_ma_columns(signal_df, 20)
     signal_df = calculate_macd(signal_df)
     signal_df = calculate_rsi(signal_df, 14)
     signal_df = generate_ma_signal(signal_df)
@@ -136,18 +137,7 @@ def _ensure_sma_columns(df: pd.DataFrame, *windows: int) -> pd.DataFrame:
             signal_df[column] = calculate_sma(signal_df, window)
     return signal_df
 
-def _ensure_volume_ma_columns(df: pd.DataFrame, *windows: int) -> pd.DataFrame:
-    signal_df = df.copy()
 
-    if "Volume" not in signal_df.columns:
-        raise ValueError("Kolom Volume tidak ditemukan untuk menghitung filter volume.")
-
-    for window in windows:
-        column = f"Volume_MA{window}"
-        if column not in signal_df.columns:
-            signal_df[column] = signal_df["Volume"].rolling(window=window).mean()
-
-    return signal_df
 
 def _has_current_and_previous_values(df: pd.DataFrame, columns: list[str]) -> pd.Series:
     return df[columns].notna().all(axis=1) & df[columns].shift(1).notna().all(axis=1)

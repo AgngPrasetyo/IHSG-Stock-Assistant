@@ -26,6 +26,7 @@ DATA_UNAVAILABLE_MESSAGE = (
     "Silakan periksa kembali kode saham atau pilih saham lain yang tersedia dalam daftar sistem."
 )
 
+
 def _run_quietly(callback):
     """Run noisy third-party data calls without printing raw provider logs."""
     output_buffer = io.StringIO()
@@ -34,12 +35,19 @@ def _run_quietly(callback):
     with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
         return callback()
     
-def fetch_price_data(
-    ticker_yfinance: str,
-    start_date: str = START_DATE,
-    end_date: str = END_DATE,
-) -> pd.DataFrame:
-    """Fetch daily historical OHLCV data from Yahoo Finance."""
+
+    
+def fetch_price_data(ticker_yfinance: str,start_date: str = START_DATE,end_date: str = END_DATE,) -> pd.DataFrame:
+    
+    """
+    Mengambil data OHLCV harian dari Yahoo Finance dengan beberapa fallback.
+
+    Urutan pengambilan data adalah yf.download, Ticker.history, lalu endpoint chart Yahoo.
+    Jika seluruh sumber gagal atau kosong, fungsi melempar pesan ketersediaan data yang
+    aman untuk ditampilkan kepada pengguna.
+    """
+
+
     if not ticker_yfinance:
         raise ValueError("ticker_yfinance wajib diisi.")
 
