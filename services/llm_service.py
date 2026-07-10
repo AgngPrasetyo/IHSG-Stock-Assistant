@@ -1,9 +1,10 @@
 ﻿"""Safe natural-language explanations for deterministic stock analysis results."""
 
 from __future__ import annotations
-import re
+
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +62,7 @@ def _contains_disallowed_script(text: str) -> bool:
     """Detect unexpected non-Indonesian scripts in the explanation output."""
     return re.search(r"[\u0600-\u06FF]", str(text)) is not None
 
+
 def _format_last_active_signal_for_prompt(value: Any) -> str:
     if not isinstance(value, dict):
         return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
@@ -72,6 +74,7 @@ def _format_last_active_signal_for_prompt(value: Any) -> str:
         return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
 
     return f"{signal} pada {signal_date}"
+
 
 def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Return compact, natural-language context without chart data or raw objects."""
@@ -113,6 +116,7 @@ def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
         context["nama_saham"] = analysis_result["stock_name"]
     return _json_safe({key: value for key, value in context.items() if value is not None})
 
+
 def _format_signal_context_for_prompt(analysis_result: dict[str, Any]) -> str:
     indicator = str(analysis_result.get("best_indicator") or "indikator terbaik")
     signal = str(analysis_result.get("latest_signal") or "HOLD").upper()
@@ -131,6 +135,7 @@ def _format_signal_context_for_prompt(analysis_result: dict[str, Any]) -> str:
         f"Sinyal teknikal saat ini adalah {signal} berdasarkan {indicator}. "
         f"Sinyal ini berasal dari aturan indikator terbaik sektor."
     )
+
 
 def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     """Build a strict Indonesian prompt that explains, never alters, results."""
@@ -186,6 +191,7 @@ def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
 Data sistem deterministik:
 {payload}"""
 
+
 def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
     """Generate the offline explanation path without any API call."""
     if not analysis_result or not analysis_result.get("success"):
@@ -221,7 +227,7 @@ def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
     )
 
     metric_quality_note = (
-    analysis_result.get("metric_quality_note") or {}
+        analysis_result.get("metric_quality_note") or {}
     ).get("message", "")
 
     decision_support_note = analysis_result.get("decision_support_note", "")
@@ -302,6 +308,7 @@ def generate_openai_explanation(analysis_result: dict[str, Any]) -> tuple[str, b
     explanation = _normalize_explanation_text(explanation)
     return explanation, False, None
 
+
 def generate_llm_explanation(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Return a provider-labelled explanation while preserving analysis success."""
     success = bool((analysis_result or {}).get("success", False))
@@ -323,6 +330,8 @@ def generate_llm_explanation(analysis_result: dict[str, Any]) -> dict[str, Any]:
         "explanation": explanation,
         "disclaimer": (analysis_result or {}).get("disclaimer", FALLBACK_DISCLAIMER),
     }
+
+
 def _normalize_explanation_text(text: str) -> str:
     """Clean small spacing and typography issues in LLM output without breaking decimals or tickers."""
     normalized = str(text or "").strip()
@@ -357,12 +366,10 @@ def _normalize_explanation_text(text: str) -> str:
         "dengankonfirmasi": "dengan konfirmasi",
         "hasilsistem": "hasil sistem",
         "secarakeseluruhan": "secara keseluruhan",
-         "MARK. JK": "MARK.JK",
         "evaluasi3": "evaluasi 3",
         "baruyang": "baru yang",
         "teknikalterbaru": "teknikal terbaru",
         "sampai 2026-06-26dianalisis": "sampai 2026-06-26 dianalisis",
-        "metrikevaluasi": "metrik evaluasi",
         "SELLhanya": "SELL hanya",
         "BUYatau": "BUY atau",
         "27total": "27 total",
@@ -408,6 +415,7 @@ def _normalize_explanation_text(text: str) -> str:
     normalized = re.sub(r"(?<=SELL)(?=hanya\b)", " ", normalized)
     normalized = re.sub(r"(?<=BUY)(?=atau\b)", " ", normalized)
     return normalized.strip()
+
 
 def explain_stock_analysis(user_input: str) -> dict[str, Any]:
     """Run deterministic analysis, then explain it without modifying results."""

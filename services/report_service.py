@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import math
 from datetime import date
 from io import BytesIO
-import math
 from typing import Any
 from xml.sax.saxutils import escape
 
@@ -65,20 +65,20 @@ def _format_user_friendly_condition(analysis: dict[str, Any]) -> str:
     )
 
 def _comparison_zero_notes(comparison: list[dict[str, Any]]) -> list[str]:
-        notes = []
-        for item in comparison:
-            try:
+    notes = []
+    for item in comparison:
+        try:
                 active = int(float(item.get("total_active_signals", 0)))
-            except (TypeError, ValueError):
+        except (TypeError, ValueError):
                 active = 0
 
-            if active == 0:
-                indicator = item.get("indicator") or "Indikator"
-                notes.append(
-                    f"{indicator} tidak menjadi indikator terpilih pada window WFA sektor ini, "
+        if active == 0:
+            indicator = item.get("indicator") or "Indikator"
+            notes.append(
+               f"{indicator} tidak menjadi indikator terpilih pada window WFA sektor ini, "
                     "sehingga tidak memiliki nilai evaluasi final pada rangkuman perbandingan."
-                )
-        return notes
+            )
+    return notes
 
 
         
@@ -117,14 +117,14 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     ]))
 
     story.append(_section_block(styles, "Ringkasan Hasil", [
-    _key_value_table([
-        ("Sinyal Teknis Saat Ini", analysis.get("latest_signal")),
-        ("Sinyal Aktif Terakhir", _format_last_active_signal(analysis.get("last_active_signal"))),
-        ("Indikator Terbaik", analysis.get("best_indicator")),
-        ("Harga Penutupan Terakhir", _format_rupiah(analysis.get("latest_close"))),
-        ("Kondisi Teknikal", _format_user_friendly_condition(analysis)),
-    ], styles),
-]))
+        _key_value_table([
+            ("Sinyal Teknis Saat Ini", analysis.get("latest_signal")),
+            ("Sinyal Aktif Terakhir", _format_last_active_signal(analysis.get("last_active_signal"))),
+            ("Indikator Terbaik", analysis.get("best_indicator")),
+            ("Harga Penutupan Terakhir", _format_rupiah(analysis.get("latest_close"))),
+            ("Kondisi Teknikal", _format_user_friendly_condition(analysis)),
+        ], styles),
+    ]))
 
     metrics = analysis.get("metrics") or {}
     story.append(_section_block(styles, "Metrik Evaluasi", [

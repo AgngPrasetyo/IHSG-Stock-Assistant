@@ -416,7 +416,6 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
         "metric_quality_note": build_metric_quality_note(best_indicator),
         "decision_support_note": build_decision_support_note(best_indicator, comparison, latest_signal),
         "disclaimer": DISCLAIMER,
-        
     }
 
 
@@ -500,6 +499,7 @@ def _rsi_signal_note(signal: str, rsi_state: str) -> str:
 
 
 def build_metric_quality_note(best_indicator: dict[str, Any]) -> dict[str, Any]:
+    """Classify WFA metric strength for dashboard and LLM explanation notes."""
     accuracy = _safe_float(best_indicator.get("directional_accuracy"))
     active = int(_safe_float(best_indicator.get("total_active_signals")) or 0)
 
@@ -535,12 +535,14 @@ def build_metric_quality_note(best_indicator: dict[str, Any]) -> dict[str, Any]:
         "message": message,
     }
 
-
+"""Build a neutral decision-support note without changing the technical signal."""
 def build_decision_support_note(
     best_indicator: dict[str, Any],
     comparison: list[dict[str, Any]],
     latest_signal: str,
 ) -> str:
+    
+    
     indicator = best_indicator.get("indicator", "indikator terbaik")
     accuracy = _safe_float(best_indicator.get("directional_accuracy"))
 

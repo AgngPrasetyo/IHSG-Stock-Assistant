@@ -14,7 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
    
 
-from services.data_service import ( # noqa: E402
+from services.data_service import (  # noqa: E402
     END_DATE,
     LAST_EVALUATION_DATE,
     START_DATE,
@@ -23,11 +23,11 @@ from services.data_service import ( # noqa: E402
     load_or_fetch_price_data,
 )
 
-from services.indicator_service import calculate_all_indicators # noqa: E402
-from services.mapping_service import load_mapping # noqa: E402
-from services.metric_service import evaluate_signal_performance_average_forward # noqa: E402
-from services.signal_service import generate_all_signals # noqa: E402
-from services.wfa_service import INDICATOR_SIGNAL_MAP, generate_wfa_windows, select_best_indicator # noqa: E402
+from services.indicator_service import calculate_all_indicators  # noqa: E402
+from services.mapping_service import load_mapping  # noqa: E402
+from services.metric_service import evaluate_signal_performance_average_forward  # noqa: E402
+from services.signal_service import generate_all_signals  # noqa: E402
+from services.wfa_service import INDICATOR_SIGNAL_MAP, generate_wfa_windows, select_best_indicator  # noqa: E402
 
 IN_SAMPLE_MONTHS, OUT_SAMPLE_MONTHS, SHIFT_MONTHS = 6, 3, 3
 EVALUATION_HORIZONS = [1, 3, 5, 10]
@@ -121,6 +121,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_samples() -> pd.DataFrame:
+    """Load the locked 40-stock research sample from the mapping file."""
     mapping = load_mapping()
     if "is_sample" not in mapping.columns:
         raise ValueError("Kolom is_sample tidak tersedia pada mapping.")
@@ -198,6 +199,7 @@ def evaluate_period(
 
 
 def evaluate_stock_windows(stock: pd.Series, refresh: bool) -> tuple[pd.DataFrame, int]:
+    """Evaluate one stock across all WFA windows using warm-up-aware data."""
     price = load_or_fetch_price_data(
         stock["ticker_yfinance"],
         WARMUP_START_DATE,
@@ -232,6 +234,8 @@ def evaluate_stock_windows(stock: pd.Series, refresh: bool) -> tuple[pd.DataFram
             continue
 
         signal_df = generate_all_signals(calculate_all_indicators(combined_df))
+        # Indicators are calculated on warm-up + in-sample + out-sample rows,
+        # while metrics are measured only on the requested period rows.
 
         for period, period_df in (
             ("in_sample", in_sample_df),
@@ -288,6 +292,8 @@ def aggregate_sector_window_period(window_results: pd.DataFrame, period: str) ->
 
 
 def build_sector_window_selection(window_results: pd.DataFrame) -> pd.DataFrame:
+    """Select the best in-sample indicator per sector-window and attach OOS metrics."""
+
     in_sample = aggregate_sector_window_period(window_results, "in_sample")
     out_sample = aggregate_sector_window_period(window_results, "out_sample")
 
@@ -355,6 +361,8 @@ def build_selected_oos_stock_results(
     window_results: pd.DataFrame,
     selection: pd.DataFrame,
 ) -> pd.DataFrame:
+    """Keep only out-sample rows whose indicator was selected from in-sample."""
+
     if window_results.empty or selection.empty:
         return pd.DataFrame(columns=WINDOW_RESULT_COLUMNS)
 
@@ -592,3 +600,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    """Run the final WFA pipeline and write all thesis CSV outputs."""
