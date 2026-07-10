@@ -59,24 +59,24 @@
 
       <div class="preview-stock">
         <div>
-          <strong>BBRI</strong>
-          <p>Bank Rakyat Indonesia · Finansial</p>
+          <strong>{{ preview.ticker }}</strong>
+          <p>{{ preview.stock_name }} · {{ preview.sector }}</p>
         </div>
-        <span class="signal signal-hold">HOLD</span>
+        <span class="signal signal-hold">{{ preview.latest_signal }}</span>
       </div>
 
       <div class="preview-grid">
         <div>
           <span>Indikator terbaik</span>
-          <strong>MACD</strong>
+          <strong>{{ preview.best_indicator }}</strong>
         </div>
         <div>
           <span>Directional Accuracy</span>
-          <strong>50.65%</strong>
+          <strong>{{ preview.directional_accuracy }}</strong>
         </div>
         <div>
           <span>Evaluasi</span>
-          <strong>T+1 · T+3 · T+5 · T+10</strong>
+          {{ preview.evaluation_label }}
         </div>
       </div>
 
