@@ -25,7 +25,7 @@ METRIC_ITEMS: list[dict[str, str]] = [
     {
         "term": "Hit Rate",
         "description": (
-            "Rata-rata keberhasilan sinyal BUY/SELL yang muncul pada setiap window evaluasi."
+            "Rata-rata keberhasilan sinyal BUY/SELL yang muncul pada setiap periode evaluasi."
         ),
     },
     {
