@@ -2693,3 +2693,115 @@ h2 {
   }
 
 }
+
+/* Mobile overflow and readability polish */
+@media (max-width: 640px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .landing-page,
+  .analysis-page {
+    overflow-x: hidden;
+  }
+
+  .section,
+  .hero,
+  .feature-shell,
+  .hero-preview,
+  .landing-disclaimer,
+  .analysis-shell,
+  .result-shell,
+  .result-grid,
+  .result-card,
+  .panel,
+  .card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .hero-copy,
+  .hero-preview,
+  .feature-shell,
+  .landing-disclaimer {
+    min-width: 0;
+  }
+
+  .hero h1,
+  .section-heading h2,
+  .analysis-page h1,
+  .analysis-page h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .hero-actions .btn,
+  .hero-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .preview-stock {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .preview-stock .signal {
+    width: fit-content;
+  }
+
+  .preview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .feature-shell {
+    padding-inline: 22px;
+  }
+
+  .feature-shell .section-heading,
+  .feature-shell .intro-card,
+  .feature-shell article,
+  .feature-shell .feature-card {
+    min-width: 0;
+  }
+
+  .workflow-grid,
+  .process-grid,
+  .steps-grid {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .workflow-grid > *,
+  .process-grid > *,
+  .steps-grid > * {
+    min-width: 0;
+  }
+
+  .comparison-table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .comparison-table table,
+  table.comparison-table {
+    min-width: 520px;
+  }
+}

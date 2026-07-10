@@ -183,9 +183,9 @@ def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     - Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi, bukan berdasarkan Hit Rate atau Correct Signals.
     - Jika Hit Rate atau Correct Signals indikator lain lebih tinggi, jelaskan bahwa keduanya adalah metrik pendukung, sedangkan pemilihan indikator terbaik tetap mengikuti Directional Accuracy.
     - Gunakan istilah “indikator terbaik berdasarkan Directional Accuracy”, bukan “indikator paling kuat”, “unggul”, atau “lebih baik”.
-    - Jelaskan bahwa indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample pada window WFA ketika indikator tersebut terpilih dari In-Sample.
+    - Jelaskan bahwa indikator terbaik dipilih berdasarkan hasil evaluasi historis WFA pada sektor saham terkait.
     - Jika Directional Accuracy berada di rentang 50% sampai 60%, jelaskan bahwa performa hanya sedikit di atas ambang 50% dan perlu konfirmasi tambahan.
-    - Jika ada indikator pembanding dengan Total Active Signals 0, jelaskan bahwa indikator tersebut tidak memiliki nilai evaluasi final karena tidak menjadi indikator terpilih pada window WFA sektor ini.
+    - Jika ada indikator pembanding dengan Total Active Signals 0, jelaskan bahwa indikator tersebut tidak memiliki nilai evaluasi final pada rangkuman sektor ini.
     - Berikan catatan pendukung keputusan yang netral: pertimbangkan indikator pembanding, tren harga, likuiditas, kondisi sektor, sentimen pasar, dan faktor fundamental emiten.
     - Saat membandingkan indikator, gunakan frasa “mencatat Directional Accuracy tertinggi dibanding indikator lain dalam data ini”, bukan “menunjukkan kecocokan sinyal aktif yang lebih tinggi”, “lebih unggul”, atau “lebih kuat”.
 Data sistem deterministik:

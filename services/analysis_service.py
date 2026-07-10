@@ -59,8 +59,10 @@ POST_SIGNAL_VALIDATION_END_DATE = "2026-07-11"
 DISCLAIMER = "Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final."
 
 BEST_INDICATOR_BASIS = (
-    "Indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample "
-    "pada window WFA ketika indikator tersebut terpilih dari In-Sample."
+    "Indikator terbaik dipilih berdasarkan hasil evaluasi historis WFA "
+    "pada sektor saham terkait. Directional Accuracy digunakan sebagai "
+    "dasar utama pemilihan indikator, sedangkan Hit Rate, Active, dan "
+    "Correct digunakan sebagai metrik pendukung."
 )
 
 INDICATOR_SIGNAL_COLUMNS = {
@@ -170,12 +172,12 @@ def _build_comparison_evaluation_note(item: dict[str, Any]) -> str:
 
     if active == 0:
         return (
-            f"{indicator} tidak menjadi indikator terpilih pada window WFA sektor ini, "
-            "sehingga tidak memiliki nilai evaluasi final pada rangkuman perbandingan."
+            f"{indicator} tidak menjadi indikator utama pada hasil evaluasi sektor ini, "
+            "sehingga nilai evaluasi finalnya tidak tersedia pada rangkuman perbandingan."
         )
 
     return (
-        f"{indicator} memiliki hasil evaluasi final dari window WFA ketika indikator tersebut terpilih."
+        f"{indicator} memiliki hasil evaluasi historis pada sektor ini."
     )
 
 

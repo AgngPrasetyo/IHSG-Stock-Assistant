@@ -776,7 +776,7 @@ function renderMetricQualityNote(analysis) {
     const comparisonDescription =
       text(
         analysis.best_indicator_basis,
-        'Indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample pada window WFA ketika indikator tersebut terpilih dari In-Sample.'
+        'Indikator terbaik dipilih berdasarkan hasil evaluasi historis WFA pada sektor saham terkait. Directional Accuracy digunakan sebagai dasar utama pemilihan indikator.'
       ) +
       ' Hit Rate, Active, dan Correct digunakan sebagai metrik pendukung untuk membaca rata-rata keberhasilan dan jumlah sinyal.';
 

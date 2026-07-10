@@ -65,18 +65,19 @@ def _format_user_friendly_condition(analysis: dict[str, Any]) -> str:
     )
 
 def _comparison_zero_notes(comparison: list[dict[str, Any]]) -> list[str]:
+    """Explain why zero-signal comparison rows have no final evaluation value."""
     notes = []
     for item in comparison:
         try:
-                active = int(float(item.get("total_active_signals", 0)))
+            active = int(float(item.get("total_active_signals", 0)))
         except (TypeError, ValueError):
-                active = 0
+            active = 0
 
         if active == 0:
             indicator = item.get("indicator") or "Indikator"
             notes.append(
-               f"{indicator} tidak menjadi indikator terpilih pada window WFA sektor ini, "
-                    "sehingga tidak memiliki nilai evaluasi final pada rangkuman perbandingan."
+                f"{indicator} tidak menjadi indikator utama pada hasil evaluasi sektor ini, "
+                "sehingga nilai evaluasi finalnya tidak tersedia pada rangkuman perbandingan."
             )
     return notes
 
@@ -129,14 +130,14 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     metrics = analysis.get("metrics") or {}
     story.append(_section_block(styles, "Metrik Evaluasi", [
     Paragraph(
-    "Indikator terbaik dipilih dari hasil gabungan pengujian Out-of-Sample "
-    "pada window WFA ketika indikator tersebut terpilih dari In-Sample. "
-    "Directional Accuracy digunakan sebagai dasar pemilihan indikator terbaik "
-    "dan dihitung berdasarkan kecocokan arah sinyal BUY/SELL terhadap Average "
-    "Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. "
-    "Hit Rate, Total Active Signals, dan Correct Signals digunakan sebagai "
-    "metrik pendukung untuk membaca rata-rata keberhasilan dan jumlah sinyal.",
-    styles["BodyRelaxed"],
+        "Indikator terbaik dipilih berdasarkan hasil evaluasi historis WFA "
+        "pada sektor saham terkait. Directional Accuracy digunakan sebagai "
+        "dasar pemilihan indikator terbaik dan dihitung berdasarkan kecocokan "
+        "arah sinyal BUY/SELL terhadap Average Forward Return pada T+1, T+3, "
+        "T+5, dan T+10 hari perdagangan bursa saham. Hit Rate, Total Active "
+        "Signals, dan Correct Signals digunakan sebagai metrik pendukung untuk "
+        "membaca rata-rata keberhasilan dan jumlah sinyal.",
+        styles["BodyRelaxed"],
     ),
     _data_table([
         ["Metrik", "Nilai"],
@@ -158,11 +159,10 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
 
     _add_section(story, styles, "Perbandingan Indikator")
     story.append(Paragraph(
-    "Tabel ini menampilkan hasil evaluasi final indikator pada sektor saham terkait. "
-    "Indikator terbaik dipilih berdasarkan Directional Accuracy tertinggi dari hasil "
-    "gabungan pengujian Out-of-Sample pada window WFA ketika indikator tersebut "
-    "terpilih dari In-Sample. Hit Rate, Active, dan Correct digunakan sebagai "
-    "metrik pendukung.",
+    "Tabel ini menampilkan hasil evaluasi historis indikator pada sektor saham "
+    "terkait. Directional Accuracy digunakan sebagai dasar pemilihan indikator "
+    "terbaik, sedangkan Hit Rate, Active, dan Correct digunakan sebagai metrik "
+    "pendukung.",
     styles["BodyRelaxed"],
 ))
 

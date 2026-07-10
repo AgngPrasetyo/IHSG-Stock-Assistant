@@ -319,7 +319,7 @@ def test_invalid_analysis_does_not_call_openai(monkeypatch):
 def test_deterministic_explanation_includes_decision_support_note(bbca_analysis):
     explanation = generate_deterministic_explanation(bbca_analysis)
 
-    assert "hasil gabungan pengujian Out-of-Sample" in explanation
+    assert "evaluasi historis WFA" in explanation
     assert "faktor fundamental" in explanation
     assert "likuiditas" in explanation
 

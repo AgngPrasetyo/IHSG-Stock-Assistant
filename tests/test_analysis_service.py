@@ -192,8 +192,11 @@ def test_analyze_stock_rejects_non_stock_context():
 
 def test_analysis_response_includes_decision_support_notes(bbca_result):
     assert bbca_result["best_indicator_basis"]
-    assert "Out-of-Sample" in bbca_result["best_indicator_basis"]
-    assert "In-Sample" in bbca_result["best_indicator_basis"]
-    assert bbca_result["metric_quality_note"]["message"]
+    assert "evaluasi historis WFA" in bbca_result["best_indicator_basis"]
+    assert "Directional Accuracy" in bbca_result["best_indicator_basis"]
+    assert bbca_result["metric_quality_note"]["level"] in {
+        "cukup_kuat",
+        "perlu_konfirmasi",
+        "lemah",
+    }
     assert bbca_result["decision_support_note"]
-
