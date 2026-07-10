@@ -160,7 +160,7 @@ def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     - Directional Accuracy adalah persentase kecocokan seluruh sinyal aktif BUY/SELL terhadap arah harga berdasarkan Average Forward Return pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham.
     - Average Forward Return adalah rata-rata return harga setelah sinyal pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham.
     - Correct Signals adalah jumlah sinyal BUY/SELL yang sesuai berdasarkan Average Forward Return tersebut.
-    - Hit Rate adalah rata-rata keberhasilan sinyal aktif per window evaluasi, bukan selalu sama dengan Directional Accuracy.
+    - Hit Rate adalah rata-rata keberhasilan sinyal aktif setiap periode evaluasi, bukan selalu sama dengan Directional Accuracy.
     - Jika sinyal teknikal saat ini adalah HOLD, jelaskan bahwa belum ada sinyal BUY atau SELL aktif pada tanggal terakhir berdasarkan indikator terbaik.
     - Jangan menyimpulkan HOLD hanya dari posisi harga terhadap SMA.
     - Untuk MA Crossover, BUY atau SELL hanya muncul saat terjadi crossover SMA10 dan SMA50 pada data terbaru; posisi SMA10 di atas/bawah SMA50 saja bukan sinyal baru.
