@@ -1,27 +1,34 @@
+# Virtual environment
 .venv/
 venv/
 env/
 
-.agents/
-archive/experiments/
-archive/validation/
+# Local environment
+.env
+.env.local
+.env.production
 
+# Python cache
 __pycache__/
 .pytest_cache/
 *.py[cod]
 *.pyo
 *.pyd
 
-.env
-.env.local
-.env.production
+# Local tooling
+.agents/
+.vscode/
+.ruff_cache/
 
+# Logs
 *.log
 flask_manual_test*.log
 
+# OS files
 .DS_Store
 Thumbs.db
 
+# Runtime cache
 cache/prices/*
 cache/indicators/*
 cache/wfa_results/*
@@ -30,7 +37,9 @@ cache/yfinance/*
 !cache/prices/.gitkeep
 !cache/indicators/.gitkeep
 !cache/wfa_results/.gitkeep
-!cache/yfinance/.gitkeep
+
+# LLM payload export examples
+data/llm_payload_examples/
 
 # Audit outputs
 data/audit_*_errors.csv
@@ -39,21 +48,10 @@ data/audit_*_errors.csv
 !data/audit_final_indicator_wfa_best_by_sector.csv
 !data/audit_final_indicator_wfa_window_results.csv
 
-archive/
-
 # WFA experiment outputs
 data/*avg_forward_t1_t3_t5_t10*.csv
 data/*pure_signal*.csv
 data/*simple_filter*.csv
 
-# Python/test cache
-__pycache__/
-*.pyc
-.pytest_cache/
-
-# Local env/cache
-.env
-.venv/
-cache/
-.vscode/
-*.log
+# Archive
+archive/

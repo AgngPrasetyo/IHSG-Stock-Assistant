@@ -55,22 +55,7 @@ INTERNAL_FIELD_TERMS = (
     "chart_data",
     "volume_ma20",
 )
-CONTEXT_FIELDS = (
-    "ticker",
-    "ticker_yfinance",
-    "stock_name",
-    "sector",
-    "best_indicator",
-    "latest_signal",
-    "latest_condition",
-    "latest_date",
-    "latest_close",
-    "metrics",
-    "indicator_comparison",
-    "wfa_config",
-    "data_period",
-    "disclaimer",
-)
+
 
 def _contains_disallowed_script(text: str) -> bool:
     """Detect unexpected non-Indonesian scripts in the explanation output."""
