@@ -53,7 +53,13 @@ def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
 
 
 def calculate_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Add final technical indicators: SMA10/SMA50, VolMA20, MACD 12/26/9, and RSI14."""
+    """
+    Add all technical columns used by the dashboard and WFA pipeline.
+
+    The final signal rules use SMA10/SMA50, MACD, and RSI. Volume_MA20 is kept
+    as a supporting chart column and is not used as a BUY/SELL filter.
+    """
+    
     indicator_df = _prepare_price_dataframe(df)
     indicator_df["SMA10"] = calculate_sma(indicator_df, 10)
     indicator_df["SMA50"] = calculate_sma(indicator_df, 50)

@@ -67,6 +67,7 @@ def generate_macd_signal(df: pd.DataFrame) -> pd.DataFrame:
 
     return signal_df
 
+
 def generate_rsi_signal(df: pd.DataFrame) -> pd.DataFrame:
     """Signal RSI exits from oversold/overbought areas without additional filters."""
     signal_df = _prepare_signal_dataframe(df)
@@ -113,7 +114,12 @@ def get_latest_signal(df: pd.DataFrame, indicator_name: str) -> dict[str, str]:
     signal_df = _ensure_indicator_signal(df, indicator_name)
     column = _get_signal_column(indicator_name)
     row = signal_df.iloc[-1]
-    return {"indicator": _normalize_indicator_name(indicator_name), "signal": row[column], "date": signal_df.index[-1].strftime("%Y-%m-%d"), "reason": _build_reason(row, indicator_name)}
+    return {
+    "indicator": _normalize_indicator_name(indicator_name),
+    "signal": row[column],
+    "date": signal_df.index[-1].strftime("%Y-%m-%d"),
+    "reason": _build_reason(row, indicator_name),
+}
 
 
 def _prepare_signal_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -145,9 +151,9 @@ def _has_current_and_previous_values(df: pd.DataFrame, columns: list[str]) -> pd
 
 def _ensure_indicator_signal(df: pd.DataFrame, indicator_name: str) -> pd.DataFrame:
     name = _normalize_indicator_name(indicator_name)
-    if name == "MA Crossover": 
+    if name == "MA Crossover":
         return generate_ma_signal(df)
-    if name == "MACD": 
+    if name == "MACD":
         return generate_macd_signal(df)
     return generate_rsi_signal(df)
 

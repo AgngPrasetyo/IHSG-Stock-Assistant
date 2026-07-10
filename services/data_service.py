@@ -38,7 +38,6 @@ def _run_quietly(callback):
     with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
         return callback()
     
-
     
 def fetch_price_data(ticker_yfinance: str,start_date: str = START_DATE,end_date: str = END_DATE,) -> pd.DataFrame:
     

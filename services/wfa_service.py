@@ -123,6 +123,9 @@ def generate_wfa_windows(
         out_df = wfa_df[(wfa_df.index >= out_start) & (wfa_df.index < out_end)].copy()
 
         if not in_df.empty and not out_df.empty:
+            # Indicators are calculated on warm-up + in-sample + out-sample data,
+            # but metrics are evaluated only on the in-sample or out-sample rows.
+            
             warmup_df = _get_warmup_dataframe(wfa_df, start, warmup_periods)
             frames = [frame for frame in (warmup_df, in_df, out_df) if not frame.empty]
             combined_df = pd.concat(frames).sort_index()
