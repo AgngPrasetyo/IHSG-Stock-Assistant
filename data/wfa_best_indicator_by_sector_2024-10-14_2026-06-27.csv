@@ -1,5 +1,0 @@
-sektor,indicator,signal_column,total_stocks,total_windows,total_active_signals,correct_signals,directional_accuracy,hit_rate
-Energi,MA Crossover,MA_Crossover_Signal,10,40,44,31,70.45454545454545,72.8395061728395
-Finansial,MACD,MACD_Trade_Signal,10,40,154,78,50.649350649350644,54.63988095238095
-Industri,MA Crossover,MA_Crossover_Signal,10,40,48,29,60.416666666666664,67.81609195402298
-Teknologi,MA Crossover,MA_Crossover_Signal,10,40,47,25,53.191489361702125,57.26190476190476

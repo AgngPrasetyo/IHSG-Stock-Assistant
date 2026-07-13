@@ -503,84 +503,6 @@ function clearAnalysisSession() {
   return `Sinyal ${signal} terakhir muncul berdasarkan aturan indikator terbaik sektor.`;
 }
 
-  function renderPostSignalValidation(analysis) {
-    const validations = Array.isArray((analysis || {}).post_signal_validation)
-      ? analysis.post_signal_validation
-      : [];
-
-    const items = validations.length ? validations : [1, 3, 5, 10].map((horizon) => ({
-      horizon,
-      label: `T+${horizon}`,
-      status: 'UNAVAILABLE',
-      message: 'Data setelah tanggal sinyal belum tersedia.'
-    }));
-    const latestSignal = String((analysis || {}).latest_signal || '').toUpperCase();
-      const isHoldSignal = latestSignal === 'HOLD';
-      const allHoldNotEvaluated = items.every((item) => (
-        String((item || {}).status || '').toUpperCase() === 'NOT_EVALUATED_HOLD'
-      ));
-
-      if (isHoldSignal && allHoldNotEvaluated) {
-        return `
-          <section class="result-card validation-card validation-card-compact">
-            <h3 class="metrics-title">Validasi Lanjutan Sinyal Terbaru</h3>
-            <div class="hold-validation-summary">
-              <span class="validation-status validation-not_evaluated_hold">Tidak dievaluasi</span>
-              <div>
-                <strong>Sinyal terbaru adalah HOLD.</strong>
-                <p>
-                  Validasi lanjutan tidak dilakukan karena HOLD bukan sinyal aktif BUY atau SELL.
-                  Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
-                </p>
-              </div>
-            </div>
-          </section>
-        `;
-      }    
-
-    const rows = items.map((item) => {
-      const status = String((item || {}).status || '').toUpperCase();
-      const isHoldValidation = status === 'NOT_EVALUATED_HOLD';
-      const detailRows = [
-        `<div><dt>Sinyal</dt><dd>${nullable(item.signal)}</dd></div>`,
-        `<div><dt>Tanggal sinyal</dt><dd>${nullable(item.signal_date)}</dd></div>`
-      ];
-
-      if (!isHoldValidation) {
-        detailRows.push(
-          `<div><dt>Tanggal target</dt><dd>${nullable(item.target_date)}</dd></div>`,
-          `<div><dt>Close sinyal</dt><dd>${item.close_t === null || item.close_t === undefined ? '-' : money(item.close_t)}</dd></div>`,
-          `<div><dt>Close target</dt><dd>${item.close_future === null || item.close_future === undefined ? '-' : money(item.close_future)}</dd></div>`,
-          `<div><dt>Return</dt><dd>${item.return_pct === null || item.return_pct === undefined ? '-' : percent(item.return_pct)}</dd></div>`
-        );
-      }
-
-      return `
-        <article class="validation-item">
-          <div class="validation-item-head">
-            <strong>${nullable(item.label)}</strong>
-            <span class="validation-status ${validationStatusClass(item.status)}">
-              ${escapeHtml(formatValidationStatus(item.status))}
-            </span>
-          </div>
-          <dl class="validation-details">
-            ${detailRows.join('')}
-          </dl>
-          <p>${escapeHtml(validationMessage(item))}</p>
-        </article>
-      `;
-    }).join('');
-
-    return `
-      <section class="result-card validation-card">
-        <h3 class="metrics-title">Validasi Lanjutan Sinyal Terbaru</h3>
-        <p class="metrics-description">
-          Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, T+5, dan T+10 hari perdagangan bursa saham. Validasi ini tidak digunakan untuk mengubah indikator terbaik atau sinyal utama.
-        </p>
-        <div class="validation-grid">${rows}</div>
-      </section>
-    `;
-  }
 
   function renderSignalRiskNote(analysis) {
   const signal = String((analysis || {}).latest_signal || '').toUpperCase();
@@ -819,7 +741,7 @@ const rows = comparison.map((item) => {
               </p>
             </div>
             <p class="result-meta">
-              Data terakhir<br>
+              Data saham terakhir<br>
               <strong>${escapeHtml(text(analysis.latest_date))}</strong>
             </p>
           </div>
@@ -871,8 +793,6 @@ const rows = comparison.map((item) => {
 
            ${renderMetricQualityNote(analysis)}
         </section>
-
-        ${renderPostSignalValidation(analysis)}
 
         ${renderSignalRiskNote(analysis)}
 

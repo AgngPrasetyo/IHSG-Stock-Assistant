@@ -40,5 +40,7 @@ def test_analysis_page_has_chat_first_input_and_static_assets():
     assert client.get("/static/css/style.css").status_code == 200
     js_response = client.get("/static/js/main.js")
     assert js_response.status_code == 200
-    assert "Validasi Lanjutan Sinyal Terbaru" in js_response.get_data(as_text=True)
-    assert "T+1, T+3, T+5, dan T+10" in js_response.get_data(as_text=True)
+    js_text = js_response.get_data(as_text=True)
+    assert "Metrik evaluasi indikator terbaik" in js_text
+    assert "Data saham terakhir" in js_text
+    

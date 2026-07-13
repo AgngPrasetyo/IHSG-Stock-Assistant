@@ -41,12 +41,7 @@ POST_SIGNAL_STATUS_LABELS = {
     "NOT_EVALUATED_HOLD": "Tidak dievaluasi",
     "UNAVAILABLE": "Data belum tersedia",
 }
-POST_SIGNAL_VALIDATION_DESCRIPTION = (
-    "Validasi ini membandingkan sinyal terbaru dengan arah harga pada T+1, T+3, "
-    "T+5, dan T+10 hari perdagangan bursa saham. Validasi ini tidak digunakan "
-    "untuk mengubah indikator terbaik, sinyal utama, atau hasil evaluasi "
-    "Walk-Forward Analysis."
-)
+
 INVALID_PDF_TEXT_CHARS = str.maketrans("", "", "■□�")
 
 def _format_user_friendly_condition(analysis: dict[str, Any]) -> str:
@@ -187,11 +182,6 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     zero_notes = _comparison_zero_notes(analysis.get("indicator_comparison") or [])
     if zero_notes:
         story.append(Paragraph(" ".join(zero_notes), styles["BodyRelaxed"]))
-
-    post_signal_validation = analysis.get("post_signal_validation")
-    if isinstance(post_signal_validation, list) and post_signal_validation:
-        story.append(_post_signal_validation_section(post_signal_validation, styles))
-
 
     hint = analysis.get("technical_hint") or {}
     hint_rows = [["Istilah", "Penjelasan"]]
@@ -480,52 +470,6 @@ def _build_price_chart_drawing(points: list[dict[str, Any]]) -> Drawing:
     drawing.add(String(x1 - 52, y0 - 25, last_date, fontSize=7.2, fillColor=text_color))
 
     return drawing
-
-def _post_signal_validation_section(
-    validations: list[Any],
-    styles: dict[str, ParagraphStyle],
-) -> KeepTogether:
-    """Render latest-signal validation rows already present in the payload."""
-    rows = [[
-        "Horizon",
-        "Sinyal",
-        "Tgl. Sinyal",
-        "Tgl. Target",
-        "Status",
-        "Return",
-        "Keterangan",
-    ]]
-    for raw_item in validations:
-        item = raw_item if isinstance(raw_item, dict) else {}
-        status = str(item.get("status") or "").strip().upper()
-        is_hold = status == "NOT_EVALUATED_HOLD"
-        rows.append([
-            _format_horizon(item),
-            item.get("signal"),
-            _format_optional_text(item.get("signal_date")),
-            "-" if is_hold else _format_optional_text(item.get("target_date")),
-            POST_SIGNAL_STATUS_LABELS.get(status, _format_optional_text(status)),
-            "-" if is_hold else _format_percent(item.get("return_pct")),
-            item.get("message") or item.get("keterangan"),
-        ])
-
-    return _section_block(styles, "Validasi Lanjutan Sinyal Terbaru", [
-        Paragraph(POST_SIGNAL_VALIDATION_DESCRIPTION, styles["BodyRelaxed"]),
-        _data_table(
-    rows,
-    styles,
-        col_widths=[
-        1.60 * cm,  # Horizon
-        1.45 * cm,  # Sinyal
-        2.25 * cm,  # Tgl. Sinyal
-        2.25 * cm,  # Tgl. Target
-        2.10 * cm,  # Status
-        1.55 * cm,  # Return
-        4.00 * cm,  # Keterangan
-    ],
-    align_right_cols={5},
-    ),
-])
 
 def _format_last_active_signal(value: Any) -> str:
     """Format the latest historical BUY/SELL signal for the PDF report."""

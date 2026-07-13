@@ -15,8 +15,18 @@ import yfinance as yf
 
 WARMUP_START_DATE = "2024-07-01"
 START_DATE = "2024-10-21"
-END_DATE = "2026-06-12"
-LAST_EVALUATION_DATE = "2026-06-11"
+
+# Batas akhir evaluasi utama WFA.
+# END_DATE bersifat eksklusif untuk kebutuhan yfinance.
+LAST_EVALUATION_DATE = "2026-04-20"
+END_DATE = "2026-04-21"
+
+# Batas data terbaru yang digunakan aplikasi untuk menampilkan kondisi terakhir
+# Data ini digunakan untuk menampilkan kondisi saham terbaru,
+# bukan untuk menghitung ulang hasil WFA.
+LATEST_DATA_DATE = "2026-06-22"
+LATEST_DATA_END_DATE = "2026-06-23"
+
 WARMUP_TRADING_DAYS = 50
 REQUIRED_OHLCV_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 

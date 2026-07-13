@@ -15,7 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from services.data_service import (  # noqa: E402
-    END_DATE,
+    LATEST_DATA_END_DATE,
     REQUIRED_OHLCV_COLUMNS,
     START_DATE,
     load_or_fetch_price_data,
@@ -36,7 +36,7 @@ REPORT_COLUMNS = [
     "error_message",
 ]
 
-REPORT_PATH = PROJECT_ROOT / "data" / f"price_fetch_report_{START_DATE}_{END_DATE}.csv"
+REPORT_PATH = PROJECT_ROOT / "data" / f"price_fetch_report_{START_DATE}_{LATEST_DATA_END_DATE}.csv"
 
 
 def filter_sample_stocks(
@@ -177,7 +177,7 @@ def _fetch_one_stock_report(
         price_df = load_or_fetch_price_data(
             ticker_yfinance,
             start_date=START_DATE,
-            end_date=END_DATE,
+            end_date=LATEST_DATA_END_DATE,
             use_cache=not refresh,
         )
         validate_ohlcv(price_df)

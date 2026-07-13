@@ -188,6 +188,7 @@ def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     - Jika ada indikator pembanding dengan Total Active Signals 0, jelaskan bahwa indikator tersebut tidak memiliki nilai evaluasi final pada rangkuman sektor ini.
     - Berikan catatan pendukung keputusan yang netral: pertimbangkan indikator pembanding, tren harga, likuiditas, kondisi sektor, sentimen pasar, dan faktor fundamental emiten.
     - Saat membandingkan indikator, gunakan frasa “mencatat Directional Accuracy tertinggi dibanding indikator lain dalam data ini”, bukan “menunjukkan kecocokan sinyal aktif yang lebih tinggi”, “lebih unggul”, atau “lebih kuat”.
+    - Gunakan istilah periode data saham untuk data terbaru aplikasi dan periode evaluasi WFA utama untuk metrik evaluasi indikator.
 Data sistem deterministik:
 {payload}"""
 
@@ -497,9 +498,20 @@ def _format_wfa_config_for_prompt(config: dict[str, Any]) -> str:
 
 def _format_data_period_for_prompt(analysis_result: dict[str, Any]) -> str:
     period = analysis_result.get("data_period") or {}
+
+    start_date = period.get("start_date", "N/A")
+    latest_date = (
+        analysis_result.get("latest_date")
+        or period.get("latest_data_date")
+        or "N/A"
+    )
+    wfa_start = period.get("wfa_evaluation_start_date", start_date)
+    wfa_end = period.get("wfa_evaluation_end_date", "N/A")
+
     return (
-        f"{period.get('start_date', 'N/A')} sampai "
-        f"{analysis_result.get('latest_date') or period.get('end_date', 'N/A')}"
+        f"Data saham tersedia dari {start_date} sampai {latest_date}. "
+        f"Evaluasi WFA utama digunakan untuk menentukan indikator terbaik "
+        f"pada periode {wfa_start} sampai {wfa_end}."
     )
 
 

@@ -1,5 +1,0 @@
-sektor,indicator,signal_column,total_stocks,total_windows,total_active_signals,correct_signals,directional_accuracy,hit_rate
-Energi,RSI,RSI_Signal,10,40,27,15,55.55555555555556,53.50877192982456
-Finansial,MA Crossover,MA_Crossover_Signal,10,40,62,34,54.83870967741935,57.323232323232325
-Industri,MA Crossover,MA_Crossover_Signal,10,40,39,22,56.41025641025641,60.3448275862069
-Teknologi,MA Crossover,MA_Crossover_Signal,10,40,44,28,63.63636363636363,66.11111111111111

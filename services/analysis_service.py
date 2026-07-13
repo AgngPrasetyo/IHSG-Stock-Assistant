@@ -9,11 +9,12 @@ from typing import Any
 import pandas as pd
 
 from services.data_service import (
-    END_DATE,
     REQUIRED_OHLCV_COLUMNS,
     START_DATE,
     load_or_fetch_price_data,
     LAST_EVALUATION_DATE,
+    LATEST_DATA_END_DATE,
+    LATEST_DATA_DATE
 )
 from services.indicator_service import calculate_all_indicators
 from services.mapping_service import (
@@ -52,7 +53,9 @@ WFA_CONFIG = {
 }
 DATA_PERIOD = {
     "start_date": START_DATE,
-    "end_date": END_DATE,
+    "wfa_evaluation_end_date": LAST_EVALUATION_DATE,
+    "latest_data_date": LATEST_DATA_DATE,
+    "latest_data_end_date": LATEST_DATA_END_DATE,
     "end_date_exclusive": True,
 }
 POST_SIGNAL_VALIDATION_END_DATE = "2026-07-11"
@@ -182,12 +185,19 @@ def _build_comparison_evaluation_note(item: dict[str, Any]) -> str:
 
 
 def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
-    """Load cached/latest OHLCV data and add final indicators and signal columns."""
-    price_df = load_or_fetch_price_data(ticker_yfinance, use_cache=True)
+    """Load latest application OHLCV data and add final indicators and signal columns."""
+    price_df = load_or_fetch_price_data(
+        ticker_yfinance,
+        start_date=START_DATE,
+        end_date=LATEST_DATA_END_DATE,
+        use_cache=True,
+    )
+
     analysis_df = price_df.dropna(subset=REQUIRED_OHLCV_COLUMNS).copy()
 
     if analysis_df.empty:
         raise ValueError("Data OHLCV lengkap tidak tersedia untuk analisis.")
+
 
     analysis_df = calculate_all_indicators(analysis_df)
     analysis_df = generate_ma_signal(analysis_df)
@@ -199,7 +209,7 @@ def prepare_post_signal_validation_dataframe(ticker_yfinance: str) -> pd.DataFra
     price_df = load_or_fetch_price_data(
         ticker_yfinance,
         start_date=START_DATE,
-        end_date=POST_SIGNAL_VALIDATION_END_DATE,
+        end_date=LATEST_DATA_END_DATE,
         use_cache=True,
     )
     analysis_df = price_df.dropna(subset=REQUIRED_OHLCV_COLUMNS).copy()
@@ -337,8 +347,8 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
 
     Fungsi ini memvalidasi input pengguna, membaca mapping saham, mengambil hasil WFA sektor,
     menyiapkan data harga dan indikator teknikal, menentukan sinyal terbaru, membangun data
-    chart, serta menyertakan validasi lanjutan dan hint teknikal. Seluruh hasil yang dikirim
-    bersifat deterministik dan tidak mengubah metrik WFA.
+    chart, serta menyertakan hint teknikal. Seluruh hasil yang dikirim bersifat deterministik
+    dan tidak mengubah metrik WFA.
     """
     ticker = extract_ticker_from_text(user_input)
     if ticker is None:

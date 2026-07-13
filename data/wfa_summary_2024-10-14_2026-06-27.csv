@@ -1,2 +1,0 @@
-sectors_count,sectors_above_50,average_best_accuracy,weighted_best_accuracy,total_active_signals,correct_signals,min_sector_accuracy,max_sector_accuracy,best_indicators_by_sector
-4,4,58.67801303306622,55.631399317406135,293,163,50.649350649350644,70.45454545454545,Energi: MA Crossover; Finansial: MACD; Industri: MA Crossover; Teknologi: MA Crossover

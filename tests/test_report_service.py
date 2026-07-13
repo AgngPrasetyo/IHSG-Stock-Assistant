@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 
 from services.report_service import build_analysis_pdf
 from services.technical_hint_service import get_indicator_hint
@@ -135,64 +135,6 @@ def test_build_analysis_pdf_contains_key_plain_values_when_stable():
     assert b"Bank Central Asia" in pdf
     assert b"MACD" in pdf
     assert b"T+10" in pdf
-
-
-def test_build_analysis_pdf_handles_mixed_post_signal_validation_statuses():
-    payload = sample_payload()
-    payload["analysis"]["post_signal_validation"] = [
-        {
-            "horizon": 1,
-            "label": "T+1",
-            "signal": "BUY",
-            "signal_date": "2026-06-22",
-            "target_date": "2026-06-23",
-            "return_pct": 3.264,
-            "status": "MATCH",
-            "message": "Pergerakan Close pada T+1 searah dengan sinyal BUY.",
-        },
-        {
-            "horizon": 3,
-            "label": "T+3",
-            "signal": "HOLD",
-            "signal_date": "2026-06-22",
-            "target_date": None,
-            "return_pct": None,
-            "status": "NOT_EVALUATED_HOLD",
-            "message": "Sinyal HOLD tidak dievaluasi karena bukan sinyal aktif.",
-        },
-        {
-            "horizon": 5,
-            "label": "T+5",
-            "signal": "SELL",
-            "signal_date": "2026-06-22",
-            "target_date": None,
-            "return_pct": float("nan"),
-            "status": "UNAVAILABLE",
-            "message": "Data setelah tanggal sinyal belum tersedia untuk horizon ini.",
-        },
-        {
-            "horizon": 10,
-            "label": "T+10",
-            "signal": "SELL",
-            "signal_date": "2026-06-22",
-            "target_date": None,
-            "return_pct": None,
-            "status": "UNAVAILABLE",
-            "message": "Data setelah tanggal sinyal belum tersedia untuk horizon ini.",
-        },
-    ]
-
-    pdf = build_analysis_pdf(payload)
-
-    assert pdf.startswith(b"%PDF")
-    assert b"Validasi Lanjutan Sinyal Terbaru" in pdf
-    assert b"Sesuai" in pdf
-    assert b"arah" in pdf
-    assert b"T+10" in pdf
-    assert b"Paragraph(" not in pdf
-    assert b"caseSensitive" not in pdf
-    assert b"NOT_EVALUATED_HOLD" not in pdf
-    assert b"NaN" not in pdf
 
 
 def test_build_analysis_pdf_sanitizes_invalid_box_characters_in_explanation():

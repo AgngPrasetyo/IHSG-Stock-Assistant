@@ -9,7 +9,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.data_service import END_DATE, REQUIRED_OHLCV_COLUMNS, START_DATE, load_or_fetch_price_data, validate_ohlcv # noqa: E402
+from services.data_service import (  # noqa: E402
+    LATEST_DATA_END_DATE,
+    REQUIRED_OHLCV_COLUMNS,
+    START_DATE,
+    load_or_fetch_price_data,
+    validate_ohlcv,
+)
 from services.mapping_service import load_mapping # noqa: E402
 
 DATA_DIR = PROJECT_ROOT / "data"
@@ -62,7 +68,7 @@ def build_one_stock(row: pd.Series) -> tuple[pd.DataFrame, dict[str, Any]]:
     price_df = load_or_fetch_price_data(
         ticker_yfinance,
         start_date=START_DATE,
-        end_date=END_DATE,
+        end_date=LATEST_DATA_END_DATE,
         use_cache=True,
     )
 
@@ -118,7 +124,7 @@ def main() -> None:
 
     sample_df = load_sample_mapping()
 
-    print(f"Periode data: {START_DATE} sampai {END_DATE} exclusive")
+    print(f"Periode data aplikasi: {START_DATE} sampai {LATEST_DATA_END_DATE} exclusive")
     print(f"Jumlah saham sampel: {len(sample_df)}")
     print("Membangun dataset gabungan OHLCV...\n")
 
