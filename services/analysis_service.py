@@ -23,7 +23,6 @@ from services.mapping_service import (
     resolve_ticker,
     validate_stock_analysis_intent,
 )
-from services.post_signal_validation_service import build_post_signal_validation
 from services.technical_hint_service import get_indicator_hint
 from services.signal_service import (
     MACD_TRADE_SIGNAL_COLUMN,
@@ -58,7 +57,7 @@ DATA_PERIOD = {
     "latest_data_end_date": LATEST_DATA_END_DATE,
     "end_date_exclusive": True,
 }
-POST_SIGNAL_VALIDATION_END_DATE = "2026-07-11"
+
 DISCLAIMER = "Hasil ini merupakan sinyal analisis teknikal, bukan rekomendasi investasi final."
 
 BEST_INDICATOR_BASIS = (
@@ -204,23 +203,6 @@ def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
     analysis_df = generate_macd_signal(analysis_df)
     return generate_rsi_signal(analysis_df)
 
-def prepare_post_signal_validation_dataframe(ticker_yfinance: str) -> pd.DataFrame:
-    """Load extended cached OHLCV data only for validating already-formed signals."""
-    price_df = load_or_fetch_price_data(
-        ticker_yfinance,
-        start_date=START_DATE,
-        end_date=LATEST_DATA_END_DATE,
-        use_cache=True,
-    )
-    analysis_df = price_df.dropna(subset=REQUIRED_OHLCV_COLUMNS).copy()
-
-    if analysis_df.empty:
-        raise ValueError("Data OHLCV lengkap tidak tersedia untuk validasi lanjutan.")
-
-    analysis_df = calculate_all_indicators(analysis_df)
-    analysis_df = generate_ma_signal(analysis_df)
-    analysis_df = generate_macd_signal(analysis_df)
-    return generate_rsi_signal(analysis_df)
 
 def get_last_active_signal(df: pd.DataFrame, signal_column: str) -> dict[str, Any] | None:
     """Return the latest BUY/SELL signal from the final signal column."""
@@ -320,26 +302,6 @@ def build_chart_data(df: pd.DataFrame, limit: int = 120) -> list[dict[str, Any]]
     return result
 
 
-def _build_validation_dataframe(
-    ticker_yfinance: str,
-    analysis_df: pd.DataFrame,
-    signal_column: str,
-    signal_date: Any,
-    latest_signal: str,
-) -> pd.DataFrame:
-    try:
-        validation_df = prepare_post_signal_validation_dataframe(ticker_yfinance)
-        if signal_column not in validation_df.columns or pd.Timestamp(signal_date) not in validation_df.index:
-            return analysis_df
-
-        validation_signal = str(validation_df.loc[pd.Timestamp(signal_date), signal_column]).upper()
-        if validation_signal != latest_signal:
-            validation_df = validation_df.copy()
-            validation_df.loc[pd.Timestamp(signal_date), signal_column] = latest_signal
-        return validation_df
-    except Exception:
-        return analysis_df
-
 
 def analyze_stock(user_input: str | None) -> dict[str, Any]:
     """
@@ -384,21 +346,10 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
     latest_row = analysis_df.iloc[-1]
     indicator_name = str(best_indicator["indicator"])
     signal_column = _get_signal_column(indicator_name)
-    signal_date = analysis_df.index[-1]
     latest_signal = get_latest_signal_by_indicator(analysis_df, indicator_name)
     last_active_signal = get_last_active_signal(analysis_df, signal_column)
-    validation_df = _build_validation_dataframe(
-        str(stock_info["ticker_yfinance"]),
-        analysis_df,
-        signal_column,
-        signal_date,
-        latest_signal,
-    )
-    post_signal_validation = build_post_signal_validation(
-        validation_df,
-        signal_column,
-        signal_date=signal_date,
-    )
+    
+    
     return {
         "success": True,
         "message": "Analisis berhasil.",
@@ -421,7 +372,6 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
         "indicator_comparison": comparison,
         "technical_hint": get_indicator_hint(indicator_name),
         "chart_data": build_chart_data(analysis_df),
-        "post_signal_validation": post_signal_validation,
         "wfa_config": WFA_CONFIG.copy(),
         "data_period": DATA_PERIOD.copy(),
         "best_indicator_basis": BEST_INDICATOR_BASIS,
@@ -547,13 +497,13 @@ def build_metric_quality_note(best_indicator: dict[str, Any]) -> dict[str, Any]:
         "message": message,
     }
 
-"""Build a neutral decision-support note without changing the technical signal."""
+
 def build_decision_support_note(
     best_indicator: dict[str, Any],
     comparison: list[dict[str, Any]],
     latest_signal: str,
 ) -> str:
-    
+    """Build a neutral decision-support note without changing the technical signal."""
     
     indicator = best_indicator.get("indicator", "indikator terbaik")
     accuracy = _safe_float(best_indicator.get("directional_accuracy"))
