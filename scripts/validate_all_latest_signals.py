@@ -1,3 +1,5 @@
+# scripts/validate_all_latest_signals.py
+
 from __future__ import annotations
 
 import sys
@@ -5,186 +7,47 @@ from pathlib import Path
 
 import pandas as pd
 
+SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.analysis_service import ( # noqa: E402
+for path in (SCRIPT_DIR, PROJECT_ROOT):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from services.analysis_service import (  # noqa: E402
     get_sector_best_indicator,
     prepare_latest_analysis_dataframe,
 )
-from services.mapping_service import load_mapping# noqa: E402
-from services.signal_service import ( # noqa: E402
+from services.mapping_service import load_mapping  # noqa: E402
+from services.signal_service import (  # noqa: E402
     MA_CROSSOVER_SIGNAL_COLUMN,
     MACD_TRADE_SIGNAL_COLUMN,
     RSI_SIGNAL_COLUMN,
 )
+from validate_latest_signals import validate_by_indicator  # noqa: E402
 
 
-ACTIVE_SIGNALS = {"BUY", "SELL"}
+def load_samples() -> pd.DataFrame:
+    mapping = load_mapping()
+    sample = mapping[
+        mapping["is_sample"].astype(str).str.strip().str.casefold().eq("ya")
+        & mapping["status_data"].astype(str).str.strip().str.casefold().eq("lengkap")
+    ][["sektor", "ticker", "ticker_yfinance"]].copy()
 
-
-def validate_ma(df: pd.DataFrame) -> str:
-    if len(df) < 2:
-        return "PERLU_CEK_DATA_KURANG"
-
-    prev = df.iloc[-2]
-    latest = df.iloc[-1]
-    signal = str(latest.get(MA_CROSSOVER_SIGNAL_COLUMN, "HOLD")).upper()
-
-    required_current = ["SMA10", "SMA50", "Volume", "Volume_MA20"]
-    required_previous = ["SMA10", "SMA50"]
-
-    if prev[required_previous].isna().any() or latest[required_current].isna().any():
-        return "PERLU_CEK_NILAI_MA_NAN"
-
-    volume_confirmed = latest["Volume"] >= latest["Volume_MA20"] * 0.8
-
-    buy_valid = (
-        prev["SMA10"] <= prev["SMA50"]
-        and latest["SMA10"] > latest["SMA50"]
-        and volume_confirmed
-    )
-
-    sell_valid = (
-        prev["SMA10"] >= prev["SMA50"]
-        and latest["SMA10"] < latest["SMA50"]
-        and volume_confirmed
-    )
-
-    if signal == "BUY" and buy_valid:
-        return "VALID_BUY"
-    if signal == "SELL" and sell_valid:
-        return "VALID_SELL"
-    if signal == "HOLD" and not buy_valid and not sell_valid:
-        return "VALID_HOLD"
-
-    return "PERLU_CEK"
-
-def validate_macd(df: pd.DataFrame) -> str:
-    if len(df) < 2:
-        return "PERLU_CEK_DATA_KURANG"
-
-    prev = df.iloc[-2]
-    latest = df.iloc[-1]
-    signal = str(latest.get(MACD_TRADE_SIGNAL_COLUMN, "HOLD")).upper()
-
-    required_current = ["Close", "SMA50", "MACD", "MACD_Signal", "Volume", "Volume_MA20"]
-    required_previous = ["MACD", "MACD_Signal"]
-
-    if prev[required_previous].isna().any() or latest[required_current].isna().any():
-        return "PERLU_CEK_NILAI_MACD_NAN"
-
-    if latest["Close"] == 0:
-        return "PERLU_CEK_CLOSE_NOL"
-
-    bullish_distance = (latest["MACD"] - latest["MACD_Signal"]) / latest["Close"]
-    bearish_distance = (latest["MACD_Signal"] - latest["MACD"]) / latest["Close"]
-    volume_confirmed = latest["Volume"] >= latest["Volume_MA20"]
-
-    buy_valid = (
-        prev["MACD"] <= prev["MACD_Signal"]
-        and latest["MACD"] > latest["MACD_Signal"]
-        and latest["Close"] > latest["SMA50"]
-        and bullish_distance >= 0.001
-        and volume_confirmed
-    )
-
-    sell_valid = (
-        prev["MACD"] >= prev["MACD_Signal"]
-        and latest["MACD"] < latest["MACD_Signal"]
-        and latest["Close"] < latest["SMA50"]
-        and bearish_distance >= 0.001
-        and volume_confirmed
-    )
-
-    if signal == "BUY" and buy_valid:
-        return "VALID_BUY"
-    if signal == "SELL" and sell_valid:
-        return "VALID_SELL"
-    if signal == "HOLD" and not buy_valid and not sell_valid:
-        return "VALID_HOLD"
-
-    return "PERLU_CEK"
-
-
-def validate_rsi(df: pd.DataFrame) -> str:
-    if len(df) < 2:
-        return "PERLU_CEK_DATA_KURANG"
-
-    prev = df.iloc[-2]
-    latest = df.iloc[-1]
-    signal = str(latest.get(RSI_SIGNAL_COLUMN, "HOLD")).upper()
-
-    required = ["Close", "SMA50", "RSI"]
-    if prev[required].isna().any() or latest[required].isna().any():
-        return "PERLU_CEK_NILAI_RSI_NAN"
-
-    buy_valid = (
-        prev["RSI"] < 30
-        and latest["RSI"] >= 30
-        and latest["Close"] > latest["SMA50"]
-    )
-
-    sell_valid = (
-        prev["RSI"] > 70
-        and latest["RSI"] <= 70
-        and latest["Close"] < latest["SMA50"]
-    )
-
-    if signal == "BUY" and buy_valid:
-        return "VALID_BUY"
-    if signal == "SELL" and sell_valid:
-        return "VALID_SELL"
-    if signal == "HOLD" and not buy_valid and not sell_valid:
-        return "VALID_HOLD"
-
-    return "PERLU_CEK"
-
-
-def get_best_signal_column(indicator: str) -> str:
-    indicator = str(indicator).strip()
-
-    if indicator == "MA Crossover":
-        return MA_CROSSOVER_SIGNAL_COLUMN
-    if indicator == "MACD":
-        return MACD_TRADE_SIGNAL_COLUMN
-    if indicator == "RSI":
-        return RSI_SIGNAL_COLUMN
-
-    return ""
-
-
-def validate_by_indicator(df: pd.DataFrame, indicator: str) -> str:
-    indicator = str(indicator).strip()
-
-    if indicator == "MA Crossover":
-        return validate_ma(df)
-    if indicator == "MACD":
-        return validate_macd(df)
-    if indicator == "RSI":
-        return validate_rsi(df)
-
-    return "PERLU_CEK_INDIKATOR_TIDAK_DIKENALI"
+    return sample.sort_values(["sektor", "ticker"]).reset_index(drop=True)
 
 
 def main() -> None:
-    mapping = load_mapping()
-
-    sample = mapping[
-        (mapping["is_sample"].astype(str).str.strip().str.casefold() == "ya")
-        & (mapping["status_data"].astype(str).str.strip().str.casefold() == "lengkap")
-    ].copy()
-
+    sample = load_samples()
     rows: list[dict[str, object]] = []
 
     for _, stock in sample.iterrows():
-        ticker = stock["ticker"]
-        ticker_yfinance = stock["ticker_yfinance"]
-        sector = stock["sektor"]
+        ticker = str(stock["ticker"])
+        ticker_yfinance = str(stock["ticker_yfinance"])
+        sector = str(stock["sektor"])
 
         try:
-            best = get_sector_best_indicator(str(sector))
+            best = get_sector_best_indicator(sector)
             if not best:
                 rows.append(
                     {
@@ -194,20 +57,18 @@ def main() -> None:
                         "best_indicator": None,
                         "latest_date": None,
                         "latest_signal": None,
+                        "expected_signal": None,
                         "validation_status": "ERROR_BEST_INDICATOR_TIDAK_TERSEDIA",
                     }
                 )
                 continue
 
             best_indicator = str(best["indicator"])
-            signal_column = get_best_signal_column(best_indicator)
+            df = prepare_latest_analysis_dataframe(ticker_yfinance)
 
-            df = prepare_latest_analysis_dataframe(str(ticker_yfinance))
             latest = df.iloc[-1]
             prev = df.iloc[-2]
-
-            latest_signal = str(latest.get(signal_column, "HOLD")).upper()
-            validation_status = validate_by_indicator(df, best_indicator)
+            validation = validate_by_indicator(df, best_indicator)
 
             rows.append(
                 {
@@ -215,14 +76,14 @@ def main() -> None:
                     "ticker_yfinance": ticker_yfinance,
                     "sector": sector,
                     "best_indicator": best_indicator,
-                    "signal_column": signal_column,
                     "rows": len(df),
                     "start_date": df.index.min().strftime("%Y-%m-%d"),
                     "prev_date": df.index[-2].strftime("%Y-%m-%d"),
                     "latest_date": df.index[-1].strftime("%Y-%m-%d"),
                     "prev_close": prev.get("Close"),
                     "latest_close": latest.get("Close"),
-                    "latest_signal": latest_signal,
+                    "latest_signal": validation.get("actual_signal"),
+                    "expected_signal": validation.get("expected_signal"),
                     "ma_signal": latest.get(MA_CROSSOVER_SIGNAL_COLUMN),
                     "macd_signal": latest.get(MACD_TRADE_SIGNAL_COLUMN),
                     "rsi_signal": latest.get(RSI_SIGNAL_COLUMN),
@@ -230,17 +91,15 @@ def main() -> None:
                     "sma50_prev": prev.get("SMA50"),
                     "sma10_latest": latest.get("SMA10"),
                     "sma50_latest": latest.get("SMA50"),
-                    "volume_latest": latest.get("Volume"),
-                    "volume_ma20_latest": latest.get("Volume_MA20"),
                     "macd_prev": prev.get("MACD"),
                     "macd_signal_prev": prev.get("MACD_Signal"),
                     "macd_latest": latest.get("MACD"),
                     "macd_signal_latest": latest.get("MACD_Signal"),
-                    "macd_histogram_latest": latest.get("MACD_Histogram"),
                     "rsi_prev": prev.get("RSI"),
                     "rsi_latest": latest.get("RSI"),
-                    "validation_status": validation_status,
-                                    }
+                    "condition": validation.get("condition"),
+                    "validation_status": validation.get("validation_status"),
+                }
             )
 
         except Exception as exc:
@@ -252,6 +111,7 @@ def main() -> None:
                     "best_indicator": None,
                     "latest_date": None,
                     "latest_signal": None,
+                    "expected_signal": None,
                     "validation_status": f"ERROR:{type(exc).__name__}:{exc}",
                 }
             )
@@ -259,10 +119,11 @@ def main() -> None:
     result = pd.DataFrame(rows)
 
     output_path = PROJECT_ROOT / "data" / "validate_all_latest_signals.csv"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(output_path, index=False)
 
     print("=" * 100)
-    print("VALIDASI SEMUA SINYAL TERBARU BERDASARKAN INDIKATOR TERBAIK SEKTOR")
+    print("VALIDASI SEMUA SINYAL TERBARU BERDASARKAN ATURAN SISTEM SAAT INI")
     print("=" * 100)
     print()
 
@@ -272,7 +133,9 @@ def main() -> None:
         "best_indicator",
         "latest_date",
         "latest_signal",
+        "expected_signal",
         "validation_status",
+        "condition",
     ]
 
     print(result[display_columns].to_string(index=False))
@@ -285,15 +148,15 @@ def main() -> None:
     print()
 
     print("=" * 100)
-    print("DATA PERLU CEK / ERROR")
+    print("DATA ERROR / PERLU CEK")
     print("=" * 100)
 
     need_check = result[
-        result["validation_status"].astype(str).str.contains("PERLU_CEK|ERROR", case=False, na=False)
+        result["validation_status"].astype(str).str.contains("ERROR|PERLU_CEK", case=False, na=False)
     ]
 
     if need_check.empty:
-        print("Tidak ada data PERLU_CEK atau ERROR.")
+        print("Tidak ada data ERROR atau PERLU_CEK.")
     else:
         print(need_check[display_columns].to_string(index=False))
 

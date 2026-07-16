@@ -1,0 +1,32 @@
+item,status,detail
+file:wfa_stock_results_2024-10-21_2026-04-20.csv,OK,File tersedia.
+file:wfa_window_results_2024-10-21_2026-04-20.csv,OK,File tersedia.
+file:wfa_sector_window_selection_2024-10-21_2026-04-20.csv,OK,File tersedia.
+file:wfa_sector_aggregate_2024-10-21_2026-04-20.csv,OK,File tersedia.
+file:wfa_best_indicator_by_sector_2024-10-21_2026-04-20.csv,OK,File tersedia.
+file:wfa_summary_2024-10-21_2026-04-20.csv,OK,File tersedia.
+file:wfa_window_count_2024-10-21_2026-04-20.csv,OK,File tersedia.
+nan_check:stock_results,OK,Jumlah NaN pada kolom kritis: 0
+nan_check:window_results,OK,Jumlah NaN pada kolom kritis: 0
+nan_check:sector_window_selection,OK,Jumlah NaN pada kolom kritis: 0
+nan_check:sector_aggregate,OK,Jumlah NaN pada kolom kritis: 0
+nan_check:best_indicator_by_sector,OK,Jumlah NaN pada kolom kritis: 0
+nan_check:summary,OK,Jumlah NaN pada kolom kritis: 0
+nan_check:window_count,OK,Jumlah NaN pada kolom kritis: 0
+jumlah_saham_sampel,OK,Ditemukan 40 saham sampel.
+jumlah_sektor,OK,Ditemukan 4 sektor.
+jumlah_window_per_saham,OK,Semua saham harus memiliki 4 window.
+selection_required_columns,OK,Kolom wajib tersedia.
+selection_tidak_menampilkan_hit_rate_window,OK,Kolom hit rate in-sample/out-of-sample tidak ditampilkan pada CSV selection.
+selection_window_per_sektor,OK,"Jumlah window per sektor: {'Energi': 4, 'Finansial': 4, 'Industri': 4, 'Teknologi': 4}"
+selection_indicator_valid,OK,Semua indikator terpilih valid.
+selection_oos_directional_accuracy,OK,DA OOS sesuai Correct/Active.
+aggregate_required_columns,OK,Kolom wajib tersedia.
+aggregate_jumlah_baris,OK,Ditemukan 12 baris; ekspektasi 12.
+aggregate_pasangan_sektor_indikator_unik,OK,Setiap sektor-indikator unik.
+aggregate_indicator_valid,OK,Semua indikator valid.
+aggregate_directional_accuracy,OK,DA agregat sesuai Correct/Active.
+aggregate_hit_rate_range,OK,Hit Rate berada pada rentang 0 sampai 100.
+best_required_columns,OK,Kolom wajib tersedia.
+best_jumlah_sektor,OK,Ditemukan 4 sektor pada best indicator.
+best_sesuai_aggregate,OK,Best indicator sesuai hasil pengurutan aggregate.

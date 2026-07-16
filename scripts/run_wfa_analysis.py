@@ -546,7 +546,12 @@ def main() -> None:
 
     stock_results.to_csv(STOCK_PATH, index=False)
     window_results.to_csv(WINDOW_RESULTS_PATH, index=False)
-    selection.to_csv(SELECTION_PATH, index=False)
+    selection_export = selection.drop(
+        columns=["in_sample_hit_rate","out_sample_hit_rate"],
+        errors="ignore",
+    )
+
+    selection_export.to_csv(SELECTION_PATH, index=False)
     aggregate.to_csv(AGGREGATE_PATH, index=False)
     best.to_csv(BEST_PATH, index=False)
     summary.to_csv(SUMMARY_PATH, index=False)

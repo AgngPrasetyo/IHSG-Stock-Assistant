@@ -21,7 +21,7 @@ START_DATE = "2024-10-21"
 LAST_EVALUATION_DATE = "2026-04-20"
 END_DATE = "2026-04-21"
 
-# Batas data terbaru yang digunakan aplikasi untuk menampilkan kondisi terakhir
+# Batas data terbaru yang digunakan aplikasi untuk menampilkan kondisi terakhir.
 # Data ini digunakan untuk menampilkan kondisi saham terbaru,
 # bukan untuk menghitung ulang hasil WFA.
 LATEST_DATA_DATE = "2026-06-22"
@@ -47,10 +47,13 @@ def _run_quietly(callback):
 
     with contextlib.redirect_stdout(output_buffer), contextlib.redirect_stderr(error_buffer):
         return callback()
-    
-    
-def fetch_price_data(ticker_yfinance: str,start_date: str = START_DATE,end_date: str = END_DATE,) -> pd.DataFrame:
-    
+
+
+def fetch_price_data(
+    ticker_yfinance: str,
+    start_date: str = START_DATE,
+    end_date: str = END_DATE,
+) -> pd.DataFrame:
     """
     Mengambil data OHLCV harian dari Yahoo Finance dengan beberapa fallback.
 
@@ -65,27 +68,32 @@ def fetch_price_data(ticker_yfinance: str,start_date: str = START_DATE,end_date:
     _configure_yfinance_cache()
 
     try:
-        price_df = _run_quietly(lambda: yf.download(
-            ticker_yfinance,
-            start=start_date,
-            end=end_date,
-            interval="1d",
-            progress=False,
-            auto_adjust=False,
-            threads=False,
-        ))
+        price_df = _run_quietly(
+            lambda: yf.download(
+                ticker_yfinance,
+                start=start_date,
+                end=end_date,
+                interval="1d",
+                progress=False,
+                auto_adjust=False,
+                threads=False,
+            )
+        )
     except Exception:
         price_df = pd.DataFrame()
 
     price_df = _normalize_price_dataframe(price_df)
+
     if price_df.empty:
         try:
-           price_df = _run_quietly(lambda: yf.Ticker(ticker_yfinance).history(
-                start=start_date,
-                end=end_date,
-                interval="1d",
-                auto_adjust=False,
-            ))
+            price_df = _run_quietly(
+                lambda: yf.Ticker(ticker_yfinance).history(
+                    start=start_date,
+                    end=end_date,
+                    interval="1d",
+                    auto_adjust=False,
+                )
+            )
         except Exception:
             price_df = pd.DataFrame()
 
@@ -112,11 +120,17 @@ def validate_ohlcv(df: pd.DataFrame) -> bool:
         missing = ", ".join(missing_columns)
         raise ValueError(f"Kolom OHLCV wajib tidak lengkap: {missing}")
 
-    if df["Close"].isna().all():
+    if df["Close"].isna().any():
+        raise ValueError("Kolom Close masih memiliki nilai kosong setelah normalisasi data.")
+
+    if df["Close"].empty or df["Close"].isna().all():
         raise ValueError("Kolom Close tidak memiliki nilai yang valid.")
 
-    if df["Volume"].isna().all():
+    if df["Volume"].empty or df["Volume"].isna().all():
         raise ValueError("Kolom Volume tidak memiliki nilai yang valid.")
+
+    if not df.index.is_monotonic_increasing:
+        raise ValueError("Urutan tanggal OHLCV tidak kronologis.")
 
     return True
 
@@ -148,7 +162,12 @@ def load_cached_price_data(
     price_df = pd.read_csv(cache_path, parse_dates=["Date"])
     price_df = price_df.set_index("Date")
     price_df.index = pd.DatetimeIndex(price_df.index)
-    return _normalize_price_dataframe(price_df)
+    price_df = _normalize_price_dataframe(price_df)
+
+    if price_df.empty:
+        return None
+
+    return price_df
 
 
 def save_price_cache(
@@ -158,11 +177,12 @@ def save_price_cache(
     end_date: str = END_DATE,
 ) -> Path:
     """Save validated OHLCV data into the price cache as CSV."""
-    validate_ohlcv(df)
+    price_df = _normalize_price_dataframe(df)
+    validate_ohlcv(price_df)
+
     cache_path = get_cache_path(ticker_yfinance, start_date, end_date)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-    price_df = _normalize_price_dataframe(df)
     price_df.to_csv(cache_path, index_label="Date")
     return cache_path
 
@@ -187,24 +207,49 @@ def load_or_fetch_price_data(
 
 
 def _normalize_price_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """Normalize yfinance/cache output into a Date-indexed OHLCV DataFrame."""
+    """Normalize yfinance/cache output into a Date-indexed clean OHLCV DataFrame."""
     if df is None:
         return pd.DataFrame()
 
     price_df = df.copy()
 
+    if price_df.empty:
+        return pd.DataFrame()
+
     if isinstance(price_df.columns, pd.MultiIndex):
         price_df.columns = [column[0] for column in price_df.columns]
 
     if "Date" in price_df.columns:
-        price_df["Date"] = pd.to_datetime(price_df["Date"])
+        price_df["Date"] = pd.to_datetime(price_df["Date"], errors="coerce")
+        price_df = price_df.dropna(subset=["Date"])
         price_df = price_df.set_index("Date")
 
     if not isinstance(price_df.index, pd.DatetimeIndex):
-        price_df.index = pd.to_datetime(price_df.index)
+        price_df.index = pd.to_datetime(price_df.index, errors="coerce")
 
+    price_df = price_df[price_df.index.notna()]
+    price_df.index = pd.DatetimeIndex(price_df.index)
     price_df.index.name = "Date"
+
     price_df = price_df.sort_index()
+    price_df = price_df[~price_df.index.duplicated(keep="last")]
+
+    # Pastikan kolom OHLCV yang tersedia berbentuk numerik.
+    for column in REQUIRED_OHLCV_COLUMNS:
+        if column in price_df.columns:
+            price_df[column] = pd.to_numeric(price_df[column], errors="coerce")
+
+    # Baris tanpa Close tidak dapat digunakan untuk indikator teknikal,
+    # forward return, sinyal terbaru, maupun grafik harga.
+    if "Close" in price_df.columns:
+        price_df = price_df.dropna(subset=["Close"])
+
+    # Simpan hanya kolom yang relevan jika tersedia, tetapi jangan paksa
+    # menghapus kolom tambahan sebelum validasi.
+    ordered_columns = [column for column in REQUIRED_OHLCV_COLUMNS if column in price_df.columns]
+    extra_columns = [column for column in price_df.columns if column not in ordered_columns]
+    price_df = price_df[ordered_columns + extra_columns]
+
     return price_df
 
 
@@ -268,4 +313,3 @@ def _fetch_price_data_from_yahoo_chart(
             "Volume": quote.get("volume"),
         }
     )
-
