@@ -2,7 +2,7 @@
 
 Aplikasi web untuk skripsi:
 
-**Rancang Bangun Asisten Pendukung Keputusan untuk Analisis Teknikal Saham Berbasis Large Language Model menggunakan Fixed-Length Rolling Walk-Forward Analysis**
+**Rancang Bangun Asisten Pendukung Keputusan Analisis Teknikal Saham Sektoral menggunakan Fixed-Length Rolling Walk-Forward Analysis dan LLM**
 
 Stock Decision Assistant adalah aplikasi web berbasis Flask yang membantu pengguna memahami hasil analisis teknikal saham secara lebih terstruktur. Sistem menyajikan indikator teknikal terbaik berdasarkan evaluasi sektoral, sinyal analisis BUY/SELL/HOLD, metrik evaluasi, grafik harga penutupan, ringkasan hasil analisis, hint istilah teknikal, dan laporan PDF.
 
@@ -22,9 +22,6 @@ Versi saat ini sudah mencakup:
 - Ringkasan hasil berbasis LLM atau fallback deterministik.
 - Hint istilah teknikal dan metrik evaluasi.
 - Unduh laporan hasil analisis dalam format PDF.
-- Test otomatis dengan pytest.
 
-Validasi terakhir:
 
-```text
 173 passed
