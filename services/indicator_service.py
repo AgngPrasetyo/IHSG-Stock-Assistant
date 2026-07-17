@@ -36,19 +36,41 @@ def calculate_macd(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
-    """Add an RSI column using average gain and average loss."""
+    """Add an RSI column using Wilder's smoothing method."""
     if period <= 0:
         raise ValueError("period harus lebih besar dari 0.")
+
     indicator_df = _prepare_price_dataframe(df)
     _validate_price_column(indicator_df, "Close")
+
     delta = indicator_df["Close"].diff()
-    gain, loss = delta.clip(lower=0), -delta.clip(upper=0)
-    average_gain = gain.rolling(window=period, min_periods=period).mean()
-    average_loss = loss.rolling(window=period, min_periods=period).mean()
+
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    # RSI Wilder:
+    # Rata-rata awal dibentuk dari periode awal,
+    # lalu nilai berikutnya diperhalus dengan alpha = 1 / period.
+    average_gain = gain.ewm(
+        alpha=1 / period,
+        adjust=False,
+        min_periods=period,
+    ).mean()
+
+    average_loss = loss.ewm(
+        alpha=1 / period,
+        adjust=False,
+        min_periods=period,
+    ).mean()
+
     rs = average_gain / average_loss
+
     indicator_df["RSI"] = 100 - (100 / (1 + rs))
+
+    # Penanganan kondisi ekstrem agar tidak menghasilkan inf/NaN yang tidak perlu.
     indicator_df.loc[(average_loss == 0) & (average_gain > 0), "RSI"] = 100
     indicator_df.loc[(average_loss == 0) & (average_gain == 0), "RSI"] = 50
+
     return indicator_df
 
 
