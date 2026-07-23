@@ -1,5 +1,10 @@
 ﻿"""Public non-API routes."""
 
+# CATATAN FILE:
+# File ini berisi route halaman publik non-API.
+# Kegunaannya adalah menampilkan halaman landing dan halaman analisis utama kepada pengguna.
+
+
 from __future__ import annotations
 
 from typing import Any
@@ -9,6 +14,9 @@ from flask import Blueprint, render_template
 main_bp = Blueprint("main", __name__)
 
 
+# CATATAN FUNGSI: Membuat pratinjau analisis untuk halaman landing.
+# CARA KERJA SINGKAT: Fungsi mencoba analisis BBCA dan memakai fallback jika gagal.
+# KEGUNAAN: Dipakai agar landing page tetap tampil meskipun data analisis tidak tersedia.
 def _build_landing_preview() -> dict[str, Any]:
     """Build adaptive homepage preview from deterministic BBCA analysis."""
     fallback = {
@@ -60,6 +68,9 @@ def _build_landing_preview() -> dict[str, Any]:
 
 
 @main_bp.get("/")
+# CATATAN FUNGSI: Menampilkan halaman utama aplikasi.
+# CARA KERJA SINGKAT: Preview dibangun lalu dikirim ke template index.
+# KEGUNAAN: Dipakai untuk route root aplikasi.
 def index() -> str:
     """Render the public landing page with an adaptive analysis preview."""
     preview = _build_landing_preview()
@@ -67,6 +78,9 @@ def index() -> str:
 
 
 @main_bp.get("/analysis")
+# CATATAN FUNGSI: Menampilkan halaman analisis saham.
+# CARA KERJA SINGKAT: Template analysis.html dirender tanpa proses analisis langsung.
+# KEGUNAAN: Dipakai untuk halaman kerja utama pengguna.
 def analysis() -> str:
     """Render the focused stock analysis experience."""
     return render_template("analysis.html")

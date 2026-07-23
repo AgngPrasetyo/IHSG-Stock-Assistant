@@ -1,4 +1,11 @@
 ﻿"""Utilities for reading and validating stock ticker mapping data."""
+# ================================================================
+# CATATAN FILE:
+# File ini bertugas membaca mapping saham, mengenali kode ticker, nama emiten, alias, sektor, dan status kelengkapan data. File ini memastikan input user berada dalam cakupan sampel penelitian sebelum diproses.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -163,6 +170,10 @@ _TOKEN_STOPWORDS = {
 _PUNCTUATION_TRANSLATION = str.maketrans({char: " " for char in string.punctuation})
 
 
+
+# CATATAN FUNGSI: Membaca file mapping saham final dan memvalidasi kolom wajib.
+# CARA KERJA SINGKAT: Membuka file Excel mapping, mengecek struktur kolom, menormalkan ticker, lalu menambahkan nama saham dan alias.
+# KEGUNAAN: Menentukan apakah input saham tersedia dan masuk cakupan penelitian.
 def load_mapping(mapping_path: str | Path = MAPPING_FILE) -> pd.DataFrame:
     """Read the stock mapping Excel file and validate required columns."""
     path = Path(mapping_path)
@@ -192,6 +203,10 @@ def load_mapping(mapping_path: str | Path = MAPPING_FILE) -> pd.DataFrame:
     return mapping_df
 
 
+
+# CATATAN FUNGSI: Menormalkan teks, nama indikator, ticker, atau data agar formatnya konsisten.
+# CARA KERJA SINGKAT: Membersihkan karakter, menyamakan kapitalisasi, mengatur indeks tanggal, atau mengganti variasi istilah ke format baku.
+# KEGUNAAN: Mengurangi kesalahan pencocokan dan menjaga hasil sistem tetap stabil.
 def normalize_search_text(input_text: str | None) -> str:
     """Normalize stock names and aliases for deterministic matching."""
     if input_text is None:
@@ -202,6 +217,10 @@ def normalize_search_text(input_text: str | None) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+
+# CATATAN FUNGSI: Menormalkan teks, nama indikator, ticker, atau data agar formatnya konsisten.
+# CARA KERJA SINGKAT: Membersihkan karakter, menyamakan kapitalisasi, mengatur indeks tanggal, atau mengganti variasi istilah ke format baku.
+# KEGUNAAN: Mengurangi kesalahan pencocokan dan menjaga hasil sistem tetap stabil.
 def normalize_ticker(input_text: str | None) -> str:
     """Normalize ticker input or extract the most likely ticker from a sentence."""
     if input_text is None:
@@ -225,6 +244,10 @@ def normalize_ticker(input_text: str | None) -> str:
     return text.removesuffix(".JK")
 
 
+
+# CATATAN FUNGSI: Mencari kode saham IDX yang cocok dari input pengguna.
+# CARA KERJA SINGKAT: Mencoba mencocokkan kode ticker, token dalam kalimat, nama emiten, dan alias yang tersedia di mapping.
+# KEGUNAAN: Memungkinkan user mengetik kode, nama saham, atau alias tanpa harus selalu format kaku.
 def resolve_ticker(input_text: str | None) -> str | None:
 
     """
@@ -281,6 +304,10 @@ def resolve_ticker(input_text: str | None) -> str | None:
     return alias_matches[0][2]
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait stock info.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_stock_info(ticker: str) -> dict[str, Any] | None:
     """Return mapping information for a resolved ticker, or None when it is unavailable."""
     if ticker is None:
@@ -301,6 +328,10 @@ def get_stock_info(ticker: str) -> dict[str, Any] | None:
     return {column: _clean_value(row[column]) for column in output_columns}
 
 
+
+# CATATAN FUNGSI: Menjalankan proses is stock available sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def is_stock_available(ticker: str) -> bool:
     """Return True only when ticker exists and has complete data status."""
     stock_info = get_stock_info(ticker)
@@ -309,6 +340,10 @@ def is_stock_available(ticker: str) -> bool:
 
     return str(stock_info["status_data"]).strip().lower() == "lengkap"
 
+
+# CATATAN FUNGSI: Menjalankan proses is direct ticker input sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def is_direct_ticker_input(input_text: str | None, ticker: str | None = None) -> bool:
     """
     Memeriksa apakah input pengguna hanya berupa kode saham langsung.
@@ -330,6 +365,10 @@ def is_direct_ticker_input(input_text: str | None, ticker: str | None = None) ->
 
     return raw in {expected, f"{expected}.JK"}
 
+
+# CATATAN FUNGSI: Menjalankan proses is known stock identity input sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def is_known_stock_identity_input(input_text: str | None, ticker: str | None = None) -> bool:
     """
     Memeriksa apakah input pengguna hanya berupa identitas saham yang dikenal,
@@ -359,6 +398,10 @@ def is_known_stock_identity_input(input_text: str | None, ticker: str | None = N
 
     return normalized_input in normalized_terms
 
+
+# CATATAN FUNGSI: Memvalidasi input atau data sebelum digunakan lebih lanjut.
+# CARA KERJA SINGKAT: Memeriksa syarat wajib seperti konteks input, kolom data, kelengkapan nilai, atau status saham.
+# KEGUNAAN: Mencegah sistem memproses data yang tidak sesuai dengan ruang lingkup penelitian.
 def validate_stock_analysis_intent(input_text: str | None, ticker: str | None = None) -> dict[str, Any]:
     """
     Memvalidasi apakah input pengguna berada dalam konteks analisis teknikal saham.
@@ -417,6 +460,10 @@ def validate_stock_analysis_intent(input_text: str | None, ticker: str | None = 
         "intent": "unclear_context",
     }
 
+
+# CATATAN FUNGSI: Memvalidasi input atau data sebelum digunakan lebih lanjut.
+# CARA KERJA SINGKAT: Memeriksa syarat wajib seperti konteks input, kolom data, kelengkapan nilai, atau status saham.
+# KEGUNAAN: Mencegah sistem memproses data yang tidak sesuai dengan ruang lingkup penelitian.
 def validate_stock_request(input_text: str) -> dict[str, Any]:
 
     
@@ -473,6 +520,10 @@ def validate_stock_request(input_text: str) -> dict[str, Any]:
     }
 
 
+
+# CATATAN FUNGSI: Membersihkan atau mengamankan nilai sebelum ditampilkan atau dikirim ke proses lain.
+# CARA KERJA SINGKAT: Menangani nilai kosong, NaN, karakter bermasalah, atau tipe data non-standar.
+# KEGUNAAN: Mencegah error tampilan dan menjaga output tetap rapi.
 def _clean_value(value: Any) -> Any:
     """Convert pandas/numpy values into plain Python values for service output."""
     if isinstance(value, list):
@@ -490,6 +541,10 @@ def _clean_value(value: Any) -> Any:
     return value
 
 
+
+# CATATAN FUNGSI: Memeriksa kondisi tertentu dan mengembalikan nilai benar atau salah.
+# CARA KERJA SINGKAT: Membandingkan input dengan aturan, daftar istilah, atau status data yang sudah ditentukan.
+# KEGUNAAN: Membantu proses validasi dan pengambilan keputusan internal sistem.
 def _is_safe_alias_term(term: str) -> bool:
     """Avoid short non-ticker aliases that can match unrelated prose."""
     if not term:

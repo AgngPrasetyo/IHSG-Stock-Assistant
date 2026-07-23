@@ -1,4 +1,11 @@
 ﻿"""Compose deterministic stock-analysis payloads from cached data and WFA outputs."""
+# ================================================================
+# CATATAN FILE:
+# File ini menjadi penghubung utama proses analisis saham saat user menggunakan sistem. File ini memvalidasi input, membaca mapping, mengambil data harga, menghitung indikator dan sinyal, membaca hasil WFA, lalu menyusun payload untuk dashboard dan LLM.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -93,6 +100,10 @@ CHART_COLUMNS = [
 
 
 
+
+# CATATAN FUNGSI: Membaca file CSV hasil WFA sektor yang sudah dibuat sebelumnya.
+# CARA KERJA SINGKAT: Memeriksa keberadaan file agregat sektor, indikator terbaik, dan ringkasan, lalu membacanya dengan pandas.
+# KEGUNAAN: Menyediakan metrik WFA final untuk dashboard dan analisis user.
 def load_wfa_outputs() -> dict[str, pd.DataFrame]:
     """Load the neutral sector-level WFA CSV outputs created by the main runner."""
     paths = {
@@ -110,6 +121,10 @@ def load_wfa_outputs() -> dict[str, pd.DataFrame]:
         raise ValueError("File output WFA tidak dapat dibaca.") from exc
 
 
+
+# CATATAN FUNGSI: Menjalankan proses extract ticker from text sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def extract_ticker_from_text(user_input: str | None) -> str | None:
     """Resolve a supported IDX ticker from ticker text, company name, or alias."""
     resolved = resolve_ticker(user_input)
@@ -122,6 +137,10 @@ def extract_ticker_from_text(user_input: str | None) -> str | None:
     return normalized
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait sector best indicator.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_sector_best_indicator(sector_name: str) -> dict[str, Any] | None:
     """Return the best WFA indicator for a sector, or None when unavailable."""
     best_df = load_wfa_outputs()["best_indicator_by_sector"]
@@ -134,6 +153,10 @@ def get_sector_best_indicator(sector_name: str) -> dict[str, Any] | None:
     ], sector_key="sector")
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait sector indicator comparison.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_sector_indicator_comparison(sector_name: str) -> list[dict[str, Any]]:
     """Return all final-indicator WFA metrics for a sector."""
     aggregate_df = load_wfa_outputs()["sector_aggregate"]
@@ -168,6 +191,10 @@ def get_sector_indicator_comparison(sector_name: str) -> list[dict[str, Any]]:
     return result
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  build comparison evaluation note sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _build_comparison_evaluation_note(item: dict[str, Any]) -> str:
     indicator = item.get("indicator", "Indikator")
     active = int(_safe_float(item.get("total_active_signals")))
@@ -183,6 +210,10 @@ def _build_comparison_evaluation_note(item: dict[str, Any]) -> str:
     )
 
 
+
+# CATATAN FUNGSI: Menyiapkan DataFrame analisis terbaru untuk saham yang diminta.
+# CARA KERJA SINGKAT: Mengambil data harga dari cache atau Yahoo Finance, membersihkan OHLCV, menghitung indikator, lalu membentuk sinyal MA, MACD, dan RSI.
+# KEGUNAAN: Menyediakan data lengkap untuk sinyal terbaru, grafik, dan kondisi teknikal.
 def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
     """Load latest application OHLCV data and add final indicators and signal columns."""
     price_df = load_or_fetch_price_data(
@@ -204,6 +235,10 @@ def prepare_latest_analysis_dataframe(ticker_yfinance: str) -> pd.DataFrame:
     return generate_rsi_signal(analysis_df)
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait last active signal.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_last_active_signal(df: pd.DataFrame, signal_column: str) -> dict[str, Any] | None:
     """Return the latest BUY/SELL signal from the final signal column."""
     if df is None or df.empty or signal_column not in df.columns:
@@ -224,6 +259,10 @@ def get_last_active_signal(df: pd.DataFrame, signal_column: str) -> dict[str, An
     }
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait latest signal by indicator.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_latest_signal_by_indicator(df: pd.DataFrame, indicator_name: str) -> str:
     """Return the latest BUY, SELL, or HOLD value for a final indicator."""
     column = _get_signal_column(indicator_name)
@@ -233,6 +272,10 @@ def get_latest_signal_by_indicator(df: pd.DataFrame, indicator_name: str) -> str
     return signal if signal in {"BUY", "SELL", "HOLD"} else "HOLD"
 
 
+
+# CATATAN FUNGSI: Menyusun output latest condition dari data yang sudah tersedia.
+# CARA KERJA SINGKAT: Mengambil nilai yang relevan dari payload atau DataFrame, memformatnya, lalu mengembalikan struktur teks, tabel, grafik, atau dictionary.
+# KEGUNAAN: Menyiapkan hasil agar mudah ditampilkan pada dashboard, PDF, atau penjelasan asisten.
 def build_latest_condition(df: pd.DataFrame, indicator_name: str) -> str:
     """Build a short deterministic description of the latest indicator state."""
     if df is None or df.empty:
@@ -287,6 +330,10 @@ def build_latest_condition(df: pd.DataFrame, indicator_name: str) -> str:
     return f"RSI {rsi} dengan status {rsi_state}. {signal_note}"
 
 
+
+# CATATAN FUNGSI: Menyusun output chart data dari data yang sudah tersedia.
+# CARA KERJA SINGKAT: Mengambil nilai yang relevan dari payload atau DataFrame, memformatnya, lalu mengembalikan struktur teks, tabel, grafik, atau dictionary.
+# KEGUNAAN: Menyiapkan hasil agar mudah ditampilkan pada dashboard, PDF, atau penjelasan asisten.
 def build_chart_data(df: pd.DataFrame, limit: int = 120) -> list[dict[str, Any]]:
     """Return JSON-serializable OHLCV, final indicator, and signal chart points."""
     if df is None or df.empty:
@@ -303,6 +350,10 @@ def build_chart_data(df: pd.DataFrame, limit: int = 120) -> list[dict[str, Any]]
 
 
 
+
+# CATATAN FUNGSI: Menyusun payload utama analisis saham berdasarkan input pengguna.
+# CARA KERJA SINGKAT: Memvalidasi ticker dan konteks input, membaca mapping, mengambil data harga, menghitung indikator/sinyal, membaca hasil WFA sektor, lalu menyusun output dashboard.
+# KEGUNAAN: Menjadi pusat orkestrasi analisis saat user menggunakan sistem.
 def analyze_stock(user_input: str | None) -> dict[str, Any]:
     """
     Menyusun payload analisis saham untuk route API dan dashboard.
@@ -381,11 +432,19 @@ def analyze_stock(user_input: str | None) -> dict[str, Any]:
     }
 
 
+
+# CATATAN FUNGSI: Menjalankan alur analisis saham dari input pengguna sampai hasil siap ditampilkan.
+# CARA KERJA SINGKAT: Memvalidasi input, mengambil data dan hasil WFA, menghitung indikator serta sinyal, lalu menyusun payload analisis dan penjelasan.
+# KEGUNAAN: Menjadi pintu utama yang dipanggil route aplikasi saat user meminta analisis saham.
 def analyze_ticker(ticker: str) -> dict[str, Any]:
     """Analyze a direct ticker value using the same workflow as user text."""
     return analyze_stock(ticker)
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  find sector row sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _find_sector_row(df: pd.DataFrame, sector_name: str) -> pd.Series | None:
     if not sector_name or "sektor" not in df.columns:
         return None
@@ -396,6 +455,10 @@ def _find_sector_row(df: pd.DataFrame, sector_name: str) -> pd.Series | None:
     return None if rows.empty else rows.iloc[0]
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  record sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _record(row: pd.Series, columns: list[str], sector_key: str | None = None) -> dict[str, Any]:
     result = {}
     for column in columns:
@@ -404,6 +467,10 @@ def _record(row: pd.Series, columns: list[str], sector_key: str | None = None) -
     return result
 
 
+
+# CATATAN FUNGSI: Menormalkan teks, nama indikator, ticker, atau data agar formatnya konsisten.
+# CARA KERJA SINGKAT: Membersihkan karakter, menyamakan kapitalisasi, mengatur indeks tanggal, atau mengganti variasi istilah ke format baku.
+# KEGUNAAN: Mengurangi kesalahan pencocokan dan menjaga hasil sistem tetap stabil.
 def _normalize_indicator_name(indicator_name: str) -> str:
     name = str(indicator_name).strip().casefold()
     aliases = {"ma crossover": "MA Crossover", "macd": "MACD", "rsi": "RSI"}
@@ -412,10 +479,18 @@ def _normalize_indicator_name(indicator_name: str) -> str:
     return aliases[name]
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait  signal column.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def _get_signal_column(indicator_name: str) -> str:
     return INDICATOR_SIGNAL_COLUMNS[_normalize_indicator_name(indicator_name)]
 
 
+
+# CATATAN FUNGSI: Memeriksa kondisi tertentu dan mengembalikan nilai benar atau salah.
+# CARA KERJA SINGKAT: Membandingkan input dengan aturan, daftar istilah, atau status data yang sudah ditentukan.
+# KEGUNAAN: Membantu proses validasi dan pengambilan keputusan internal sistem.
 def _is_research_sample(stock_info: dict[str, Any]) -> bool:
     return (
         str(stock_info.get("is_sample", "")).strip().casefold() == "ya"
@@ -423,6 +498,10 @@ def _is_research_sample(stock_info: dict[str, Any]) -> bool:
     )
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  stock name sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _stock_name(stock_info: dict[str, Any]) -> Any:
     for key in ("stock_name", "nama_saham", "nama_emiten"):
         if stock_info.get(key):
@@ -430,6 +509,10 @@ def _stock_name(stock_info: dict[str, Any]) -> Any:
     return None
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  relative position sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _relative_position(left: Any, right: Any, left_name: str, right_name: str) -> str:
     if pd.isna(left) or pd.isna(right):
         return f"{left_name} dan {right_name} belum cukup data"
@@ -440,6 +523,10 @@ def _relative_position(left: Any, right: Any, left_name: str, right_name: str) -
     return f"{left_name} sama dengan {right_name}"
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  rsi state sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _rsi_state(value: Any) -> str:
     if pd.isna(value):
         return "belum cukup data"
@@ -450,6 +537,10 @@ def _rsi_state(value: Any) -> str:
     return "netral"
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  rsi signal note sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _rsi_signal_note(signal: str, rsi_state: str) -> str:
     if signal != "HOLD":
         return f"Sinyal {signal} muncul karena RSI keluar dari area ekstrem 30/70."
@@ -460,6 +551,10 @@ def _rsi_signal_note(signal: str, rsi_state: str) -> str:
     return "Sinyal HOLD karena RSI belum membentuk kondisi keluar dari area oversold atau overbought pada data terakhir."
 
 
+
+# CATATAN FUNGSI: Menyusun output metric quality note dari data yang sudah tersedia.
+# CARA KERJA SINGKAT: Mengambil nilai yang relevan dari payload atau DataFrame, memformatnya, lalu mengembalikan struktur teks, tabel, grafik, atau dictionary.
+# KEGUNAAN: Menyiapkan hasil agar mudah ditampilkan pada dashboard, PDF, atau penjelasan asisten.
 def build_metric_quality_note(best_indicator: dict[str, Any]) -> dict[str, Any]:
     """Classify WFA metric strength for dashboard and LLM explanation notes."""
     accuracy = _safe_float(best_indicator.get("directional_accuracy"))
@@ -498,6 +593,10 @@ def build_metric_quality_note(best_indicator: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+# CATATAN FUNGSI: Menyusun output decision support note dari data yang sudah tersedia.
+# CARA KERJA SINGKAT: Mengambil nilai yang relevan dari payload atau DataFrame, memformatnya, lalu mengembalikan struktur teks, tabel, grafik, atau dictionary.
+# KEGUNAAN: Menyiapkan hasil agar mudah ditampilkan pada dashboard, PDF, atau penjelasan asisten.
 def build_decision_support_note(
     best_indicator: dict[str, Any],
     comparison: list[dict[str, Any]],
@@ -529,21 +628,37 @@ def build_decision_support_note(
     return " ".join(parts)
 
 
+
+# CATATAN FUNGSI: Membersihkan atau mengamankan nilai sebelum ditampilkan atau dikirim ke proses lain.
+# CARA KERJA SINGKAT: Menangani nilai kosong, NaN, karakter bermasalah, atau tipe data non-standar.
+# KEGUNAAN: Mencegah error tampilan dan menjaga output tetap rapi.
 def _safe_float(value: Any) -> float:
     try:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_number(value: Any) -> str:
     json_value = _json_value(value)
     return "N/A" if json_value is None else f"{float(json_value):.2f}"
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  chart key sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _chart_key(column: str) -> str:
     return {"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"}.get(column, column)
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  json value sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _json_value(value: Any) -> Any:
     if value is None or pd.isna(value):
         return None
@@ -554,5 +669,9 @@ def _json_value(value: Any) -> Any:
     return value
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  failure sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _failure(message: str) -> dict[str, Any]:
     return {"success": False, "message": message}

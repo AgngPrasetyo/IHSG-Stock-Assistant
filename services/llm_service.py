@@ -1,4 +1,11 @@
 ﻿"""Safe natural-language explanations for deterministic stock analysis results."""
+# ================================================================
+# CATATAN FILE:
+# File ini bertugas menyusun penjelasan natural-language dari hasil analisis deterministik. LLM hanya menjelaskan hasil yang sudah dihitung sistem dan tidak mengubah sinyal, indikator terbaik, maupun metrik evaluasi.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -58,11 +65,19 @@ INTERNAL_FIELD_TERMS = (
 )
 
 
+
+# CATATAN FUNGSI: Mendeteksi pola teks yang tidak boleh muncul pada output penjelasan.
+# CARA KERJA SINGKAT: Memeriksa teks menggunakan pencarian kata kunci atau pola karakter tertentu.
+# KEGUNAAN: Menjaga penjelasan tetap aman, netral, dan tidak membocorkan istilah internal.
 def _contains_disallowed_script(text: str) -> bool:
     """Detect unexpected non-Indonesian scripts in the explanation output."""
     return re.search(r"[\u0600-\u06FF]", str(text)) is not None
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_last_active_signal_for_prompt(value: Any) -> str:
     if not isinstance(value, dict):
         return "Belum ada sinyal aktif BUY/SELL pada periode data yang tersedia."
@@ -76,6 +91,10 @@ def _format_last_active_signal_for_prompt(value: Any) -> str:
     return f"{signal} pada {signal_date}"
 
 
+
+# CATATAN FUNGSI: Menyusun output llm context dari data yang sudah tersedia.
+# CARA KERJA SINGKAT: Mengambil nilai yang relevan dari payload atau DataFrame, memformatnya, lalu mengembalikan struktur teks, tabel, grafik, atau dictionary.
+# KEGUNAAN: Menyiapkan hasil agar mudah ditampilkan pada dashboard, PDF, atau penjelasan asisten.
 def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Return compact, natural-language context without chart data or raw objects."""
     if not analysis_result or not analysis_result.get("success"):
@@ -117,6 +136,10 @@ def build_llm_context(analysis_result: dict[str, Any]) -> dict[str, Any]:
     return _json_safe({key: value for key, value in context.items() if value is not None})
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_signal_context_for_prompt(analysis_result: dict[str, Any]) -> str:
     indicator = str(analysis_result.get("best_indicator") or "indikator terbaik")
     signal = str(analysis_result.get("latest_signal") or "HOLD").upper()
@@ -137,6 +160,10 @@ def _format_signal_context_for_prompt(analysis_result: dict[str, Any]) -> str:
     )
 
 
+
+# CATATAN FUNGSI: Menyusun prompt ketat untuk LLM agar hanya menjelaskan hasil deterministik.
+# CARA KERJA SINGKAT: Mengubah konteks analisis ke JSON, lalu menambahkan aturan larangan mengubah sinyal, metrik, dan rekomendasi investasi.
+# KEGUNAAN: Menjaga penjelasan LLM tetap netral dan sesuai batasan penelitian.
 def build_llm_prompt(analysis_context: dict[str, Any]) -> str:
     """Build a strict Indonesian prompt that explains, never alters, results."""
     payload = json.dumps(analysis_context, ensure_ascii=False, indent=2)
@@ -193,6 +220,10 @@ Data sistem deterministik:
 {payload}"""
 
 
+
+# CATATAN FUNGSI: Menyusun penjelasan analisis tanpa memanggil API eksternal.
+# CARA KERJA SINGKAT: Mengambil hasil analisis, metrik, sinyal, dan perbandingan indikator, lalu merangkainya menjadi teks penjelasan tetap.
+# KEGUNAAN: Menjadi fallback ketika LLM tidak tersedia atau output LLM tidak aman.
 def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
     """Generate the offline explanation path without any API call."""
     if not analysis_result or not analysis_result.get("success"):
@@ -260,6 +291,10 @@ def generate_deterministic_explanation(analysis_result: dict[str, Any]) -> str:
 )
 
 
+
+# CATATAN FUNGSI: Menghasilkan penjelasan menggunakan OpenAI jika API diaktifkan.
+# CARA KERJA SINGKAT: Memeriksa konfigurasi provider, API key, dan guardrail output; jika gagal atau tidak aman, fungsi memakai fallback deterministik.
+# KEGUNAAN: Memberi opsi penjelasan LLM tanpa mengorbankan keamanan dan konsistensi hasil sistem.
 def generate_openai_explanation(analysis_result: dict[str, Any]) -> tuple[str, bool, str | None]:
     """Use OpenAI only when explicitly enabled; otherwise preserve fallback behavior."""
     provider = os.getenv("LLM_PROVIDER", DEFAULT_PROVIDER).strip().casefold() or DEFAULT_PROVIDER
@@ -310,6 +345,10 @@ def generate_openai_explanation(analysis_result: dict[str, Any]) -> tuple[str, b
     return explanation, False, None
 
 
+
+# CATATAN FUNGSI: Menjalankan proses generate llm explanation sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def generate_llm_explanation(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Return a provider-labelled explanation while preserving analysis success."""
     success = bool((analysis_result or {}).get("success", False))
@@ -333,6 +372,10 @@ def generate_llm_explanation(analysis_result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+# CATATAN FUNGSI: Menormalkan teks, nama indikator, ticker, atau data agar formatnya konsisten.
+# CARA KERJA SINGKAT: Membersihkan karakter, menyamakan kapitalisasi, mengatur indeks tanggal, atau mengganti variasi istilah ke format baku.
+# KEGUNAAN: Mengurangi kesalahan pencocokan dan menjaga hasil sistem tetap stabil.
 def _normalize_explanation_text(text: str) -> str:
     """Clean small spacing and typography issues in LLM output without breaking decimals or tickers."""
     normalized = str(text or "").strip()
@@ -418,6 +461,10 @@ def _normalize_explanation_text(text: str) -> str:
     return normalized.strip()
 
 
+
+# CATATAN FUNGSI: Menjalankan alur analisis saham dari input pengguna sampai hasil siap ditampilkan.
+# CARA KERJA SINGKAT: Memvalidasi input, mengambil data dan hasil WFA, menghitung indikator serta sinyal, lalu menyusun payload analisis dan penjelasan.
+# KEGUNAAN: Menjadi pintu utama yang dipanggil route aplikasi saat user meminta analisis saham.
 def explain_stock_analysis(user_input: str) -> dict[str, Any]:
     """Run deterministic analysis, then explain it without modifying results."""
     analysis = analyze_stock(user_input)
@@ -431,6 +478,10 @@ def explain_stock_analysis(user_input: str) -> dict[str, Any]:
     }
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait  max output tokens.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def _get_max_output_tokens() -> int:
     """Return a positive output-token cap, defaulting safely to 700."""
     try:
@@ -440,12 +491,20 @@ def _get_max_output_tokens() -> int:
     return value if value > 0 else DEFAULT_MAX_OUTPUT_TOKENS
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait  env bool.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def _get_env_bool(name: str, default: bool = False) -> bool:
     """Read common truthy env values while keeping defaults explicit."""
     value = os.getenv(name)
     return default if value is None else value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+
+# CATATAN FUNGSI: Membersihkan atau mengamankan nilai sebelum ditampilkan atau dikirim ke proses lain.
+# CARA KERJA SINGKAT: Menangani nilai kosong, NaN, karakter bermasalah, atau tipe data non-standar.
+# KEGUNAAN: Mencegah error tampilan dan menjaga output tetap rapi.
 def _safe_float_format(value: Any, decimals: int = 6) -> str:
     try:
         numeric = float(value)
@@ -454,11 +513,19 @@ def _safe_float_format(value: Any, decimals: int = 6) -> str:
     return f"{int(numeric)}" if decimals == 0 else f"{numeric:.{decimals}f}"
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_percent(value: Any) -> str:
     formatted = _safe_float_format(value, 2)
     return "N/A" if formatted == "N/A" else f"{formatted}%"
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_metrics_for_prompt(metrics: dict[str, Any]) -> str:
     formatted = _format_metrics_for_display(metrics)
     return (
@@ -469,6 +536,10 @@ def _format_metrics_for_prompt(metrics: dict[str, Any]) -> str:
     )
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_comparison_for_prompt(comparison: list[dict[str, Any]]) -> list[str]:
     return [
         (
@@ -482,6 +553,10 @@ def _format_comparison_for_prompt(comparison: list[dict[str, Any]]) -> list[str]
     ]
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_wfa_config_for_prompt(config: dict[str, Any]) -> str:
     label = config.get(
         "evaluation_horizon_label",
@@ -496,6 +571,10 @@ def _format_wfa_config_for_prompt(config: dict[str, Any]) -> str:
     )
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_data_period_for_prompt(analysis_result: dict[str, Any]) -> str:
     period = analysis_result.get("data_period") or {}
 
@@ -515,6 +594,10 @@ def _format_data_period_for_prompt(analysis_result: dict[str, Any]) -> str:
     )
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_metrics_for_display(metrics: dict[str, Any]) -> dict[str, str]:
     """Format immutable system metrics for concise user-facing display."""
     return {
@@ -525,6 +608,10 @@ def _format_metrics_for_display(metrics: dict[str, Any]) -> dict[str, str]:
     }
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_indicator_comparison(comparison: list[dict[str, Any]]) -> str:
     """Create the deterministic fallback's compact comparison sentence."""
     if not comparison:
@@ -541,12 +628,20 @@ def _format_indicator_comparison(comparison: list[dict[str, Any]]) -> str:
     return "; ".join(parts) + "."
 
 
+
+# CATATAN FUNGSI: Mendeteksi pola teks yang tidak boleh muncul pada output penjelasan.
+# CARA KERJA SINGKAT: Memeriksa teks menggunakan pencarian kata kunci atau pola karakter tertentu.
+# KEGUNAAN: Menjaga penjelasan tetap aman, netral, dan tidak membocorkan istilah internal.
 def _contains_internal_field_terms(text: str) -> bool:
     """Return True when provider output leaks implementation field names."""
     normalized = str(text).casefold()
     return any(term in normalized for term in INTERNAL_FIELD_TERMS)
 
 
+
+# CATATAN FUNGSI: Mendeteksi pola teks yang tidak boleh muncul pada output penjelasan.
+# CARA KERJA SINGKAT: Memeriksa teks menggunakan pencarian kata kunci atau pola karakter tertentu.
+# KEGUNAAN: Menjaga penjelasan tetap aman, netral, dan tidak membocorkan istilah internal.
 def _contains_forbidden_recommendation_terms(text: str) -> bool:
     """Detect explicit recommendation language while allowing negated disclaimers."""
     normalized = str(text).casefold()
@@ -556,6 +651,10 @@ def _contains_forbidden_recommendation_terms(text: str) -> bool:
     return any(term in non_disclaimer_text for term in FORBIDDEN_RECOMMENDATION_TERMS)
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  json safe sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _json_safe(value: Any) -> Any:
     """Round-trip through JSON so prompts never receive pandas/numpy objects."""
     return json.loads(json.dumps(value, default=str, allow_nan=False))

@@ -1,4 +1,11 @@
 ﻿"""Deterministic explanations for technical indicator terms."""
+# ================================================================
+# CATATAN FILE:
+# File ini menyimpan penjelasan istilah indikator dan metrik evaluasi secara deterministik. Data dari file ini digunakan untuk menampilkan hint atau glossary pada dashboard dan laporan.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -136,6 +143,10 @@ _HINTS: dict[str, dict[str, Any]] = {
 }
 
 
+
+# CATATAN FUNGSI: Mengambil hint istilah teknikal dan metrik evaluasi berdasarkan indikator terbaik.
+# CARA KERJA SINGKAT: Mencocokkan nama indikator ke daftar hint, lalu mengembalikan salinan item agar data asli tidak berubah.
+# KEGUNAAN: Menyediakan glossary untuk dashboard dan laporan PDF.
 def get_indicator_hint(indicator_name: str) -> dict[str, Any]:
     """Return deterministic glossary items for the selected best indicator."""
     key = str(indicator_name or "").strip().casefold()

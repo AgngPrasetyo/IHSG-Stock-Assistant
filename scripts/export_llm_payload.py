@@ -1,3 +1,7 @@
+# CATATAN FILE:
+# File ini berisi script ekspor payload analisis dan konteks LLM.
+# Kegunaannya adalah membantu audit bahwa LLM hanya menerima ringkasan hasil deterministik dan tidak mengubah sinyal, indikator, atau metrik.
+
 from __future__ import annotations
 
 import json
@@ -12,6 +16,9 @@ from services.analysis_service import analyze_stock  # noqa: E402
 from services.llm_service import build_llm_context  # noqa: E402
 
 
+# CATATAN FUNGSI: Mengekspor payload analisis dan konteks LLM ke file JSON.
+# CARA KERJA SINGKAT: Analisis deterministik dijalankan, konteks LLM dibentuk, lalu keduanya disimpan.
+# KEGUNAAN: Dipakai untuk audit bahwa LLM hanya menjelaskan hasil sistem.
 def export_llm_payload(query: str = "Analisis saham BBCA") -> Path:
     """Export deterministic analysis and LLM context for inspection."""
     output_dir = PROJECT_ROOT / "data" / "llm_payload_examples"
@@ -50,6 +57,9 @@ def export_llm_payload(query: str = "Analisis saham BBCA") -> Path:
     return output_path
 
 
+# CATATAN FUNGSI: Menjalankan ekspor payload dari command-line.
+# CARA KERJA SINGKAT: Query diambil dari argumen atau memakai default BBCA.
+# KEGUNAAN: Dipakai sebagai entry point script ekspor payload.
 def main() -> None:
     query = " ".join(sys.argv[1:]).strip() or "Analisis saham BBCA"
     output_path = export_llm_payload(query)

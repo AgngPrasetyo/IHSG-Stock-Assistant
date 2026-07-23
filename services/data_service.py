@@ -1,4 +1,11 @@
 ﻿"""Data access utilities for historical OHLCV prices from Yahoo Finance."""
+# ================================================================
+# CATATAN FILE:
+# File ini bertugas mengambil, menormalkan, memvalidasi, dan menyimpan cache data OHLCV historis dari Yahoo Finance. File ini memastikan data harga layak digunakan sebelum masuk ke perhitungan indikator, sinyal, dan WFA.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -40,6 +47,10 @@ DATA_UNAVAILABLE_MESSAGE = (
 )
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  run quietly sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _run_quietly(callback):
     """Run noisy third-party data calls without printing raw provider logs."""
     output_buffer = io.StringIO()
@@ -49,6 +60,10 @@ def _run_quietly(callback):
         return callback()
 
 
+
+# CATATAN FUNGSI: Mengambil data dari sumber eksternal ketika data lokal belum tersedia.
+# CARA KERJA SINGKAT: Mengirim permintaan ke penyedia data, menangani kegagalan, lalu menormalkan hasil menjadi DataFrame.
+# KEGUNAAN: Menjamin sistem tetap dapat memperoleh data historis saat cache belum ada.
 def fetch_price_data(
     ticker_yfinance: str,
     start_date: str = START_DATE,
@@ -110,6 +125,10 @@ def fetch_price_data(
     return price_df
 
 
+
+# CATATAN FUNGSI: Memvalidasi input atau data sebelum digunakan lebih lanjut.
+# CARA KERJA SINGKAT: Memeriksa syarat wajib seperti konteks input, kolom data, kelengkapan nilai, atau status saham.
+# KEGUNAAN: Mencegah sistem memproses data yang tidak sesuai dengan ruang lingkup penelitian.
 def validate_ohlcv(df: pd.DataFrame) -> bool:
     """Validate that a DataFrame contains usable OHLCV data."""
     if df is None or df.empty:
@@ -135,6 +154,10 @@ def validate_ohlcv(df: pd.DataFrame) -> bool:
     return True
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait cache path.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_cache_path(
     ticker_yfinance: str,
     start_date: str = START_DATE,
@@ -149,6 +172,10 @@ def get_cache_path(
     return CACHE_DIR / filename
 
 
+
+# CATATAN FUNGSI: Membaca data atau file yang dibutuhkan oleh sistem.
+# CARA KERJA SINGKAT: Memeriksa ketersediaan file/cache, membaca data ke DataFrame, lalu mengembalikan hasil yang sudah siap diproses.
+# KEGUNAAN: Menyediakan data awal untuk analisis, mapping, WFA, atau tampilan aplikasi.
 def load_cached_price_data(
     ticker_yfinance: str,
     start_date: str = START_DATE,
@@ -170,6 +197,10 @@ def load_cached_price_data(
     return price_df
 
 
+
+# CATATAN FUNGSI: Menyimpan data hasil proses ke file cache atau penyimpanan lokal.
+# CARA KERJA SINGKAT: Menormalkan dan memvalidasi data, membuat folder jika diperlukan, lalu menulis data ke file.
+# KEGUNAAN: Mempercepat proses berikutnya karena data tidak perlu selalu diambil ulang.
 def save_price_cache(
     ticker_yfinance: str,
     df: pd.DataFrame,
@@ -187,6 +218,10 @@ def save_price_cache(
     return cache_path
 
 
+
+# CATATAN FUNGSI: Membaca data atau file yang dibutuhkan oleh sistem.
+# CARA KERJA SINGKAT: Memeriksa ketersediaan file/cache, membaca data ke DataFrame, lalu mengembalikan hasil yang sudah siap diproses.
+# KEGUNAAN: Menyediakan data awal untuk analisis, mapping, WFA, atau tampilan aplikasi.
 def load_or_fetch_price_data(
     ticker_yfinance: str,
     start_date: str = START_DATE,
@@ -206,6 +241,10 @@ def load_or_fetch_price_data(
     return price_df
 
 
+
+# CATATAN FUNGSI: Menormalkan teks, nama indikator, ticker, atau data agar formatnya konsisten.
+# CARA KERJA SINGKAT: Membersihkan karakter, menyamakan kapitalisasi, mengatur indeks tanggal, atau mengganti variasi istilah ke format baku.
+# KEGUNAAN: Mengurangi kesalahan pencocokan dan menjaga hasil sistem tetap stabil.
 def _normalize_price_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize yfinance/cache output into a Date-indexed clean OHLCV DataFrame."""
     if df is None:
@@ -253,6 +292,10 @@ def _normalize_price_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return price_df
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  configure yfinance cache sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _configure_yfinance_cache() -> None:
     """Point yfinance's internal cache to a project folder that is writable."""
     cache_dir = YFINANCE_CACHE_DIR
@@ -265,6 +308,10 @@ def _configure_yfinance_cache() -> None:
     yf.set_tz_cache_location(str(cache_dir))
 
 
+
+# CATATAN FUNGSI: Mengambil data dari sumber eksternal ketika data lokal belum tersedia.
+# CARA KERJA SINGKAT: Mengirim permintaan ke penyedia data, menangani kegagalan, lalu menormalkan hasil menjadi DataFrame.
+# KEGUNAAN: Menjamin sistem tetap dapat memperoleh data historis saat cache belum ada.
 def _fetch_price_data_from_yahoo_chart(
     ticker_yfinance: str,
     start_date: str,

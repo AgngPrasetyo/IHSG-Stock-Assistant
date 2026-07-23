@@ -1,5 +1,10 @@
 ﻿"""Sector-level aggregation service for final 6,3,3 Walk-Forward Analysis."""
 
+# CATATAN FILE:
+# File ini berisi layanan agregasi hasil WFA pada level sektor.
+# Kegunaannya adalah menjalankan WFA untuk saham-saham sampel dalam sektor, menggabungkan hasil per saham/per window, dan memilih indikator terbaik sektor berdasarkan metrik evaluasi.
+
+
 from __future__ import annotations
 
 import pandas as pd
@@ -54,6 +59,9 @@ SECTOR_AGGREGATE_COLUMNS = [
 _REQUIRED_STOCK_COLUMNS = ["ticker", "ticker_yfinance", "sektor"]
 
 
+# CATATAN FUNGSI: Mengambil daftar sektor yang memiliki saham sampel lengkap.
+# CARA KERJA SINGKAT: Mapping difilter ke saham sampel lengkap lalu sektor unik diurutkan.
+# KEGUNAAN: Dipakai untuk mengetahui sektor yang bisa dievaluasi.
 def get_available_sectors(mapping_df: pd.DataFrame | None = None) -> list[str]:
     """Return sorted sectors that have complete sample stocks in the mapping."""
     sample = _get_complete_sample_mapping(mapping_df)
@@ -64,6 +72,9 @@ def get_available_sectors(mapping_df: pd.DataFrame | None = None) -> list[str]:
     return sorted(sector for sector in sectors if sector)
 
 
+# CATATAN FUNGSI: Mengambil daftar saham sampel lengkap pada satu sektor.
+# CARA KERJA SINGKAT: Mapping difilter berdasarkan sektor, status data lengkap, dan status sampel penelitian.
+# KEGUNAAN: Dipakai sebelum menjalankan WFA sektor.
 def get_sector_stocks(sector: str, mapping_df: pd.DataFrame | None = None) -> pd.DataFrame:
     """Return complete sample stocks for one sector using the public mapping columns."""
     sample = _get_complete_sample_mapping(mapping_df)
@@ -80,6 +91,9 @@ def get_sector_stocks(sector: str, mapping_df: pd.DataFrame | None = None) -> pd
     return result[_REQUIRED_STOCK_COLUMNS].reset_index(drop=True)
 
 
+# CATATAN FUNGSI: Menjalankan WFA agregat untuk satu saham dari mapping.
+# CARA KERJA SINGKAT: Data harga dibaca, WFA dijalankan, lalu hasil agregat diberi metadata ticker dan sektor.
+# KEGUNAAN: Dipakai untuk membangun hasil evaluasi per saham.
 def run_wfa_for_stock_row(
     stock_row: pd.Series | dict[str, object],
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -114,6 +128,9 @@ def run_wfa_for_stock_row(
         return pd.DataFrame(columns=SECTOR_RESULT_COLUMNS)
 
 
+# CATATAN FUNGSI: Menjalankan WFA per window untuk satu saham.
+# CARA KERJA SINGKAT: Data harga dibaca, WFA dijalankan, lalu baris window-level diberi metadata ticker dan sektor.
+# KEGUNAAN: Dipakai saat perlu rincian metrik per saham-window.
 def run_wfa_windows_for_stock_row(
     stock_row: pd.Series | dict[str, object],
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -145,6 +162,9 @@ def run_wfa_windows_for_stock_row(
         return pd.DataFrame(columns=SECTOR_WINDOW_RESULT_COLUMNS)
 
 
+# CATATAN FUNGSI: Menjalankan WFA satu kali dan mengembalikan dua jenis output.
+# CARA KERJA SINGKAT: Fungsi menghasilkan agregat per saham dan detail per window dari run yang sama.
+# KEGUNAAN: Menghindari perhitungan ganda saat sektor membutuhkan dua output sekaligus.
 def run_wfa_outputs_for_stock_row(
     stock_row: pd.Series | dict[str, object],
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -195,6 +215,9 @@ def run_wfa_outputs_for_stock_row(
         )
 
 
+# CATATAN FUNGSI: Menjalankan WFA per saham untuk semua saham dalam satu sektor.
+# CARA KERJA SINGKAT: Setiap saham sektor diproses lalu hasilnya digabungkan.
+# KEGUNAAN: Dipakai untuk rekap evaluasi indikator pada level sektor.
 def run_sector_wfa(
     sector: str,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -221,6 +244,9 @@ def run_sector_wfa(
     return pd.concat(frames, ignore_index=True)[SECTOR_RESULT_COLUMNS]
 
 
+# CATATAN FUNGSI: Menjalankan WFA window-level untuk semua saham dalam satu sektor.
+# CARA KERJA SINGKAT: Setiap saham diproses dan seluruh baris window-level digabung.
+# KEGUNAAN: Dipakai untuk audit rincian saham-window.
 def run_sector_wfa_windows(
     sector: str,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -247,6 +273,9 @@ def run_sector_wfa_windows(
     return pd.concat(frames, ignore_index=True)[SECTOR_WINDOW_RESULT_COLUMNS]
 
 
+# CATATAN FUNGSI: Menjalankan WFA sektor dan mengambil hasil saham serta window sekaligus.
+# CARA KERJA SINGKAT: Setiap saham menghasilkan output agregat dan window, kemudian semua hasil digabung.
+# KEGUNAAN: Dipakai agar agregasi sektor dan rincian audit berasal dari run yang sama.
 def run_sector_wfa_outputs(
     sector: str,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -284,6 +313,9 @@ def run_sector_wfa_outputs(
     return stock_results, window_results
 
 
+# CATATAN FUNGSI: Menggabungkan hasil WFA menjadi metrik sektor-indikator.
+# CARA KERJA SINGKAT: Data dikelompokkan berdasarkan sektor, indikator, dan kolom sinyal, lalu Active, Correct, DA, dan Hit Rate dihitung.
+# KEGUNAAN: Dipakai untuk menentukan kinerja indikator pada level sektor.
 def aggregate_sector_results(sector_results_df: pd.DataFrame) -> pd.DataFrame:
     """Aggregate WFA rows into sector-level indicator metrics."""
     if sector_results_df is None or sector_results_df.empty:
@@ -314,6 +346,9 @@ def aggregate_sector_results(sector_results_df: pd.DataFrame) -> pd.DataFrame:
     return result[SECTOR_AGGREGATE_COLUMNS]
 
 
+# CATATAN FUNGSI: Memilih indikator terbaik pada sektor.
+# CARA KERJA SINGKAT: Data diurutkan berdasarkan Directional Accuracy, Hit Rate, dan Total Active Signals sebagai tie-breaker.
+# KEGUNAAN: Dipakai untuk menentukan indikator utama sektor.
 def select_best_sector_indicator(sector_aggregate_df: pd.DataFrame) -> dict[str, object] | None:
     """Select the best sector indicator using the existing metric tie-break order."""
     if sector_aggregate_df is None or sector_aggregate_df.empty:
@@ -336,6 +371,9 @@ def select_best_sector_indicator(sector_aggregate_df: pd.DataFrame) -> dict[str,
     }
 
 
+# CATATAN FUNGSI: Menjalankan alur lengkap evaluasi satu sektor.
+# CARA KERJA SINGKAT: Fungsi mengambil saham sektor, menjalankan WFA, mengagregasi hasil, dan memilih indikator terbaik.
+# KEGUNAAN: Dipakai sebagai pipeline sektor yang siap digunakan oleh script lain.
 def run_sector_pipeline(
     sector: str,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -364,6 +402,9 @@ def run_sector_pipeline(
     }
 
 
+# CATATAN FUNGSI: Menjalankan pipeline sektor untuk semua sektor yang tersedia.
+# CARA KERJA SINGKAT: Daftar sektor diambil dari mapping lalu setiap sektor diproses melalui run_sector_pipeline.
+# KEGUNAAN: Dipakai untuk evaluasi menyeluruh lintas sektor.
 def run_all_sectors_pipeline(
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
@@ -388,6 +429,9 @@ def run_all_sectors_pipeline(
     }
 
 
+# CATATAN FUNGSI: Menyaring mapping menjadi saham sampel lengkap.
+# CARA KERJA SINGKAT: Fungsi hanya mempertahankan baris dengan status_data lengkap dan is_sample ya.
+# KEGUNAAN: Menjamin WFA hanya memakai sampel penelitian yang valid.
 def _get_complete_sample_mapping(mapping_df: pd.DataFrame | None = None) -> pd.DataFrame:
     """Return only complete sample rows required by sector-level WFA."""
     mapping = load_mapping() if mapping_df is None else mapping_df.copy()
@@ -400,6 +444,9 @@ def _get_complete_sample_mapping(mapping_df: pd.DataFrame | None = None) -> pd.D
     return mapping[complete & sample].copy().reset_index(drop=True)
 
 
+# CATATAN FUNGSI: Menghitung DA dari jumlah sinyal benar dan sinyal aktif.
+# CARA KERJA SINGKAT: Correct dibagi Total Active lalu dikali 100, dan nol jika tidak ada sinyal aktif.
+# KEGUNAAN: Dipakai dalam agregasi sektor.
 def _calculate_count_based_score(row: pd.Series) -> float:
     """Return count-based percentage accuracy from aggregated signal counts."""
     total_active = int(row["total_active_signals"])
@@ -408,6 +455,9 @@ def _calculate_count_based_score(row: pd.Series) -> float:
     return int(row["correct_signals"]) / total_active * 100
 
 
+# CATATAN FUNGSI: Menghitung rata-rata Hit Rate dari baris yang memiliki sinyal aktif.
+# CARA KERJA SINGKAT: Baris dengan Total Active Signals nol dikeluarkan sebelum rata-rata dihitung.
+# KEGUNAAN: Dipakai untuk menghasilkan Hit Rate sektor berbasis unit aktif.
 def _average_active_hit_rate(df: pd.DataFrame, group_keys: list[str]) -> pd.DataFrame:
     """Return average stock/window hit rate for rows with active BUY/SELL signals."""
     active = df[df["total_active_signals"] > 0]

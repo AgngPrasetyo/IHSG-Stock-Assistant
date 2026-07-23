@@ -1,4 +1,11 @@
 ﻿"""Fixed-length rolling Walk-Forward Analysis service."""
+# ================================================================
+# CATATAN FILE:
+# File ini menjalankan proses Fixed-Length Rolling Walk-Forward Analysis. File ini membentuk window in-sample dan out-of-sample, mengevaluasi indikator, memilih indikator terbaik, serta menggabungkan hasil metrik WFA.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -63,6 +70,10 @@ WFA_SELECTION_COLUMNS = [
 ]
 
 
+
+# CATATAN FUNGSI: Menjalankan proses prepare wfa dataframe sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def prepare_wfa_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize OHLCV input into a Date-indexed frame for fixed-length rolling WFA."""
     if df is None or df.empty:
@@ -83,6 +94,10 @@ def prepare_wfa_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return result.dropna(subset=["Close"]).sort_index()
 
 
+
+# CATATAN FUNGSI: Membentuk window Fixed-Length Rolling WFA dari data harga.
+# CARA KERJA SINGKAT: Membagi data menjadi periode in-sample dan out-of-sample dengan panjang tetap, serta menambahkan warm-up jika diperlukan.
+# KEGUNAAN: Menjadi dasar evaluasi bergulir agar pemilihan indikator mengikuti urutan waktu.
 def generate_wfa_windows(
     df: pd.DataFrame,
     in_sample_months: int = DEFAULT_IN_SAMPLE_MONTHS,
@@ -153,6 +168,10 @@ def generate_wfa_windows(
 
     return windows
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait  warmup dataframe.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def _get_warmup_dataframe(
     df: pd.DataFrame,
     evaluation_start: pd.Timestamp,
@@ -166,6 +185,10 @@ def _get_warmup_dataframe(
     warmup_df = df[df.index < evaluation_start].tail(periods).copy()
     return warmup_df
 
+
+# CATATAN FUNGSI: Menjalankan bagian proses Fixed-Length Rolling Walk-Forward Analysis.
+# CARA KERJA SINGKAT: Membagi data menjadi window evaluasi, menghitung indikator dan sinyal, lalu mengevaluasi performa sesuai horizon yang digunakan.
+# KEGUNAAN: Mendukung pemilihan dan validasi indikator teknikal secara historis.
 def run_wfa_for_window(
     window: dict[str, object],
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -209,6 +232,10 @@ def run_wfa_for_window(
 
     return results
 
+
+# CATATAN FUNGSI: Menjalankan proses evaluate indicators on period sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def evaluate_indicators_on_period(
     signal_df: pd.DataFrame,
     period_df: pd.DataFrame,
@@ -255,6 +282,10 @@ def evaluate_indicators_on_period(
     return pd.DataFrame(results, columns=WFA_AGGREGATE_COLUMNS)
 
 
+
+# CATATAN FUNGSI: Memilih indikator terbaik pada in-sample dan memvalidasinya pada out-of-sample.
+# CARA KERJA SINGKAT: Mengevaluasi semua indikator di in-sample, memilih indikator terbaik, lalu hanya indikator terpilih yang diuji pada out-of-sample.
+# KEGUNAAN: Mewakili inti metode WFA yang menghindari pemilihan indikator berdasarkan data masa depan.
 def run_wfa_selection_for_window(
     window: dict[str, object],
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -330,6 +361,10 @@ def run_wfa_selection_for_window(
         "out_sample_hit_rate": float(out_row["hit_rate"]),
     }
 
+
+# CATATAN FUNGSI: Menjalankan bagian proses Fixed-Length Rolling Walk-Forward Analysis.
+# CARA KERJA SINGKAT: Membagi data menjadi window evaluasi, menghitung indikator dan sinyal, lalu mengevaluasi performa sesuai horizon yang digunakan.
+# KEGUNAAN: Mendukung pemilihan dan validasi indikator teknikal secara historis.
 def run_wfa_selection_pipeline(
     df: pd.DataFrame,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -373,6 +408,10 @@ def run_wfa_selection_pipeline(
     }
 
 
+
+# CATATAN FUNGSI: Menjalankan bagian proses Fixed-Length Rolling Walk-Forward Analysis.
+# CARA KERJA SINGKAT: Membagi data menjadi window evaluasi, menghitung indikator dan sinyal, lalu mengevaluasi performa sesuai horizon yang digunakan.
+# KEGUNAAN: Mendukung pemilihan dan validasi indikator teknikal secara historis.
 def run_wfa_all_indicators(
     df: pd.DataFrame,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -391,6 +430,10 @@ def run_wfa_all_indicators(
     return pd.DataFrame(results, columns=WFA_RESULT_COLUMNS)
 
 
+
+# CATATAN FUNGSI: Menggabungkan hasil evaluasi window menjadi metrik indikator akhir.
+# CARA KERJA SINGKAT: Menjumlahkan total sinyal aktif dan benar, menghitung Directional Accuracy, lalu mengambil rata-rata Hit Rate dari unit aktif.
+# KEGUNAAN: Menyediakan ringkasan performa indikator untuk proses pemilihan terbaik.
 def aggregate_wfa_results(wfa_results_df: pd.DataFrame) -> pd.DataFrame:
     """Aggregate window-level WFA counts into indicator-level metrics."""
     if wfa_results_df is None or wfa_results_df.empty:
@@ -415,6 +458,10 @@ def aggregate_wfa_results(wfa_results_df: pd.DataFrame) -> pd.DataFrame:
     return result[WFA_AGGREGATE_COLUMNS]
 
 
+
+# CATATAN FUNGSI: Memilih indikator terbaik berdasarkan urutan metrik evaluasi yang sudah ditetapkan.
+# CARA KERJA SINGKAT: Mengurutkan hasil evaluasi berdasarkan Directional Accuracy, Hit Rate, dan jumlah sinyal aktif sebagai tie-breaker.
+# KEGUNAAN: Menentukan indikator yang digunakan sebagai acuan utama sistem.
 def select_best_indicator(aggregate_df: pd.DataFrame) -> dict[str, object] | None:
     """Select the best indicator using the locked metric tie-break order."""
     if aggregate_df is None or aggregate_df.empty:
@@ -434,6 +481,10 @@ def select_best_indicator(aggregate_df: pd.DataFrame) -> dict[str, object] | Non
     }
 
 
+
+# CATATAN FUNGSI: Menjalankan bagian proses Fixed-Length Rolling Walk-Forward Analysis.
+# CARA KERJA SINGKAT: Membagi data menjadi window evaluasi, menghitung indikator dan sinyal, lalu mengevaluasi performa sesuai horizon yang digunakan.
+# KEGUNAAN: Mendukung pemilihan dan validasi indikator teknikal secara historis.
 def run_wfa_pipeline(
     df: pd.DataFrame,
     evaluation_horizons: list[int] | tuple[int, ...] | None = None,
@@ -459,6 +510,10 @@ def run_wfa_pipeline(
     }
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  calculate count based score sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _calculate_count_based_score(row: pd.Series) -> float:
     """Return count-based percentage accuracy from active/correct signal counts."""
     total_active = int(row["total_active_signals"])
@@ -467,6 +522,10 @@ def _calculate_count_based_score(row: pd.Series) -> float:
     return int(row["correct_signals"]) / total_active * 100
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  average active hit rate sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _average_active_hit_rate(df: pd.DataFrame, group_keys: list[str]) -> pd.DataFrame:
     """Return Average Window Hit Rate for rows with active BUY/SELL signals."""
     active = df[df["total_active_signals"] > 0]
@@ -475,6 +534,10 @@ def _average_active_hit_rate(df: pd.DataFrame, group_keys: list[str]) -> pd.Data
     return active.groupby(group_keys, as_index=False)["hit_rate"].mean().reset_index(drop=True)
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_date(value: object) -> str:
     """Format WFA boundary timestamps for JSON/CSV-ready outputs."""
     return pd.Timestamp(value).strftime("%Y-%m-%d")

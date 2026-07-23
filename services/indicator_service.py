@@ -1,10 +1,21 @@
 ﻿"""Technical indicator calculations for the final OHLCV analysis methods."""
+# ================================================================
+# CATATAN FILE:
+# File ini bertugas menghitung indikator teknikal yang digunakan sistem, yaitu SMA, EMA, MACD, RSI, serta kolom indikator pendukung lain. File ini hanya menghitung nilai indikator, bukan membentuk sinyal BUY/SELL.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
 import pandas as pd
 
 
+
+# CATATAN FUNGSI: Menghitung nilai SMA dari data harga yang diterima.
+# CARA KERJA SINGKAT: Menyiapkan DataFrame harga, memvalidasi kolom yang dibutuhkan, lalu melakukan perhitungan indikator dengan pandas.
+# KEGUNAAN: Menyediakan kolom indikator teknikal untuk pembentukan sinyal dan evaluasi WFA.
 def calculate_sma(df: pd.DataFrame, window: int, price_column: str = "Close") -> pd.Series:
     """Calculate a Simple Moving Average."""
     if window <= 0:
@@ -14,6 +25,10 @@ def calculate_sma(df: pd.DataFrame, window: int, price_column: str = "Close") ->
     return price_df[price_column].rolling(window=window).mean()
 
 
+
+# CATATAN FUNGSI: Menghitung nilai EMA dari data harga yang diterima.
+# CARA KERJA SINGKAT: Menyiapkan DataFrame harga, memvalidasi kolom yang dibutuhkan, lalu melakukan perhitungan indikator dengan pandas.
+# KEGUNAAN: Menyediakan kolom indikator teknikal untuk pembentukan sinyal dan evaluasi WFA.
 def calculate_ema(df: pd.DataFrame, span: int, price_column: str = "Close") -> pd.Series:
     """Calculate an EMA; MACD uses EMA12, EMA26, and an EMA9 signal line."""
     if span <= 0:
@@ -23,6 +38,10 @@ def calculate_ema(df: pd.DataFrame, span: int, price_column: str = "Close") -> p
     return price_df[price_column].ewm(span=span, adjust=False).mean()
 
 
+
+# CATATAN FUNGSI: Menghitung nilai MACD dari data harga yang diterima.
+# CARA KERJA SINGKAT: Menyiapkan DataFrame harga, memvalidasi kolom yang dibutuhkan, lalu melakukan perhitungan indikator dengan pandas.
+# KEGUNAAN: Menyediakan kolom indikator teknikal untuk pembentukan sinyal dan evaluasi WFA.
 def calculate_macd(df: pd.DataFrame) -> pd.DataFrame:
     """Add MACD 12/26/9 columns."""
     indicator_df = _prepare_price_dataframe(df)
@@ -35,6 +54,10 @@ def calculate_macd(df: pd.DataFrame) -> pd.DataFrame:
     return indicator_df
 
 
+
+# CATATAN FUNGSI: Menghitung nilai RSI dari data harga yang diterima.
+# CARA KERJA SINGKAT: Menyiapkan DataFrame harga, memvalidasi kolom yang dibutuhkan, lalu melakukan perhitungan indikator dengan pandas.
+# KEGUNAAN: Menyediakan kolom indikator teknikal untuk pembentukan sinyal dan evaluasi WFA.
 def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
     """Add an RSI column using Wilder's smoothing method."""
     if period <= 0:
@@ -74,6 +97,10 @@ def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
     return indicator_df
 
 
+
+# CATATAN FUNGSI: Menghitung nilai ALL INDICATORS dari data harga yang diterima.
+# CARA KERJA SINGKAT: Menyiapkan DataFrame harga, memvalidasi kolom yang dibutuhkan, lalu melakukan perhitungan indikator dengan pandas.
+# KEGUNAAN: Menyediakan kolom indikator teknikal untuk pembentukan sinyal dan evaluasi WFA.
 def calculate_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
     Add all technical columns used by the dashboard and WFA pipeline.
@@ -94,6 +121,10 @@ def calculate_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return calculate_rsi(indicator_df, 14)
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  prepare price dataframe sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _prepare_price_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Return a copied DataFrame sorted by date."""
     if df is None or df.empty:
@@ -108,6 +139,10 @@ def _prepare_price_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return price_df.sort_index()
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  validate price column sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _validate_price_column(df: pd.DataFrame, price_column: str) -> None:
     if price_column not in df.columns:
         raise ValueError(f"Kolom harga tidak ditemukan: {price_column}")

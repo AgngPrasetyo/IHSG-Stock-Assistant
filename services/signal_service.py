@@ -1,4 +1,11 @@
 ﻿"""Technical-analysis signals for final SMA10/SMA50, MACD, and RSI methods."""
+# ================================================================
+# CATATAN FILE:
+# File ini bertugas membentuk sinyal teknikal final BUY, SELL, atau HOLD berdasarkan aturan MA Crossover, MACD, dan RSI. File ini menggunakan nilai indikator yang sudah dihitung sebelumnya.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -13,6 +20,10 @@ MACD_TRADE_SIGNAL_COLUMN = "MACD_Trade_Signal"
 RSI_SIGNAL_COLUMN = "RSI_Signal"
 
 
+
+# CATATAN FUNGSI: Membentuk sinyal MA Crossover berdasarkan perpotongan SMA10 dan SMA50.
+# CARA KERJA SINGKAT: BUY muncul ketika SMA10 memotong SMA50 dari bawah ke atas; SELL muncul ketika SMA10 memotong dari atas ke bawah; selain itu HOLD.
+# KEGUNAAN: Menentukan sinyal teknikal final untuk indikator MA Crossover.
 def generate_ma_signal(df: pd.DataFrame) -> pd.DataFrame:
     """Signal MA Crossover SMA10/SMA50 without additional filters."""
     signal_df = _ensure_sma_columns(_prepare_signal_dataframe(df), 10, 50)
@@ -39,6 +50,10 @@ def generate_ma_signal(df: pd.DataFrame) -> pd.DataFrame:
     return signal_df
 
 
+
+# CATATAN FUNGSI: Membentuk sinyal MACD berdasarkan crossover MACD Line dan Signal Line.
+# CARA KERJA SINGKAT: BUY muncul saat MACD Line memotong Signal Line ke atas; SELL muncul saat memotong ke bawah; selain itu HOLD.
+# KEGUNAAN: Menentukan sinyal teknikal final untuk indikator MACD.
 def generate_macd_signal(df: pd.DataFrame) -> pd.DataFrame:
     """Signal MACD Line crossover against Signal Line without additional filters."""
     signal_df = _prepare_signal_dataframe(df)
@@ -68,6 +83,10 @@ def generate_macd_signal(df: pd.DataFrame) -> pd.DataFrame:
     return signal_df
 
 
+
+# CATATAN FUNGSI: Membentuk sinyal RSI berdasarkan keluarnya RSI dari area ekstrem.
+# CARA KERJA SINGKAT: BUY muncul saat RSI naik keluar dari oversold; SELL muncul saat RSI turun keluar dari overbought; selain itu HOLD.
+# KEGUNAAN: Menentukan sinyal teknikal final untuk indikator RSI.
 def generate_rsi_signal(df: pd.DataFrame) -> pd.DataFrame:
     """Signal RSI exits from oversold/overbought areas without additional filters."""
     signal_df = _prepare_signal_dataframe(df)
@@ -97,6 +116,10 @@ def generate_rsi_signal(df: pd.DataFrame) -> pd.DataFrame:
     return signal_df
 
 
+
+# CATATAN FUNGSI: Membentuk sinyal teknikal BUY, SELL, atau HOLD berdasarkan aturan indikator final.
+# CARA KERJA SINGKAT: Memastikan kolom indikator tersedia, membandingkan nilai saat ini dan nilai sebelumnya, lalu menandai kondisi crossover atau keluar area ekstrem.
+# KEGUNAAN: Menghasilkan kolom sinyal yang digunakan untuk dashboard, sinyal terbaru, dan evaluasi performa.
 def generate_all_signals(df: pd.DataFrame) -> pd.DataFrame:
     """
     Generate final MA Crossover, MACD, and RSI signal columns.
@@ -109,6 +132,10 @@ def generate_all_signals(df: pd.DataFrame) -> pd.DataFrame:
     return generate_rsi_signal(signal_df)
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait latest signal.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def get_latest_signal(df: pd.DataFrame, indicator_name: str) -> dict[str, str]:
     """Return the latest final-method signal and deterministic reason."""
     signal_df = _ensure_indicator_signal(df, indicator_name)
@@ -122,6 +149,10 @@ def get_latest_signal(df: pd.DataFrame, indicator_name: str) -> dict[str, str]:
 }
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  prepare signal dataframe sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _prepare_signal_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if df is None or df.empty:
         raise ValueError("Data indikator kosong.")
@@ -135,6 +166,10 @@ def _prepare_signal_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return signal_df.sort_index()
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  ensure sma columns sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _ensure_sma_columns(df: pd.DataFrame, *windows: int) -> pd.DataFrame:
     signal_df = df.copy()
     for window in windows:
@@ -145,10 +180,18 @@ def _ensure_sma_columns(df: pd.DataFrame, *windows: int) -> pd.DataFrame:
 
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  has current and previous values sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _has_current_and_previous_values(df: pd.DataFrame, columns: list[str]) -> pd.Series:
     return df[columns].notna().all(axis=1) & df[columns].shift(1).notna().all(axis=1)
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  ensure indicator signal sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _ensure_indicator_signal(df: pd.DataFrame, indicator_name: str) -> pd.DataFrame:
     name = _normalize_indicator_name(indicator_name)
     if name == "MA Crossover":
@@ -158,10 +201,18 @@ def _ensure_indicator_signal(df: pd.DataFrame, indicator_name: str) -> pd.DataFr
     return generate_rsi_signal(df)
 
 
+
+# CATATAN FUNGSI: Mengambil informasi yang dibutuhkan terkait  signal column.
+# CARA KERJA SINGKAT: Membaca sumber data yang relevan, mencari baris atau kolom yang sesuai, lalu mengembalikan nilai terpilih.
+# KEGUNAAN: Menyediakan informasi pendukung untuk proses analisis, sinyal, mapping, atau laporan.
 def _get_signal_column(indicator_name: str) -> str:
     return {"MA Crossover": MA_CROSSOVER_SIGNAL_COLUMN, "MACD": MACD_TRADE_SIGNAL_COLUMN, "RSI": RSI_SIGNAL_COLUMN}[_normalize_indicator_name(indicator_name)]
 
 
+
+# CATATAN FUNGSI: Menormalkan teks, nama indikator, ticker, atau data agar formatnya konsisten.
+# CARA KERJA SINGKAT: Membersihkan karakter, menyamakan kapitalisasi, mengatur indeks tanggal, atau mengganti variasi istilah ke format baku.
+# KEGUNAAN: Mengurangi kesalahan pencocokan dan menjaga hasil sistem tetap stabil.
 def _normalize_indicator_name(indicator_name: str) -> str:
     name = str(indicator_name).strip().lower()
     if name in {
@@ -178,6 +229,10 @@ def _normalize_indicator_name(indicator_name: str) -> str:
     raise ValueError("indicator_name harus berupa MA Crossover, MACD, atau RSI.")
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  build reason sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _build_reason(row: pd.Series, indicator_name: str) -> str:
     name = _normalize_indicator_name(indicator_name)
 

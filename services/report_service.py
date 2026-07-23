@@ -1,4 +1,11 @@
 ﻿"""Build offline PDF reports from an existing analysis payload."""
+# ================================================================
+# CATATAN FILE:
+# File ini bertugas membangun laporan PDF hasil analisis teknikal dari payload analisis yang sudah tersedia. File ini berfokus pada format laporan, tabel, grafik harga, disclaimer, dan footer, bukan pada perhitungan indikator atau WFA.
+# Catatan ini ditambahkan untuk membantu penjelasan kode saat sidang.
+# Bagian di bawah ini tidak mengubah logika program; hanya berupa komentar dokumentasi.
+# ================================================================
+
 
 from __future__ import annotations
 
@@ -44,6 +51,10 @@ POST_SIGNAL_STATUS_LABELS = {
 
 INVALID_PDF_TEXT_CHARS = str.maketrans("", "", "■□�")
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_user_friendly_condition(analysis: dict[str, Any]) -> str:
     signal = str(analysis.get("latest_signal") or "HOLD").upper()
     indicator = analysis.get("best_indicator") or "indikator terbaik"
@@ -59,6 +70,10 @@ def _format_user_friendly_condition(analysis: dict[str, Any]) -> str:
         f"Sinyal saat ini adalah {signal} pada {latest_date} berdasarkan {indicator}."
     )
 
+
+# CATATAN FUNGSI: Menjalankan proses  comparison zero notes sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _comparison_zero_notes(comparison: list[dict[str, Any]]) -> list[str]:
     """Explain why zero-signal comparison rows have no final evaluation value."""
     notes = []
@@ -79,6 +94,10 @@ def _comparison_zero_notes(comparison: list[dict[str, Any]]) -> list[str]:
 
         
 
+
+# CATATAN FUNGSI: Membangun file PDF laporan hasil analisis teknikal dari payload frontend.
+# CARA KERJA SINGKAT: Memvalidasi payload, menyusun bagian laporan, tabel, grafik, hint, dan disclaimer, lalu menghasilkan byte PDF.
+# KEGUNAAN: Menyediakan laporan offline yang dapat diunduh pengguna.
 def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     """Build a PDF report from an already available frontend analysis payload."""
     if not isinstance(payload, dict):
@@ -211,6 +230,10 @@ def build_analysis_pdf(payload: dict[str, Any]) -> bytes:
     return buffer.getvalue()
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  header sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _header(styles: dict[str, ParagraphStyle]) -> list[Any]:
     """Build the fixed report heading without reading external state."""
     return [
@@ -222,6 +245,10 @@ def _header(styles: dict[str, ParagraphStyle]) -> list[Any]:
     ]
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  styles sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _styles() -> dict[str, ParagraphStyle]:
     """Create all ReportLab paragraph styles used by the PDF layout."""
     base = getSampleStyleSheet()
@@ -318,17 +345,29 @@ def _styles() -> dict[str, ParagraphStyle]:
     }
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  section block sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _section_block(styles: dict[str, ParagraphStyle], title: str, flowables: list[Any]) -> KeepTogether:
     """Keep short sections together so they do not split awkwardly across pages."""
     return KeepTogether([Spacer(1, 0.08 * cm), Paragraph(_clean_text(title), styles["Heading2"]), *flowables])
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  add section sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _add_section(story: list[Any], styles: dict[str, ParagraphStyle], title: str) -> None:
     """Append a standalone section heading to the report story."""
     story.append(Spacer(1, 0.12 * cm))
     story.append(Paragraph(_clean_text(title), styles["Heading2"]))
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  key value table sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _key_value_table(rows: list[tuple[str, Any]], styles: dict[str, ParagraphStyle]) -> Table:
     """Render label/value rows without converting Paragraph cells to strings."""
     data = [
@@ -348,6 +387,10 @@ def _key_value_table(rows: list[tuple[str, Any]], styles: dict[str, ParagraphSty
     return table
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  data table sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _data_table(
     rows: list[list[Any]],
     styles: dict[str, ParagraphStyle],
@@ -379,6 +422,10 @@ def _data_table(
     ]))
     return table
 
+
+# CATATAN FUNGSI: Menjalankan proses  price chart section sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _price_chart_section(chart_data: Any, styles: dict[str, ParagraphStyle]) -> KeepTogether | None:
     """Render a simple closing-price chart from frontend chart_data."""
     if not isinstance(chart_data, list):
@@ -420,6 +467,10 @@ def _price_chart_section(chart_data: Any, styles: dict[str, ParagraphStyle]) -> 
         drawing,
     ])
 
+
+# CATATAN FUNGSI: Menjalankan proses  build price chart drawing sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _build_price_chart_drawing(points: list[dict[str, Any]]) -> Drawing:
     """Build a compact line chart drawing for closing prices."""
     width = 15.2 * cm
@@ -471,6 +522,10 @@ def _build_price_chart_drawing(points: list[dict[str, Any]]) -> Drawing:
 
     return drawing
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_last_active_signal(value: Any) -> str:
     """Format the latest historical BUY/SELL signal for the PDF report."""
     if not isinstance(value, dict):
@@ -484,6 +539,10 @@ def _format_last_active_signal(value: Any) -> str:
 
     return f"{signal} pada {signal_date}"
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_horizon(item: dict[str, Any]) -> str:
     """Format validation horizon without recalculating anything from price data."""
     label = _format_optional_text(item.get("label"))
@@ -496,12 +555,20 @@ def _format_horizon(item: dict[str, Any]) -> str:
         return "-"
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_optional_text(value: Any) -> str:
     """Return a clean placeholder for optional payload text fields."""
     text = sanitize_pdf_text(value)
     return "-" if text.casefold() in {"none", "null", "undefined", "nan"} else text
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  disclaimer box sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _disclaimer_box(text: Any, styles: dict[str, ParagraphStyle]) -> Table:
     """Render the investment-safety disclaimer as a highlighted single-cell box."""
     table = Table([[Paragraph(_clean_text(text), styles["Body"])]], colWidths=[15.2 * cm], hAlign="LEFT")
@@ -516,6 +583,10 @@ def _disclaimer_box(text: Any, styles: dict[str, ParagraphStyle]) -> Table:
     return table
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  table cell sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _table_cell(value: Any, style: ParagraphStyle) -> Any:
     """Return flowables unchanged; wrap plain values for table cell text wrapping."""
     if isinstance(value, Paragraph):
@@ -523,6 +594,10 @@ def _table_cell(value: Any, style: ParagraphStyle) -> Any:
     return Paragraph(_clean_text(value), style)
 
 
+
+# CATATAN FUNGSI: Membersihkan atau mengamankan nilai sebelum ditampilkan atau dikirim ke proses lain.
+# CARA KERJA SINGKAT: Menangani nilai kosong, NaN, karakter bermasalah, atau tipe data non-standar.
+# KEGUNAAN: Mencegah error tampilan dan menjaga output tetap rapi.
 def sanitize_pdf_text(value: Any) -> str:
     """Normalize and remove characters that render as invalid boxes in PDFs."""
     if isinstance(value, float) and math.isnan(value):
@@ -548,11 +623,19 @@ def sanitize_pdf_text(value: Any) -> str:
     return text
 
 
+
+# CATATAN FUNGSI: Membersihkan atau mengamankan nilai sebelum ditampilkan atau dikirim ke proses lain.
+# CARA KERJA SINGKAT: Menangani nilai kosong, NaN, karakter bermasalah, atau tipe data non-standar.
+# KEGUNAAN: Mencegah error tampilan dan menjaga output tetap rapi.
 def _clean_text(value: Any) -> str:
     """Escape sanitized user-facing text for ReportLab Paragraph markup."""
     return escape(sanitize_pdf_text(value)).replace("\n", "<br/>")
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_number(value: Any, decimals: int = 2) -> str:
     """Format numeric values for report tables with a safe fallback."""
     try:
@@ -564,6 +647,10 @@ def _format_number(value: Any, decimals: int = 2) -> str:
     return f"{numeric:.{decimals}f}"
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_rupiah(value: Any) -> str:
     """Format a numeric price as a compact Indonesian Rupiah string."""
     try:
@@ -573,12 +660,20 @@ def _format_rupiah(value: Any) -> str:
     return f"Rp {numeric:,.0f}".replace(",", ".")
 
 
+
+# CATATAN FUNGSI: Memformat nilai mentah menjadi teks yang lebih aman dan mudah dibaca.
+# CARA KERJA SINGKAT: Menerima nilai input, menangani nilai kosong atau format tidak valid, lalu mengubahnya ke bentuk tampilan akhir.
+# KEGUNAAN: Menjaga tampilan angka, tanggal, sinyal, dan teks tetap konsisten pada dashboard, prompt, atau laporan.
 def _format_percent(value: Any) -> str:
     """Format percentage metrics using two decimal places."""
     formatted = _format_number(value, 2)
     return "-" if formatted == "-" else f"{formatted}%"
 
 
+
+# CATATAN FUNGSI: Menjalankan proses  footer sesuai kebutuhan modul ini.
+# CARA KERJA SINGKAT: Memproses input yang diterima, melakukan validasi seperlunya, lalu mengembalikan hasil yang siap digunakan tahap berikutnya.
+# KEGUNAAN: Mendukung alur sistem agar data atau hasil analisis tetap terstruktur dan konsisten.
 def _footer(canvas: Any, doc: SimpleDocTemplate) -> None:
     """Draw the static compliance footer on every PDF page."""
     canvas.saveState()

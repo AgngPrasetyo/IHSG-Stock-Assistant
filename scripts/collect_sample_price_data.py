@@ -1,5 +1,10 @@
 ﻿"""Collect and cache OHLCV price data for sample stocks from the mapping file."""
 
+# CATATAN FILE:
+# File ini berisi script pengambilan dan caching data harga OHLCV untuk saham sampel.
+# Kegunaannya adalah memastikan data harga tersedia, tervalidasi, dan memiliki laporan status pengambilan data.
+
+
 from __future__ import annotations
 
 import argparse
@@ -39,6 +44,9 @@ REPORT_COLUMNS = [
 REPORT_PATH = PROJECT_ROOT / "data" / f"price_fetch_report_{START_DATE}_{LATEST_DATA_END_DATE}.csv"
 
 
+# CATATAN FUNGSI: Menyaring saham yang akan diambil datanya.
+# CARA KERJA SINGKAT: Mapping difilter berdasarkan status lengkap, sampel penelitian, sektor opsional, dan limit opsional.
+# KEGUNAAN: Dipakai untuk membatasi proses fetch sesuai kebutuhan.
 def filter_sample_stocks(
     mapping_df: pd.DataFrame,
     sector: str | None = None,
@@ -66,6 +74,9 @@ def filter_sample_stocks(
     return filtered_df.reset_index(drop=True)
 
 
+# CATATAN FUNGSI: Mengambil atau memuat cache harga untuk saham sampel.
+# CARA KERJA SINGKAT: Setiap saham diproses, hasil sukses/gagal dicatat, lalu laporan disimpan.
+# KEGUNAAN: Dipakai untuk validasi ketersediaan data harga.
 def collect_sample_price_data(
     refresh: bool = False,
     limit: int | None = None,
@@ -101,6 +112,9 @@ def collect_sample_price_data(
     return report_df
 
 
+# CATATAN FUNGSI: Menyimpan laporan pengambilan data harga.
+# CARA KERJA SINGKAT: Folder dibuat jika belum ada lalu DataFrame ditulis ke CSV.
+# KEGUNAAN: Menyediakan bukti status fetch data.
 def save_report(report_df: pd.DataFrame, report_path: str | Path = REPORT_PATH) -> Path:
     """Save the collection report as CSV."""
     path = Path(report_path)
@@ -109,6 +123,9 @@ def save_report(report_df: pd.DataFrame, report_path: str | Path = REPORT_PATH) 
     return path
 
 
+# CATATAN FUNGSI: Membaca argumen command-line untuk script.
+# CARA KERJA SINGKAT: Argumen refresh, limit, dan sector didefinisikan melalui argparse.
+# KEGUNAAN: Memudahkan menjalankan script dengan variasi kebutuhan.
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the cache builder."""
     parser = argparse.ArgumentParser(
@@ -134,6 +151,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# CATATAN FUNGSI: Menjalankan script pengumpulan data harga.
+# CARA KERJA SINGKAT: Argumen dibaca, data dikumpulkan, laporan dicetak, dan tanggal akhir divalidasi.
+# KEGUNAAN: Dipakai sebagai entry point script cache harga.
 def main() -> None:
     """CLI entry point."""
     args = parse_args()
@@ -154,6 +174,9 @@ def main() -> None:
         print(f"Validasi tanggal akhir perlu ditinjau: {sorted(last_dates)}")
 
 
+# CATATAN FUNGSI: Mengambil data satu saham dan membentuk baris laporan.
+# CARA KERJA SINGKAT: Data harga dimuat/fetch, divalidasi, lalu status, jumlah data, dan tanggal dicatat.
+# KEGUNAAN: Dipakai oleh collect_sample_price_data untuk setiap saham.
 def _fetch_one_stock_report(
     ticker: str,
     ticker_yfinance: str,
@@ -200,6 +223,9 @@ def _fetch_one_stock_report(
         }
 
 
+# CATATAN FUNGSI: Mengubah tanggal/index menjadi format YYYY-MM-DD.
+# CARA KERJA SINGKAT: Nilai kosong menjadi string kosong, nilai valid dikonversi ke tanggal ISO.
+# KEGUNAAN: Dipakai dalam laporan fetch harga.
 def _format_date(value: Any) -> str:
     """Format index/date values for CSV report output."""
     if pd.isna(value):
@@ -207,6 +233,9 @@ def _format_date(value: Any) -> str:
     return pd.Timestamp(value).date().isoformat()
 
 
+# CATATAN FUNGSI: Mengubah nilai nullable menjadi string aman.
+# CARA KERJA SINGKAT: NaN menjadi kosong dan nilai lain di-strip.
+# KEGUNAAN: Dipakai saat membaca ticker, sektor, dan metadata mapping.
 def _safe_string(value: Any) -> str:
     """Convert nullable mapping values to safe strings."""
     if pd.isna(value):

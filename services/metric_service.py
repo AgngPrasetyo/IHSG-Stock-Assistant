@@ -1,5 +1,10 @@
 ﻿"""Signal evaluation metrics for deterministic technical analysis."""
 
+# CATATAN FILE:
+# File ini berisi perhitungan metrik evaluasi sinyal teknikal.
+# Kegunaannya adalah menghitung forward return, Average Forward Return, arah harga aktual, Directional Accuracy, Hit Rate, Total Active Signals, dan Correct Signals yang dipakai dalam evaluasi indikator.
+
+
 from __future__ import annotations
 
 import pandas as pd
@@ -24,6 +29,9 @@ SIGNAL_COLUMNS = [
 ]
 
 
+# CATATAN FUNGSI: Menghitung forward return untuk satu horizon ke depan.
+# CARA KERJA SINGKAT: Data disalin, divalidasi, lalu harga Close masa depan dibandingkan dengan Close saat ini.
+# KEGUNAAN: Dipakai untuk evaluasi arah harga pada metode lama atau single horizon.
 def calculate_forward_return(
     df: pd.DataFrame,
     close_column: str = "Close",
@@ -40,6 +48,9 @@ def calculate_forward_return(
     return metric_df
 
 
+# CATATAN FUNGSI: Menghitung Average Forward Return dari beberapa horizon evaluasi.
+# CARA KERJA SINGKAT: Return dihitung pada T+1, T+3, T+5, dan T+10 lalu dirata-ratakan hanya jika seluruh horizon tersedia.
+# KEGUNAAN: Menjadi dasar evaluasi utama sinyal BUY/SELL dalam penelitian.
 def calculate_average_forward_return(
     df: pd.DataFrame,
     close_column: str = "Close",
@@ -71,6 +82,9 @@ def calculate_average_forward_return(
     return metric_df
 
 
+# CATATAN FUNGSI: Menentukan arah harga aktual dari forward return satu horizon.
+# CARA KERJA SINGKAT: Forward return positif diberi label UP, negatif DOWN, nol FLAT, dan data tidak tersedia UNKNOWN.
+# KEGUNAAN: Dipakai untuk kompatibilitas evaluasi lama berbasis satu horizon.
 def calculate_actual_direction(
     df: pd.DataFrame,
     close_column: str = "Close",
@@ -89,6 +103,9 @@ def calculate_actual_direction(
     return metric_df
 
 
+# CATATAN FUNGSI: Menentukan arah harga aktual berdasarkan Average Forward Return.
+# CARA KERJA SINGKAT: Average Forward Return positif diberi label UP, negatif DOWN, nol FLAT, dan data tidak tersedia UNKNOWN.
+# KEGUNAAN: Dipakai untuk menilai apakah sinyal BUY/SELL sesuai arah harga rata-rata ke depan.
 def calculate_average_actual_direction(
     df: pd.DataFrame,
     close_column: str = "Close",
@@ -118,6 +135,9 @@ def calculate_average_actual_direction(
     return metric_df
 
 
+# CATATAN FUNGSI: Mengevaluasi akurasi sinyal BUY/SELL pada satu horizon.
+# CARA KERJA SINGKAT: Fungsi menghitung arah aktual lalu meneruskan penilaian ke evaluator umum.
+# KEGUNAAN: Dipertahankan agar kode lama yang memakai single horizon tetap dapat berjalan.
 def evaluate_signal_performance(
     df: pd.DataFrame,
     signal_column: str,
@@ -132,6 +152,9 @@ def evaluate_signal_performance(
     return _evaluate_from_direction(metric_df, signal_column)
 
 
+# CATATAN FUNGSI: Mengevaluasi akurasi sinyal BUY/SELL menggunakan Average Forward Return.
+# CARA KERJA SINGKAT: Fungsi membentuk arah aktual dari rata-rata return T+1, T+3, T+5, dan T+10, lalu menghitung total aktif, benar, DA, dan Hit Rate.
+# KEGUNAAN: Dipakai sebagai evaluator utama dalam WFA penelitian.
 def evaluate_signal_performance_average_forward(
     df: pd.DataFrame,
     signal_column: str,
@@ -158,6 +181,9 @@ def evaluate_signal_performance_average_forward(
     return result
 
 
+# CATATAN FUNGSI: Mengembalikan nilai Directional Accuracy dari kolom sinyal tertentu.
+# CARA KERJA SINGKAT: Fungsi memanggil evaluasi sinyal lalu mengambil field directional_accuracy.
+# KEGUNAAN: Memudahkan pemanggilan metrik DA secara langsung.
 def calculate_directional_accuracy(
     df: pd.DataFrame,
     signal_column: str,
@@ -173,6 +199,9 @@ def calculate_directional_accuracy(
     )
 
 
+# CATATAN FUNGSI: Mengembalikan nilai Hit Rate dari kolom sinyal tertentu.
+# CARA KERJA SINGKAT: Fungsi memanggil evaluasi sinyal lalu mengambil field hit_rate.
+# KEGUNAAN: Memudahkan pemanggilan metrik Hit Rate secara langsung.
 def calculate_hit_rate(
     df: pd.DataFrame,
     signal_column: str,
@@ -188,6 +217,9 @@ def calculate_hit_rate(
     )
 
 
+# CATATAN FUNGSI: Mengevaluasi semua kolom sinyal yang tersedia pada data.
+# CARA KERJA SINGKAT: Fungsi memeriksa kolom MA, MACD, dan RSI yang ada lalu mengevaluasinya satu per satu.
+# KEGUNAAN: Dipakai untuk membandingkan beberapa indikator tanpa membentuk ulang sinyal.
 def evaluate_all_signal_columns(
     df: pd.DataFrame,
     forward_periods: int = 1,
@@ -209,6 +241,9 @@ def evaluate_all_signal_columns(
     return results
 
 
+# CATATAN FUNGSI: Mengevaluasi semua kolom sinyal dengan Average Forward Return.
+# CARA KERJA SINGKAT: Setiap kolom sinyal yang tersedia dinilai menggunakan horizon rata-rata yang sama.
+# KEGUNAAN: Dipakai untuk evaluasi multi-indikator yang konsisten dengan metode final.
 def evaluate_all_signal_columns_average_forward(
     df: pd.DataFrame,
     forward_horizons: list[int] | tuple[int, ...] | None = None,
@@ -230,6 +265,9 @@ def evaluate_all_signal_columns_average_forward(
     return results
 
 
+# CATATAN FUNGSI: Menghitung metrik dari data yang sudah memiliki arah aktual.
+# CARA KERJA SINGKAT: Fungsi hanya mengambil baris evaluable, menyaring BUY/SELL, menghitung sinyal benar, DA, dan Hit Rate.
+# KEGUNAAN: Menjadi inti evaluasi agar perhitungan metrik konsisten di seluruh service.
 def _evaluate_from_direction(
     metric_df: pd.DataFrame,
     signal_column: str,
@@ -271,6 +309,9 @@ def _evaluate_from_direction(
     }
 
 
+# CATATAN FUNGSI: Menyiapkan DataFrame evaluasi agar berbasis index Date.
+# CARA KERJA SINGKAT: Data disalin, kolom Date dijadikan index jika ada, lalu diurutkan kronologis.
+# KEGUNAAN: Mencegah kesalahan evaluasi akibat urutan tanggal atau format index yang tidak seragam.
 def _prepare_metric_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Return a copied DataFrame sorted by date."""
     if df is None or df.empty:
@@ -289,18 +330,27 @@ def _prepare_metric_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return metric_df.sort_index()
 
 
+# CATATAN FUNGSI: Memastikan kolom yang dibutuhkan tersedia.
+# CARA KERJA SINGKAT: Jika kolom tidak ada, fungsi menghentikan proses dengan ValueError.
+# KEGUNAAN: Mencegah perhitungan berjalan dengan data yang tidak lengkap.
 def _validate_column(df: pd.DataFrame, column: str) -> None:
     """Ensure a required column is available."""
     if column not in df.columns:
         raise ValueError(f"Kolom tidak ditemukan: {column}")
 
 
+# CATATAN FUNGSI: Memastikan horizon evaluasi bernilai positif.
+# CARA KERJA SINGKAT: Nilai forward_periods dikonversi ke integer dan harus minimal 1.
+# KEGUNAAN: Mencegah horizon yang tidak logis seperti 0 atau negatif.
 def _validate_forward_periods(forward_periods: int) -> None:
     """Ensure the evaluation horizon is a positive row count."""
     if int(forward_periods) < 1:
         raise ValueError("forward_periods harus lebih besar atau sama dengan 1.")
 
 
+# CATATAN FUNGSI: Menormalkan daftar horizon evaluasi.
+# CARA KERJA SINGKAT: Fungsi mengambil default jika kosong, menghapus duplikasi, mengurutkan, dan memvalidasi setiap horizon.
+# KEGUNAAN: Menjamin evaluasi T+1, T+3, T+5, dan T+10 dipakai secara konsisten.
 def _normalize_forward_horizons(
     forward_horizons: list[int] | tuple[int, ...] | None,
 ) -> list[int]:

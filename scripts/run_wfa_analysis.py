@@ -1,5 +1,10 @@
 ﻿"""Run fixed-length rolling WFA with in-sample selection and out-of-sample validation."""
 
+# CATATAN FILE:
+# File ini berisi script utama untuk menjalankan Fixed-Length Rolling Walk-Forward Analysis.
+# Kegunaannya adalah mengevaluasi indikator pada in-sample, memvalidasi indikator terpilih pada out-of-sample, lalu menghasilkan file CSV final untuk skripsi dan aplikasi.
+
+
 from __future__ import annotations
 
 import argparse
@@ -108,6 +113,9 @@ SELECTION_COLUMNS = [
 ]
 
 
+# CATATAN FUNGSI: Membaca argumen command-line untuk menjalankan WFA.
+# CARA KERJA SINGKAT: Argumen refresh menentukan apakah data diambil ulang atau memakai cache.
+# KEGUNAAN: Dipakai saat menjalankan script WFA final.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run WFA with in-sample indicator selection and out-of-sample validation."
@@ -120,6 +128,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# CATATAN FUNGSI: Memuat 40 saham sampel penelitian dari mapping.
+# CARA KERJA SINGKAT: Mapping difilter lengkap dan sampel, lalu divalidasi harus 4 sektor masing-masing 10 saham.
+# KEGUNAAN: Menjamin WFA memakai cakupan penelitian yang terkunci.
 def load_samples() -> pd.DataFrame:
     """Load the locked 40-stock research sample from the mapping file."""
     mapping = load_mapping()
@@ -141,6 +152,9 @@ def load_samples() -> pd.DataFrame:
     return sample.sort_values(["sektor", "ticker"]).reset_index(drop=True)
 
 
+# CATATAN FUNGSI: Menambahkan DA dan merapikan Hit Rate pada hasil agregasi.
+# CARA KERJA SINGKAT: DA dihitung dari Correct dibagi Active, sedangkan Hit Rate diisi nol jika kosong.
+# KEGUNAAN: Dipakai sebelum hasil WFA disimpan atau dipilih.
 def add_scores(df: pd.DataFrame) -> pd.DataFrame:
     result = df.copy()
     result["directional_accuracy"] = 0.0
@@ -158,6 +172,9 @@ def add_scores(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+# CATATAN FUNGSI: Menghitung rata-rata Hit Rate dari unit yang memiliki sinyal aktif.
+# CARA KERJA SINGKAT: Baris dengan total_active_signals nol dikeluarkan, lalu hit_rate dirata-ratakan per group.
+# KEGUNAAN: Menjelaskan pembagi Unit Aktif pada hasil akhir.
 def average_active_hit_rate(df: pd.DataFrame, group_keys: list[str]) -> pd.DataFrame:
     active = df[df["total_active_signals"] > 0]
     if active.empty:
@@ -166,6 +183,9 @@ def average_active_hit_rate(df: pd.DataFrame, group_keys: list[str]) -> pd.DataF
     return active.groupby(group_keys, as_index=False)["hit_rate"].mean()
 
 
+# CATATAN FUNGSI: Mengevaluasi semua indikator pada satu periode WFA.
+# CARA KERJA SINGKAT: Setiap kolom sinyal dinilai menggunakan Average Forward Return T+1, T+3, T+5, T+10.
+# KEGUNAAN: Dipakai untuk in-sample selection dan out-of-sample validation.
 def evaluate_period(
     signal_df: pd.DataFrame,
     period_df: pd.DataFrame,
@@ -198,6 +218,9 @@ def evaluate_period(
     return results
 
 
+# CATATAN FUNGSI: Mengevaluasi satu saham pada seluruh window WFA.
+# CARA KERJA SINGKAT: Data harga dengan warm-up dimuat, window dibuat, indikator/sinyal dihitung, lalu metrik in-sample dan out-sample dicatat.
+# KEGUNAAN: Menghasilkan detail WFA per saham-window.
 def evaluate_stock_windows(stock: pd.Series, refresh: bool) -> tuple[pd.DataFrame, int]:
     """Evaluate one stock across all WFA windows using warm-up-aware data."""
     price = load_or_fetch_price_data(
@@ -265,6 +288,9 @@ def evaluate_stock_windows(stock: pd.Series, refresh: bool) -> tuple[pd.DataFram
     return pd.DataFrame(records, columns=WINDOW_RESULT_COLUMNS), len(windows)
 
 
+# CATATAN FUNGSI: Mengagregasi hasil saham-window pada level sektor-window-period.
+# CARA KERJA SINGKAT: Data dipilih berdasarkan periode, lalu digabung per sektor, window, dan indikator.
+# KEGUNAAN: Dipakai untuk seleksi indikator in-sample dan pembacaan performa out-sample.
 def aggregate_sector_window_period(window_results: pd.DataFrame, period: str) -> pd.DataFrame:
     source = window_results[window_results["period"] == period].copy()
     if source.empty:
@@ -291,6 +317,9 @@ def aggregate_sector_window_period(window_results: pd.DataFrame, period: str) ->
     return add_scores(aggregate)
 
 
+# CATATAN FUNGSI: Memilih indikator terbaik per sektor-window dan mengambil hasil OOS-nya.
+# CARA KERJA SINGKAT: Indikator dipilih dari in-sample, lalu metrik indikator yang sama dicari pada out-sample.
+# KEGUNAAN: Menjadi inti alur WFA: in-sample selection ke out-of-sample validation.
 def build_sector_window_selection(window_results: pd.DataFrame) -> pd.DataFrame:
     """Select the best in-sample indicator per sector-window and attach OOS metrics."""
 
@@ -357,6 +386,9 @@ def build_sector_window_selection(window_results: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(selection_records, columns=SELECTION_COLUMNS)
 
 
+# CATATAN FUNGSI: Mengambil hanya baris OOS indikator yang terpilih dari in-sample.
+# CARA KERJA SINGKAT: Selection key digabungkan dengan out-sample window results.
+# KEGUNAAN: Dipakai agar agregasi akhir hanya memakai indikator yang memang terpilih.
 def build_selected_oos_stock_results(
     window_results: pd.DataFrame,
     selection: pd.DataFrame,
@@ -374,6 +406,9 @@ def build_selected_oos_stock_results(
     return out_sample.merge(selection_key, on=["sektor", "window_id", "indicator"], how="inner")
 
 
+# CATATAN FUNGSI: Mengagregasi hasil OOS terpilih pada level saham.
+# CARA KERJA SINGKAT: Baris selected OOS dikelompokkan per sektor, ticker, dan indikator untuk menghitung Active, Correct, DA, dan Hit Rate.
+# KEGUNAAN: Dipakai untuk tabel kontribusi per saham.
 def aggregate_stock_results(selected_oos: pd.DataFrame) -> pd.DataFrame:
     if selected_oos.empty:
         return pd.DataFrame(columns=STOCK_COLUMNS)
@@ -394,6 +429,9 @@ def aggregate_stock_results(selected_oos: pd.DataFrame) -> pd.DataFrame:
     return add_scores(stock_results)[STOCK_COLUMNS]
 
 
+# CATATAN FUNGSI: Mengagregasi hasil OOS terpilih pada level sektor.
+# CARA KERJA SINGKAT: Selected OOS dikelompokkan per sektor dan indikator, lalu baris indikator kosong dilengkapi.
+# KEGUNAAN: Dipakai untuk file agregat sektor final.
 def aggregate_sector_from_selected_oos(selected_oos: pd.DataFrame, sectors: list[str]) -> pd.DataFrame:
     group_keys = ["sektor", "indicator", "signal_column"]
 
@@ -416,6 +454,9 @@ def aggregate_sector_from_selected_oos(selected_oos: pd.DataFrame, sectors: list
     return ensure_all_sector_indicator_rows(aggregate, sectors)
 
 
+# CATATAN FUNGSI: Memastikan setiap sektor memiliki baris untuk semua indikator.
+# CARA KERJA SINGKAT: Jika indikator tidak muncul pada selected OOS, baris nol ditambahkan.
+# KEGUNAAN: Membuat tabel output tetap lengkap dan konsisten.
 def ensure_all_sector_indicator_rows(aggregate: pd.DataFrame, sectors: list[str]) -> pd.DataFrame:
     existing = {
         (str(row.sektor), str(row.indicator))
@@ -446,6 +487,9 @@ def ensure_all_sector_indicator_rows(aggregate: pd.DataFrame, sectors: list[str]
     return aggregate.sort_values(["sektor", "indicator"]).reset_index(drop=True)[AGGREGATE_COLUMNS]
 
 
+# CATATAN FUNGSI: Memilih indikator terbaik akhir untuk setiap sektor.
+# CARA KERJA SINGKAT: Data diurutkan berdasarkan DA, Hit Rate, dan Total Active Signals lalu diambil satu per sektor.
+# KEGUNAAN: Dipakai untuk file best indicator by sector.
 def select_best_by_sector(aggregate: pd.DataFrame) -> pd.DataFrame:
     if aggregate.empty:
         return pd.DataFrame(columns=AGGREGATE_COLUMNS)
@@ -462,6 +506,9 @@ def select_best_by_sector(aggregate: pd.DataFrame) -> pd.DataFrame:
     return best[AGGREGATE_COLUMNS]
 
 
+# CATATAN FUNGSI: Membuat ringkasan hasil WFA lintas sektor.
+# CARA KERJA SINGKAT: Fungsi menghitung jumlah sektor, rata-rata/weighted accuracy, total sinyal, dan daftar indikator terbaik.
+# KEGUNAAN: Dipakai untuk file summary hasil akhir.
 def build_summary(best: pd.DataFrame) -> pd.DataFrame:
     active = int(best["total_active_signals"].sum())
     correct = int(best["correct_signals"].sum())
@@ -485,10 +532,16 @@ def build_summary(best: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+# CATATAN FUNGSI: Mengubah nilai tanggal menjadi string YYYY-MM-DD.
+# CARA KERJA SINGKAT: Nilai dikonversi ke pandas Timestamp lalu diformat.
+# KEGUNAAN: Dipakai saat menulis batas window WFA ke CSV.
 def format_date(value: Any) -> str:
     return pd.Timestamp(value).strftime("%Y-%m-%d")
 
 
+# CATATAN FUNGSI: Menjalankan pipeline WFA final dari awal sampai output CSV.
+# CARA KERJA SINGKAT: Fungsi memuat sampel, mengevaluasi saham, membangun selection, selected OOS, agregat, best indicator, summary, lalu menyimpan file.
+# KEGUNAAN: Dipakai sebagai entry point utama pembentukan hasil WFA skripsi.
 def main() -> None:
     args = parse_args()
     DATA_DIR.mkdir(parents=True, exist_ok=True)

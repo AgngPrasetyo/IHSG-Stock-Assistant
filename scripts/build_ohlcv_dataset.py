@@ -1,3 +1,7 @@
+# CATATAN FILE:
+# File ini berisi script pembentuk dataset OHLCV gabungan untuk saham sampel.
+# Kegunaannya adalah mengambil data harga dari cache/provider, membersihkan data, lalu mengekspor dataset gabungan per saham dan per sektor.
+
 from __future__ import annotations
 
 import sys
@@ -38,12 +42,18 @@ OUTPUT_COLUMNS = [
 ]
 
 
+# CATATAN FUNGSI: Mengubah nilai kosong menjadi string aman.
+# CARA KERJA SINGKAT: Nilai NaN dijadikan string kosong, selain itu di-strip.
+# KEGUNAAN: Dipakai saat membaca nilai dari mapping.
 def _safe_string(value: Any) -> str:
     if pd.isna(value):
         return ""
     return str(value).strip()
 
 
+# CATATAN FUNGSI: Mengambil mapping saham sampel yang lengkap.
+# CARA KERJA SINGKAT: Mapping difilter status lengkap dan is_sample ya, lalu diurutkan.
+# KEGUNAAN: Dipakai sebagai daftar saham yang akan dibuat dataset OHLCV-nya.
 def load_sample_mapping() -> pd.DataFrame:
     mapping_df = load_mapping()
 
@@ -60,6 +70,9 @@ def load_sample_mapping() -> pd.DataFrame:
     return sample_df
 
 
+# CATATAN FUNGSI: Membangun dataset OHLCV untuk satu saham.
+# CARA KERJA SINGKAT: Data harga dibaca, divalidasi, diberi metadata saham/sektor, lalu dirapikan kolomnya.
+# KEGUNAAN: Dipakai untuk mengisi dataset gabungan.
 def build_one_stock(row: pd.Series) -> tuple[pd.DataFrame, dict[str, Any]]:
     ticker = _safe_string(row.get("ticker"))
     ticker_yfinance = _safe_string(row.get("ticker_yfinance"))
@@ -105,6 +118,9 @@ def build_one_stock(row: pd.Series) -> tuple[pd.DataFrame, dict[str, Any]]:
     return df, summary
 
 
+# CATATAN FUNGSI: Mengekspor data OHLCV ke Excel per saham.
+# CARA KERJA SINGKAT: Setiap ticker dibuat sebagai sheet tersendiri.
+# KEGUNAAN: Memudahkan pemeriksaan data historis per saham.
 def export_by_stock(all_df: pd.DataFrame) -> None:
     with pd.ExcelWriter(BY_STOCK_XLSX_PATH, engine="openpyxl") as writer:
         for ticker, group in all_df.groupby("ticker", sort=True):
@@ -112,6 +128,9 @@ def export_by_stock(all_df: pd.DataFrame) -> None:
             group.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
+# CATATAN FUNGSI: Mengekspor data OHLCV ke Excel per sektor.
+# CARA KERJA SINGKAT: Setiap sektor dibuat sebagai sheet tersendiri.
+# KEGUNAAN: Memudahkan pemeriksaan data historis per sektor.
 def export_by_sector(all_df: pd.DataFrame) -> None:
     with pd.ExcelWriter(BY_SECTOR_XLSX_PATH, engine="openpyxl") as writer:
         for sector, group in all_df.groupby("sektor", sort=True):
@@ -119,6 +138,9 @@ def export_by_sector(all_df: pd.DataFrame) -> None:
             group.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
+# CATATAN FUNGSI: Menjalankan proses pembentukan dataset OHLCV gabungan.
+# CARA KERJA SINGKAT: Fungsi membaca mapping, memproses seluruh saham, menyimpan CSV/Excel, dan mencetak ringkasan.
+# KEGUNAAN: Dipakai sebagai entry point script dataset.
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
